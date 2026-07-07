@@ -1,0 +1,75 @@
+# ============================
+# Umum — semua workspace
+# ============================
+node_modules/
+**/node_modules/
+dist/
+build/
+*.log
+.env
+.env.local
+.env.*.local
+.DS_Store
+Thumbs.db
+
+# ============================
+# apps/api — Node.js/Express/Prisma
+# ============================
+apps/api/node_modules/
+apps/api/dist/
+apps/api/.env
+apps/api/prisma/*.db
+apps/api/prisma/migrations/dev/
+
+# ============================
+# apps/web — React/Vite/Next (generic, sesuaikan stack yang dipilih)
+# ============================
+apps/web/node_modules/
+apps/web/dist/
+apps/web/build/
+apps/web/.next/
+apps/web/.env
+apps/web/.env.local
+apps/web/coverage/
+
+# ============================
+# apps/mobile — Expo/React Native
+# ============================
+apps/mobile/node_modules/
+apps/mobile/.expo/
+apps/mobile/dist/
+apps/mobile/web-build/
+apps/mobile/*.jks
+apps/mobile/*.p12
+apps/mobile/*.key
+apps/mobile/*.mobileprovision
+apps/mobile/.env
+
+# ============================
+# tools/simulator
+# ============================
+tools/simulator/node_modules/
+tools/simulator/.env
+
+# ============================
+# packages/shared — Prisma
+# ============================
+packages/shared/node_modules/
+packages/shared/.env
+packages/shared/prisma/migrations/dev/
+packages/shared/generated/
+
+# ============================
+# Docker
+# ============================
+# volume data postgres TIDAK ikut masuk repo (dikelola Docker sendiri via named volume)
+# tapi kalau nanti ganti ke bind mount, tambahkan folder datanya di sini, misal:
+# pgdata/
+
+# ============================
+# Editor/OS
+# ============================
+.vscode/
+.idea/
+*.swp
+.claude

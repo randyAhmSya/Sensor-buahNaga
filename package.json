@@ -1,0 +1,20 @@
+{
+  "name": "project-magang",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "workspaces": [
+    "apps/api",
+    "apps/web",
+    "packages/*",
+    "tools/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:simulator": "npm run start --workspace=tools/simulator"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

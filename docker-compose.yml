@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: buah-naga-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: buah_naga
+      POSTGRES_PASSWORD: ganti-password-sesuai-password-db
+      POSTGRES_DB: buah_naga_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:D:/docker-data/buah-naga-postgres
+ 
+volumes:
+  pgdata:
+ 
