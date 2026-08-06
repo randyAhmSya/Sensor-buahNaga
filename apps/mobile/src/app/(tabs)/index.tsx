@@ -6,6 +6,7 @@ import { WeatherHero } from "@/component/dashboard/WeatherHero";
 import { StatsCards } from "@/component/dashboard/StatsCards";
 import { QuickActions } from "@/component/dashboard/QuickActions";
 import { ActivityList } from "@/component/dashboard/ActivityList";
+import { ActivityHeaders } from "@/component/dashboard/ActivityHeaders";
 
 export default function DashboardScreen() {
   const { greetingName, today, state, refetch } = useDashboard();
@@ -39,8 +40,8 @@ export default function DashboardScreen() {
           onActionPress={(key) => console.log("action:", key)}
         />
       </View>
+      <ActivityHeaders onSeeAllPress={() => console.log("see all")} />
 
-      {/* 2. BAGIAN YANG BISA DI-SCROLL: Hanya ActivityList ke bawah */}
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
@@ -48,7 +49,6 @@ export default function DashboardScreen() {
       >
         <ActivityList
           activities={activities}
-          onSeeAllPress={() => console.log("lihat semua")}
           onItemPress={(id) => console.log("activity:", id)}
         />
       </ScrollView>

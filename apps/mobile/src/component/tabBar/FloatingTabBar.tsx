@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from "react";
-import { Text, useWindowDimensions, View } from "react-native";
+import { Pressable, Text, useWindowDimensions, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Tabs, useRouter } from "expo-router";
@@ -112,16 +112,18 @@ function ScanButton() {
   const router = useRouter();
 
   return (
-    <PressableOpacity
+    <Pressable
       onPress={() => router.push("/scan")}
-      activeOpacity={0.85}
-      style={[{ backgroundColor: TAB_COLORS.scanBackground }, Floating_Shadow]}
-      className="h-14 w-14 items-center justify-center rounded-full"
-      android_ripple={{ color: "rgba(255,255,255,0.2)", borderless: true }}
-      accessibilityRole="button"
-      accessibilityLabel="Scan"
+      style={{
+        width: 60,
+        height: 60,
+        borderRadius: 20,
+        backgroundColor: TAB_COLORS.scanBackground,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
     >
-      <Ionicons name="scan-outline" size={24} color={TAB_COLORS.scanIcon} />
-    </PressableOpacity>
+      <Ionicons name="scan-outline" size={24} color="#fff" />
+    </Pressable>
   );
 }

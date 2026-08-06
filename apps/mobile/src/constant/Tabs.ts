@@ -29,4 +29,6 @@ export const TAB_COLORS = {
   inactive: "#9CA3AF", // gray-400
   scanBackground: "#14532D",
   scanIcon: "#FFFFFF",
+  subTitles: "#151C25",
+  subIcons: "#717970",
 };
