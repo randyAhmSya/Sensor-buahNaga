@@ -6,6 +6,7 @@ import { useMonitoring } from "@/hooks/useMonitoring";
 import { SearchBar } from "@/component/monitoring/SearchBar";
 import { FilterPills } from "@/component/monitoring/FilterPills";
 import { NodeSection } from "@/component/monitoring/NodeSection";
+import { router } from "expo-router";
 
 export default function MonitoringScreen() {
   const {
@@ -57,7 +58,14 @@ export default function MonitoringScreen() {
             <NodeSection
               key={group.dateLabel}
               group={group}
-              onNodePress={(id) => console.log("node:", id)}
+              onNodePress={(id) => {
+                router.push({
+                  pathname: "/monitoring/[id]",
+                  params: {
+                    id,
+                  },
+                });
+              }}
             />
           ))
         )}
