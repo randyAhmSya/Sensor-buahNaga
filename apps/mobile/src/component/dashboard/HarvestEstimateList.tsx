@@ -34,7 +34,7 @@ export function HarvestEstimateList({
         <HarvestEstimateCard
           key={item.id}
           item={item}
-          onPress={() => onItemPress?.(item.id)}
+          onPress={() => onItemPress?.(item.nodeId)}
         />
       ))}
     </View>

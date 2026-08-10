@@ -9,6 +9,7 @@ import { ActivityList } from "@/component/dashboard/ActivityList";
 import { ActivityHeaders } from "@/component/dashboard/ActivityHeaders";
 import { ActionNeededList } from "@/component/dashboard/ActionNededList";
 import { HarvestEstimateList } from "@/component/dashboard/HarvestEstimateList";
+import { router } from "expo-router";
 
 export default function DashboardScreen() {
   const { greetingName, today, state, refetch } = useDashboard();
@@ -73,7 +74,16 @@ export default function DashboardScreen() {
           <HarvestEstimateList
             items={harvestEstimates}
             onSeeAllPress={() => console.log("lihat semua panen")}
-            onItemPress={(id) => console.log("harvest:", id)}
+            onItemPress={(id) => {
+              console.log("harvest:", id);
+
+              router.push({
+                pathname: "/harvest/[id]",
+                params: {
+                  id,
+                },
+              });
+            }}
           />
         )}
 

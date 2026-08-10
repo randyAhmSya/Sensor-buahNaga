@@ -7,6 +7,7 @@ import { ProfileCard } from "@/component/profile/ProfileCard";
 import { ProfileStats } from "@/component/profile/ProfileStats";
 import { ProfileMenu } from "@/component/profile/ProfileMenu";
 import { LogoutButton } from "@/component/profile/LogoutButton";
+import { router } from "expo-router";
 
 export default function ProfileScreen() {
   const { state, refetch } = useProfile();
@@ -36,7 +37,20 @@ export default function ProfileScreen() {
       >
         <ProfileMenu
           items={menu}
-          onItemPress={(key) => console.log("menu:", key)}
+          onItemPress={(key) => {
+            switch (key) {
+              case "notifications":
+                router.push("/profile/notification");
+                break;
+
+              case "account-settings":
+                router.push("/profile/account-setting");
+                break;
+
+              default:
+                console.log("menu tidak tersedia:", key);
+            }
+          }}
         />
         <LogoutButton onPress={() => console.log("logout")} />
       </ScrollView>
