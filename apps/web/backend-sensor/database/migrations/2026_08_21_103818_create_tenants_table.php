@@ -15,6 +15,7 @@ return new class extends Migration
             $table->uuid('tenant_id')->primary();
             $table->string('nama_tenant');
             $table->string('paket_langganan')->default('trial');
+            $table->boolean('is_admin_allowed')->default(false);
             $table->timestamps();
         });
     }

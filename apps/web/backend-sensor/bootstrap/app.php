@@ -14,13 +14,26 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
 
         then: function () {
-            Route::middleware('api')->prefix('api')->group(base_path('routes/api/admin.php'));
-            Route::middleware('api')->prefix('api')->group(base_path('routes/api/petani.php'));
-            Route::middleware('api')->prefix('api')->group(base_path('routes/api/iot.php'));
+            Route::middleware(['api', 'auth:sanctum'])
+                ->prefix('api/admin')
+                ->name('admin.')
+                ->group(base_path('routes/api/admin.php'));
+
+            Route::middleware(['api', 'auth:sanctum'])
+                ->prefix('api/petani')
+                ->name('petani.')
+                ->group(base_path('routes/api/petani.php'));
+
+            Route::middleware('api')
+                ->prefix('api/iot')
+                ->name('iot.')
+                ->group(base_path('routes/api/iot.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'superAdmin' => \App\Http\Middleware\EnsureIsSuperAdmin::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
