@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('bloks', function (Blueprint $table) {
             $table->uuid('id_blok')->primary();
             $table->foreignUuid('kebun_id')->constrained('kebuns', 'id_kebun')->cascadeOnDelete();
-            $table->string('nama_kebun');
+            $table->string('nama_blok');
             $table->string('keterangan')->nullable();
             $table->float('luas_area')->nullable();
             $table->string('url_foto')->nullable();
