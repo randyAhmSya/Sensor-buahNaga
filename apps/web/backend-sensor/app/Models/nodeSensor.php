@@ -12,6 +12,8 @@ class nodeSensor extends Model
 
     protected $table = 'node_sensors';
     protected $primaryKey = 'id_sensor';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
 
 
@@ -37,5 +39,9 @@ class nodeSensor extends Model
     {
         // Ubah menjadi 'kode_qr' menyesuaikan nama class di kode_qr.php
         return $this->belongsTo(kode_qr::class, 'qr_id', 'id_qr');
+    }
+    public function blok()
+    {
+        return $this->belongsTo(Blok::class, 'blok_id', 'id_blok');
     }
 }

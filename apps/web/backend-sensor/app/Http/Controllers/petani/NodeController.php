@@ -108,4 +108,11 @@ class NodeController extends Controller
         $this->nodeService->deleteNode($node);
         return $this->successResponse(null, 'Sensor berhasil dihapus dari sistem.');
     }
+
+    public function generateNewQr($id)
+    {
+        $hasil = $this->nodeService->generateNewQrForSensor($id);
+
+        return $this->successResponse($hasil, 'QR Code baru berhasil di-generate dan dipasangkan ke sensor.');
+    }
 }

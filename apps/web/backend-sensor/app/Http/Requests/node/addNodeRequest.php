@@ -25,7 +25,7 @@ class addNodeRequest extends FormRequest
         return [
             'blok_id'         => 'required|uuid|exists:bloks,id_blok|unique:node_sensors,blok_id',
             'gateway_id'      => 'required|uuid|exists:gateways,id_gateway',
-            'qr_id'           => 'required|uuid|exists:kode_qrs,id_qr',
+            'qr_id'           => 'nulllable|uuid|exists:kode_qrs,id_qr',
 
             'kode_perangkat'  => 'required|string|unique:node_sensors,kode_perangkat',
             'kode_pairing'    => 'nullable|string|unique:node_sensors,kode_pairing',
