@@ -24,10 +24,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::define('view', function (User $user, kebun $kebun) {
+            if ($user->role === 'superAdmin') {
+                $tenant = Tenant::where('tenant_id', $kebun->tenant_id)->first();
+                return $tenant && $tenant->is_admin_allowed;
+            }
+            return $user->tenant_id === $kebun->tenant_id;
+        });
         Gate::define('update', function (User $user, kebun $kebun) {
             if ($user->role === 'superAdmin') {
                 $tenant = Tenant::where('tenant_id', $kebun->tenant_id)->first();
-                return $tenant && $tenant->is_admin_allowed === true;
+                return $tenant && $tenant->is_admin_allowed;
             }
             return $user->tenant_id === $kebun->tenant_id;
         });
@@ -35,7 +42,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('delete', function (User $user, kebun $kebun) {
             if ($user->role === 'superAdmin') {
                 $tenant = Tenant::where('tenant_id', $kebun->tenant_id)->first();
-                return $tenant && $tenant->is_admin_allowed === true;
+                return $tenant && $tenant->is_admin_allowed;
             }
             return $user->tenant_id === $kebun->tenant_id;
         });

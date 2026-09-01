@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('node_sensors', function (Blueprint $table) {
             $table->uuid('id_sensor')->primary();
+            $table->foreignUuid('blok_id')->unique()->constrained('bloks', 'id_blok')->cascadeOnDelete();
             $table->foreignUuid('gateway_id')->constrained('gateways', 'id_gateway')->cascadeOnDelete();
             $table->foreignUuid('qr_id')->constrained('kode_qrs', 'id_qr')->cascadeOnDelete();
             $table->string('kode_perangkat')->unique();

@@ -37,4 +37,9 @@ class Tenant extends Model
     {
         return $this->hasMany(kebun::class, 'tenant_id', 'tenant_id');
     }
+    public function tenant()
+    {
+        // Kebun dimiliki oleh 1 Tenant
+        return $this->belongsTo(Tenant::class, 'tenant_id', 'tenant_id');
+    }
 }
