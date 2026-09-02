@@ -51,8 +51,9 @@ class KebunController extends Controller
         } else {
             $tenantId = $user->tenant_id;
         }
+        $fileFoto = $request->file('foto');
 
-        $kebun = $this->kebunService->createKebun($tenantId, $request->validated());
+        $kebun = $this->kebunService->createKebun($tenantId, $request->validated(), $fileFoto);
 
         return $this->successResponse($kebun, 'Kebun berhasil ditambahkan.', 201);
     }
@@ -89,8 +90,9 @@ class KebunController extends Controller
         if (Gate::denies('update', $kebun)) {
             return $this->errorResponse('Anda tidak memiliki izin memperbarui kebun ini.', 403);
         }
+        $fileFoto = $request->file('foto');
 
-        $updatedKebun = $this->kebunService->updateKebun($kebun, $request->validated());
+        $updatedKebun = $this->kebunService->updateKebun($kebun, $request->validated(), $fileFoto);
 
         return $this->successResponse($updatedKebun, 'Data kebun berhasil diperbarui.');
     }

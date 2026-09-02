@@ -2,11 +2,13 @@
 
 namespace App\Http\Requests\blok;
 
+use App\Traits\FileUploadTrait;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class updateBlokRequest extends FormRequest
 {
+    use FileUploadTrait;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -23,10 +25,10 @@ class updateBlokRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nama_blok'  => 'sometimes|string|max:100',
+            'nama_blok' => 'sometimes|string|max:100',
             'keterangan' => 'nullable|string',
-            'luas_area'  => 'nullable|numeric',
-            'url_foto'   => 'nullable|string',
+            'luas_area' => 'nullable|numeric',
+            'url_foto' => 'nullable|string',
         ];
     }
 }

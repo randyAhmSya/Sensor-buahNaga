@@ -25,10 +25,10 @@ class updateNodeRequest extends FormRequest
     {
         $sensorId = $this->route('node');
         return [
-            'gateway_id'      => 'sometimes|uuid|exists:gateways,id_gateway',
-            'kode_perangkat'  => ['sometimes', 'string', Rule::unique('node_sensors', 'kode_perangkat')->ignore($sensorId, 'id_sensor')],
-            'tipe_sensor'     => 'sometimes|string',
-            'status_koneksi'  => 'sometimes|string',
+            'gateway_id' => 'sometimes|uuid|exists:gateways,id_gateway',
+            'kode_perangkat' => ['sometimes', 'string', Rule::unique('node_sensors', 'kode_perangkat')->ignore($sensorId, 'id_sensor')],
+            'tipe_sensor' => 'sometimes|string',
+            'status_koneksi' => 'sometimes|string',
         ];
     }
 }

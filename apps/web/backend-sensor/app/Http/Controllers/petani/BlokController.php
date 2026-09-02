@@ -53,7 +53,9 @@ class BlokController extends Controller
         if (!$kebun) return $this->errorResponse('Data kebun tidak ditemukan.', 404);
         if (Gate::denies('update', $kebun)) return $this->errorResponse('Anda tidak memiliki izin menambah blok di kebun ini.', 403);
 
-        $blok = $this->blokService->createBlok($request->validated());
+        $fileFoto = $request->file('foto');
+
+        $blok = $this->blokService->createBlok($request->validated(), $fileFoto);
         return $this->successResponse($blok, 'Blok berhasil ditambahkan.', 201);
     }
 
@@ -82,7 +84,9 @@ class BlokController extends Controller
         $kebun = kebun::find($blok->kebun_id);
         if (Gate::denies('update', $kebun)) return $this->errorResponse('Anda tidak memiliki izin.', 403);
 
-        $updatedBlok = $this->blokService->updateBlok($blok, $request->validated());
+        $fileFoto = $request->file('foto');
+
+        $updatedBlok = $this->blokService->updateBlok($blok, $request->validated(), $fileFoto);
         return $this->successResponse($updatedBlok, 'Data blok berhasil diperbarui.');
     }
 

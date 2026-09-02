@@ -2,10 +2,12 @@
 
 namespace App\Http\Requests\kebun;
 
+use App\Traits\FileUploadTrait;
 use Illuminate\Foundation\Http\FormRequest;
 
 class updatekebunRequest extends FormRequest
 {
+    use FileUploadTrait;
     public function authorize(): bool
     {
         return true;
@@ -15,7 +17,7 @@ class updatekebunRequest extends FormRequest
         return [
             'nama_kebun' => 'sometimes|required|string|max:100',
             'lokasi_kebun' => 'nullable|string|max:100',
-            'url_foto' => 'nullable|string|max:100',
+            'foto' => $this->aturanValidasiFoto(false),
             'status_kebun' => 'sometimes|boolean',
         ];
     }
