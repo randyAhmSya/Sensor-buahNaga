@@ -23,15 +23,14 @@ class addNodeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'blok_id'         => 'required|uuid|exists:bloks,id_blok|unique:node_sensors,blok_id',
-            'gateway_id'      => 'required|uuid|exists:gateways,id_gateway',
-            'qr_id'           => 'nulllable|uuid|exists:kode_qrs,id_qr',
-
-            'kode_perangkat'  => 'required|string|unique:node_sensors,kode_perangkat',
-            'kode_pairing'    => 'nullable|string|unique:node_sensors,kode_pairing',
+            'blok_id' => 'required|uuid|exists:bloks,id_blok|unique:node_sensors,blok_id',
+            'gateway_id' => 'required|uuid|exists:gateways,id_gateway',
+            'qr_id' => 'nulllable|uuid|exists:kode_qrs,id_qr',
+            'kode_perangkat' => 'required|string|unique:node_sensors,kode_perangkat',
+            'kode_pairing' => 'nullable|string|unique:node_sensors,kode_pairing',
             'token_perangkat' => 'nullable|string|unique:node_sensors,token_perangkat',
-            'tipe_sensor'     => 'required|string',
-            'status_koneksi'  => 'required|string',
+            'tipe_sensor' => 'required|string',
+            'status_koneksi' => 'required|string',
         ];
     }
 }

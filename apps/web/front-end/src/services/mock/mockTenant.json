@@ -1,0 +1,70 @@
+{
+  "tenant_id": "TNT-AGR-0091",
+  "nama_tenant": "PT Agro Naga Nusantara Makmur",
+  "merek_dagang": "DragonAgro Prime",
+  "paket_langganan": "Enterprise AgTech Smart Farm",
+  "siklus_tagihan": "Tahunan (Aktif s/d 31 Des 2027)",
+  "kantor_pusat": "Jl. Raya Ijen No. 88, Banyuwangi, Jawa Timur",
+  "total_luas_hektar": 24.5,
+  "total_blok": 12,
+  "total_sensor": 48,
+  "total_gateway": 4,
+  "kebuns": [
+    {
+      "id_kebun": "KBN-BWI-01",
+      "nama_kebun": "Kebun Naga Merah Banyuwangi Lestari",
+      "lokasi": "Kecamatan Pesanggaran, Banyuwangi",
+      "latitude": -8.5428,
+      "longitude": 114.1205,
+      "nama_pengelola": "Ir. Suryo Wicaksono, M.P.",
+      "total_blok_aktif": 5,
+      "bloks": [
+        {
+          "id_blok": "BLK-NAGA-A1",
+          "nama_blok": "Blok Naga Merah Super A1",
+          "luas_area": 2.2,
+          "varietas_naga": "Super Red Hylocereus polyrhizus",
+          "jumlah_tiang": 1200
+        },
+        {
+          "id_blok": "BLK-NAGA-A2",
+          "nama_blok": "Blok Naga Merah Super A2",
+          "luas_area": 2.0,
+          "varietas_naga": "Super Red Hylocereus polyrhizus",
+          "jumlah_tiang": 1150
+        },
+        {
+          "id_blok": "BLK-NAGA-B1",
+          "nama_blok": "Blok Naga Kuning Palora B1",
+          "luas_area": 1.5,
+          "varietas_naga": "Golden Dragon Selenicereus megalanthus",
+          "jumlah_tiang": 850
+        },
+        {
+          "id_blok": "BLK-NAGA-B2",
+          "nama_blok": "Blok Naga Putih Organik B2",
+          "luas_area": 1.8,
+          "varietas_naga": "White Flesh Hylocereus undatus",
+          "jumlah_tiang": 980
+        },
+        {
+          "id_blok": "BLK-NAGA-C1",
+          "nama_blok": "Blok Naga Hitam Eksperimen C1",
+          "luas_area": 1.0,
+          "varietas_naga": "Costa Rican Black Dragon Hylocereus costaricensis",
+          "jumlah_tiang": 600
+        }
+      ]
+    },
+    {
+      "id_kebun": "KBN-JBR-02",
+      "nama_kebun": "Kebun Naga Rembangan Hills",
+      "lokasi": "Kecamatan Arjasa, Jember",
+      "latitude": -8.1124,
+      "longitude": 113.7219,
+      "nama_pengelola": "Ratna Kartika Sari, S.P.",
+      "total_blok_aktif": 7,
+      "bloks": []
+    }
+  ]
+}

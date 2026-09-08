@@ -26,8 +26,8 @@ class updateGatewayRequest extends FormRequest
         $gatewayId = $this->route('gateway');
         return [
             'nama_gateway' => 'sometimes|string|max:100',
-            'mac_address'  => ['sometimes', 'string', Rule::unique('gateways', 'mac_address')->ignore($gatewayId, 'id_gateway')],
-            'status'       => 'sometimes|string',
+            'mac_address' => ['sometimes', 'string', Rule::unique('gateways', 'mac_address')->ignore($gatewayId, 'id_gateway')],
+            'status' => 'sometimes|string',
         ];
     }
 }

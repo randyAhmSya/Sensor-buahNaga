@@ -3,9 +3,12 @@
 namespace App\Services\management_kebun;
 
 use App\Models\blok;
+use App\Traits\FileUploadTrait;
 
 class BlokService
 {
+    use FileUploadTrait;
+
     public function getAllBlokByKebun(string $kebunId)
     {
         return blok::with('kebun')->where('kebun_id', $kebunId)->get();
@@ -16,19 +19,28 @@ class BlokService
         return blok::with('kebun')->find($id);
     }
 
-    public function createBlok(array $data)
+    public function createBlok(array $data, $fileFoto = null)
     {
+        if ($fileFoto) {
+            $data['url_foto'] = $this->uploadFoto($fileFoto, 'foto_blok');
+        }
+
         return blok::create($data);
     }
 
-    public function updateBlok(blok $blok, array $data)
+    public function updateBlok(blok $blok, array $data, $fileFoto = null)
     {
+        if ($fileFoto) {
+            $data['url_foto'] = $this->uploadFoto($fileFoto, 'foto_blok');
+        }
+
         $blok->update($data);
         return $blok;
     }
 
     public function deleteBlok(blok $blok)
     {
+        $this->hapusFoto($blok->url_foto);
         $blok->delete();
     }
 }

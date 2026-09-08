@@ -23,7 +23,7 @@ class addGatewayRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'blok_id'        => 'required|uuid|exists:bloks,id_blok',
+            'blok_id' => 'required|uuid|exists:bloks,id_blok',
             'kode_perangkat' => 'required|string|unique:gateways,kode_perangkat',
             'status_koneksi' => 'required|string',
         ];
