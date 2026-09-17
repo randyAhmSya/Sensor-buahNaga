@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>AgroLiht - MQTT</title>
+        <link rel="stylesheet" href="style.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js" type="text/javascript"></script>
+        <script src="demo.js" type="text/javascript"></script>
+    </head>
+<body>
+    <div class="wrapper">
+        <h1 id="Main_heading"> <b>AgroLight - Buah Naga MQTT</b></h1><br><br>
+        <form id="connection-information-form">
+            <b>Hostname and Port Number</b><br>
+            <input id="host" name="host" type="text" placeholder="broker address">
+            <input id="port" name="port" type="text" value="1883"><br>
+
+            <b>Client ID</b><br>
+            <input id="client_id" name="client_id" type="text" placeholder="clien_1"><br>
+
+            <b>Username and Password</b><br>
+            <input id="username" name="username" type="text" placeholder="username"><br>
+            <input id="password" name="password" type="password" placeholder="password"><br>
+
+            <b>Subscription</b><br>
+            <input id="topic_1" name="topic_1" type="text" value=""><br><br>
+
+            <input type="button" onclick="startConnect()" value="Connect">
+            <input type="button" onclick="startDisconnect()" value="Disconnect"><br>
+
+            <b>Publish Message</b><br>
+            <input id="topic_2" name="topic_2" value="" type="text" placeholder="Topic">
+            <input id="Message" name="message" value="" type="text" placeholder="Message">
+            <input type="button" onclick="publishMessages()" value="Publish">
+        </form>
+        <div id="messages"></div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+    "require": {
+        "laravel/sanctum": "^4.3",
+        "doctrine/dbal": "^4.4"
+    }
+}

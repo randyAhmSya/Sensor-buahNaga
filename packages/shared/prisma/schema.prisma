@@ -1,3 +1,4 @@
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -5,4 +6,127 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id_admin   String   @id @default(uuid()) @map("id_admin")
+  name       String   @map("name")
+  email      String   @unique @map("email")
+  password   String   @map("password")
+  role       String   @map("role")
+  nomor      Int?     @map("nomor")
+  created_at DateTime @default(now()) @map("created_at")
+
+  @@map("admin")
+}
+
+model Garden {
+  id_garden  String   @id @default(uuid()) @map("id_garden")
+  name       String   @map("name")
+  location   String?  @map("location")
+  created_at DateTime @default(now()) @map("created_at")
+
+  bloks Blok[]
+
+  @@map("garden")
+}
+
+model Gateway {
+  id_gateway String   @id @default(uuid()) @map("id_gateway")
+  devicecode String   @map("devicecode")
+  status     String?  @map("status")
+  lastseen   DateTime? @map("lastseen")
+  created_at DateTime @default(now()) @map("created_at")
+
+  @@map("gateway")
+}
+
+model Blok {
+  id_blok    String   @id @default(uuid()) @map("id_blok")
+  name       String   @map("name")
+  areasize   Float?   @map("areasize")
+  garden_id  String?  @map("garden_id")
+  created_at DateTime @default(now()) @map("created_at")
+
+  garden         Garden?          @relation(fields: [garden_id], references: [id_garden])
+  harvestCycles  HarvestCycle[]
+
+  @@map("blok")
+}
+
+model HarvestCycle {
+  id_harvest          String   @id @default(uuid()) @map("id_harvest")
+  block_id            String?  @map("block_id")
+  startdate           DateTime? @map("startdate")
+  targetflowering     Int?     @map("targetflowering")
+  predictedharvestdate DateTime? @map("predictedharvestdate")
+  actualharvestdate   DateTime? @map("actualharvestdate")
+
+  block Blok? @relation(fields: [block_id], references: [id_blok])
+
+  @@map("harvestcycle")
+}
+
+model Node {
+  id_node      String   @id @default(uuid()) @map("id_node")
+  devicecode   String   @map("devicecode")
+  pairingcode  String?  @map("pairingcode")
+  devicetoken  String?  @map("devicetoken")
+  status       String?  @map("status")
+  lastseen     DateTime? @map("lastseen")
+  created_at   DateTime @default(now()) @map("created_at")
+
+  sensorReadings SensorReading[]
+  dimmingLogs    DimmingLog[]
+  lightSchedules LightSchedule[]
+  energyLogs     EnergyLog[]
+
+  @@map("node")
+}
+
+model SensorReading {
+  id_sensor  String   @id @default(uuid()) @map("id_sensor")
+  node_id    String?  @map("node_id")
+  luxvalue   Float?   @map("luxvalue")
+  recordedat DateTime @default(now()) @map("recordedat")
+
+  node Node? @relation(fields: [node_id], references: [id_node])
+
+  @@map("sensorreading")
+}
+
+model DimmingLog {
+  id_dimming     String   @id @default(uuid()) @map("id_dimming")
+  node_id        String?  @map("node_id")
+  intensityperce Float?   @map("intensityperce")
+  luxattime      Float?   @map("luxattime")
+  moonphase      String?  @map("moonphase")
+  loggedat       DateTime @default(now()) @map("loggedat")
+
+  node Node? @relation(fields: [node_id], references: [id_node])
+
+  @@map("dimminglog")
+}
+
+model LightSchedule {
+  id_light          String   @id @default(uuid()) @map("id_light")
+  node_id           String?  @map("node_id")
+  starttime         DateTime? @map("starttime")
+  endtime           DateTime? @map("endtime")
+  defaultintensity  Float?   @map("defaultintensity")
+
+  node Node? @relation(fields: [node_id], references: [id_node])
+
+  @@map("lightschedule")
+}
+
+model EnergyLog {
+  id_energy  String   @id @default(uuid()) @map("id_energy")
+  node_id    String?  @map("node_id")
+  watthour   Float?   @map("watthour")
+  recordedat DateTime @default(now()) @map("recordedat")
+
+  node Node? @relation(fields: [node_id], references: [id_node])
+
+  @@map("energylog")
 }

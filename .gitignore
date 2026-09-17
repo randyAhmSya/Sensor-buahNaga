@@ -3,6 +3,7 @@
 # ============================
 node_modules/
 **/node_modules/
+**/vendor/
 dist/
 build/
 *.log
@@ -20,6 +21,7 @@ apps/api/dist/
 apps/api/.env
 apps/api/prisma/*.db
 apps/api/prisma/migrations/dev/
+apps/vendor/
 
 # ============================
 # apps/web — React/Vite/Next (generic, sesuaikan stack yang dipilih)
@@ -72,4 +74,3 @@ packages/shared/generated/
 .vscode/
 .idea/
 *.swp
-.claude
