@@ -1,9 +1,10 @@
 import { useState, useCallback, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/store/useAuthStore'
-import { USER_ROLES } from '@/config/constants'
+import { useAuthStore, mapBackendUserToUserProfile } from '@/store/useAuthStore'
 import { sanitizeInput } from '@/utils/sanitize'
 import { loginSchema } from '../schemas/authSchemas'
+import { authService } from '@/services/authService'
+import { ApiError } from '@/services/api'
 
 export function useLoginForm() {
   const navigate = useNavigate()
@@ -16,6 +17,8 @@ export function useLoginForm() {
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [generalError, setGeneralError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target
@@ -33,6 +36,7 @@ export function useLoginForm() {
       ...prev,
       [name]: type === 'checkbox' ? checked : cleanValue,
     }))
+    setGeneralError(null)
     setErrors((prev) => {
       if (fieldError) {
         return { ...prev, [name]: fieldError }
@@ -45,9 +49,10 @@ export function useLoginForm() {
   }, [])
 
   const handleSubmit = useCallback(
-    (e: FormEvent) => {
+    async (e: FormEvent) => {
       e.preventDefault()
       setErrors({})
+      setGeneralError(null)
 
       const sanitizedData = {
         email: sanitizeInput(formData.email),
@@ -68,17 +73,34 @@ export function useLoginForm() {
         return
       }
 
-      login(
-        {
-          id: 'USR-BWI-001',
-          name: 'Pengelola Kebun',
+      setIsSubmitting(true)
+      try {
+        const res = await authService.login({
           email: result.data.email,
-          role: USER_ROLES.SUPER_ADMIN,
-          tenantId: 'TNT-AGR-0091',
-        },
-        'mock-jwt-token-agrolight-2026'
-      )
-      navigate('/admin/dashboard')
+          password: result.data.password,
+        })
+
+        if (res && res.data && res.data.user && res.data.token) {
+          const profile = mapBackendUserToUserProfile(res.data.user)
+          login(profile, res.data.token)
+          navigate('/admin/dashboard')
+        }
+      } catch (err: unknown) {
+        if (err instanceof ApiError) {
+          setGeneralError(err.pesan || 'Email atau password salah.')
+          if (err.errors) {
+            const fieldErrs: Record<string, string> = {}
+            for (const [key, msgs] of Object.entries(err.errors)) {
+              fieldErrs[key] = msgs[0]
+            }
+            setErrors(fieldErrs)
+          }
+        } else {
+          setGeneralError((err as Error)?.message || 'Terjadi kesalahan saat masuk.')
+        }
+      } finally {
+        setIsSubmitting(false)
+      }
     },
     [formData, login, navigate]
   )
@@ -86,6 +108,8 @@ export function useLoginForm() {
   return {
     formData,
     errors,
+    generalError,
+    isSubmitting,
     handleChange,
     handleSubmit,
   }

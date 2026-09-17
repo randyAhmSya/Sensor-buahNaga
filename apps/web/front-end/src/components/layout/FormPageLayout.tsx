@@ -70,6 +70,7 @@ export const FormPageLayout: React.FC<FormPageLayoutProps> = ({
               variant="primary"
               size="lg"
               disabled={isSubmitting}
+              isLoading={isSubmitting}
               className="w-full flex flex-row items-center justify-center gap-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-3.5 px-4 rounded-xl shadow-xs whitespace-nowrap"
             >
               <Save className="w-5 h-5 shrink-0" />

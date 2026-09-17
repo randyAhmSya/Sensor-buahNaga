@@ -1,4 +1,4 @@
-import React from 'react'
+import type { FC } from 'react'
 import { Search, ChevronDown } from 'lucide-react'
 
 interface SensorFilterBarProps {
@@ -8,16 +8,20 @@ interface SensorFilterBarProps {
   onFarmChange: (value: string) => void
   selectedStatus: string
   onStatusChange: (value: string) => void
+  farmOptions?: string[]
 }
 
-export const SensorFilterBar: React.FC<SensorFilterBarProps> = ({
+export const SensorFilterBar: FC<SensorFilterBarProps> = ({
   searchTerm,
   onSearchChange,
   selectedFarm,
   onFarmChange,
   selectedStatus,
   onStatusChange,
+  farmOptions = [],
 }) => {
+  const uniqueFarms = ['Semua Kebun', ...Array.from(new Set(farmOptions))]
+
   return (
     <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
       {/* Input Pencarian */}
@@ -40,10 +44,11 @@ export const SensorFilterBar: React.FC<SensorFilterBarProps> = ({
             onChange={(e) => onFarmChange(e.target.value)}
             className="appearance-none pl-3.5 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:border-slate-300 focus:outline-none focus:border-emerald-600 cursor-pointer shadow-2xs"
           >
-            <option value="Semua Kebun">Semua Kebun</option>
-            <option value="Kebun Raya Bogor">Kebun Raya Bogor</option>
-            <option value="Lembang Farm House">Lembang Farm House</option>
-            <option value="Indoor Farm BSD">Indoor Farm BSD</option>
+            {uniqueFarms.map((farm) => (
+              <option key={farm} value={farm}>
+                {farm}
+              </option>
+            ))}
           </select>
           <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
@@ -55,8 +60,8 @@ export const SensorFilterBar: React.FC<SensorFilterBarProps> = ({
             className="appearance-none pl-3.5 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:border-slate-300 focus:outline-none focus:border-emerald-600 cursor-pointer shadow-2xs"
           >
             <option value="Semua Status">Semua Status</option>
-            <option value="Online">Online</option>
-            <option value="Offline">Offline</option>
+            <option value="Aktif">Aktif</option>
+            <option value="Nonaktif">Nonaktif</option>
           </select>
           <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>

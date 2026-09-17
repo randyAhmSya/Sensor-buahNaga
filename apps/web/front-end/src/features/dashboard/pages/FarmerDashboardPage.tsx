@@ -1,16 +1,32 @@
 import React from 'react';
-import { Download, AlertCircle, Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Download, AlertCircle, Calendar, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { MOCK_DIMMING_CHART } from '@/data/mockSchedules';
 import { DimmingBarChart } from '@/features/schedules/components/DimmingBarChart';
 import { UpcomingHarvestWidget } from '../components/UpcomingHarvestWidget';
 import { ActiveBlocksOverview } from '../components/ActiveBlocksOverview';
-
-// Komponen metrik dan tabel telemetri yang sudah ada sebelumnya
 import { DashboardMetricCards } from '../components/DashboardMetricCards';
 import { RecentActivityTable } from '../components/RecentActivityTable';
+import { useDashboardData } from '../hooks/useDashboardData';
 
 export const FarmerDashboardPage: React.FC = () => {
+  const navigate = useNavigate();
+  const {
+    metricCards,
+    offlineNodes,
+    recentActivities,
+    activeBlocksList,
+    cycles,
+    isLoading,
+  } = useDashboardData();
+
+  const todayText = new Date().toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-8">
       {/* Header Dashboard & Export */}
@@ -19,7 +35,7 @@ export const FarmerDashboardPage: React.FC = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Dashboard Utama</h1>
           <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mt-1">
             <Calendar className="w-3.5 h-3.5" />
-            <span>Senin, 24 Oktober 2026 • Siklus Induksi Pembungaan Aktif</span>
+            <span>{todayText}</span>
           </div>
         </div>
 
@@ -37,18 +53,21 @@ export const FarmerDashboardPage: React.FC = () => {
 
       {/* Alert Status Operasional - Minimalist Outline */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-rose-400 bg-white text-rose-700 text-xs font-semibold shadow-2xs">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-          <span>Perlu Tindakan: 3 Node Sensor Offline di Kebun Raya Bogor</span>
-        </div>
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-emerald-600 bg-white text-emerald-800 text-xs font-semibold shadow-2xs">
-          <Calendar className="w-4 h-4 shrink-0 text-emerald-700" />
-          <span>Estimasi Panen Terdekat: Blok A (24 Nov 2026)</span>
-        </div>
+        {offlineNodes > 0 ? (
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-rose-400 bg-white text-rose-700 text-xs font-semibold shadow-2xs">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+            <span>Perlu Tindakan: {offlineNodes} Node Sensor Offline</span>
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-emerald-600 bg-white text-emerald-800 text-xs font-semibold shadow-2xs">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-700" />
+            <span>Semua Sistem Sensor Berjalan Optimal</span>
+          </div>
+        )}
       </div>
 
       {/* 4 Kartu Metrik Utama */}
-      <DashboardMetricCards />
+      <DashboardMetricCards cards={metricCards} isLoading={isLoading} />
 
       {/* Baris Tengah: Grafik & Progres Panen (7 Kolom vs 5 Kolom) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
@@ -61,27 +80,30 @@ export const FarmerDashboardPage: React.FC = () => {
               <p className="text-xs text-slate-500">Rata-rata intensitas pencahayaan per jam malam tadi</p>
             </div>
             <span className="text-xs font-bold text-emerald-700 bg-white border border-emerald-600 px-2.5 py-0.5 rounded-full">
-              Hemat Daya ~28%
+              Auto-Dimming
             </span>
           </div>
           <div className="pt-2">
-            <DimmingBarChart data={MOCK_DIMMING_CHART} />
+            <DimmingBarChart data={[]} />
           </div>
         </div>
 
         <div className="lg:col-span-5 h-full">
-          <UpcomingHarvestWidget />
+          <UpcomingHarvestWidget initialCycles={cycles} />
         </div>
       </div>
 
       {/* Baris Bawah: Operasional Blok Lahan & Telemetri Node (Konsisten 5 Kolom vs 7 Kolom) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         <div className="lg:col-span-5 h-full">
-          <ActiveBlocksOverview />
+          <ActiveBlocksOverview items={activeBlocksList} isLoading={isLoading} />
         </div>
 
         <div className="lg:col-span-7 h-full">
-          <RecentActivityTable />
+          <RecentActivityTable
+            activities={recentActivities}
+            onViewAll={() => navigate('/admin/sensors')}
+          />
         </div>
       </div>
     </div>

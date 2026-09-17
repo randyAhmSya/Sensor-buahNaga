@@ -1,16 +1,39 @@
-import React from 'react'
+import { useState, useRef, useEffect, type FC } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Sun, Thermometer, Radio } from 'lucide-react'
-import type { SensorNodeItem } from '@/data/mockSensors'
+import { Sun, Thermometer, Radio, MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import type { SensorNodeItem } from '@/types/sensor.types'
 import { SensorSparkline } from './SensorSparkline'
 
 interface SensorNodeCardProps {
   sensor: SensorNodeItem
+  onEdit?: (sensor: SensorNodeItem) => void
+  onDelete?: (sensor: SensorNodeItem) => void
 }
 
-export const SensorNodeCard: React.FC<SensorNodeCardProps> = ({ sensor }) => {
+export const SensorNodeCard: FC<SensorNodeCardProps> = ({
+  sensor,
+  onEdit,
+  onDelete,
+}) => {
   const navigate = useNavigate()
-  const isOnline = sensor.status === 'Online'
+  const isOnline =
+    sensor.status?.toLowerCase() === 'aktif' ||
+    sensor.status?.toLowerCase() === 'online'
+  const displayStatus = isOnline ? 'Aktif' : 'Nonaktif'
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   return (
     <div
@@ -30,21 +53,85 @@ export const SensorNodeCard: React.FC<SensorNodeCardProps> = ({ sensor }) => {
                 {sensor.nodeCode}
               </h3>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              {sensor.farmName} • <span className="font-semibold text-slate-700">{sensor.blockName}</span>
+            <p className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-1">
+              <span>{sensor.farmName}</span>
+              <span>•</span>
+              <span className="font-semibold text-slate-700">{sensor.blockName}</span>
+              {sensor.gatewayCode && (
+                <span className="inline-flex items-center gap-1 ml-1 text-slate-400">
+                  <span>• GW: <strong className="text-slate-600">{sensor.gatewayCode}</strong></span>
+                  {sensor.gatewayStatus && (
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                        sensor.gatewayStatus.toLowerCase() === 'terhubung'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}
+                    >
+                      {sensor.gatewayStatus.toLowerCase() === 'terhubung' ? 'Terhubung' : 'Belum Terhubung'}
+                    </span>
+                  )}
+                </span>
+              )}
             </p>
           </div>
 
-          <span
-            className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border flex items-center gap-1.5 shadow-2xs ${
-              isOnline
-                ? 'bg-white border-emerald-600 text-emerald-700'
-                : 'bg-white border-rose-300 text-rose-600'
-            }`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-600' : 'bg-rose-500'}`} />
-            {sensor.status}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border flex items-center gap-1.5 shadow-2xs ${
+                isOnline
+                  ? 'bg-white border-emerald-600 text-emerald-700'
+                  : 'bg-white border-rose-300 text-rose-600'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-600' : 'bg-rose-500'}`} />
+              {displayStatus}
+            </span>
+
+            {/* Menu Aksi Titik Tiga */}
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsMenuOpen((prev) => !prev)
+                }}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                aria-label="Opsi sensor"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
+
+              {isMenuOpen && (
+                <div className="absolute right-0 mt-1 w-32 bg-white rounded-xl border border-slate-200 shadow-lg py-1 z-30 animate-in fade-in duration-100">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsMenuOpen(false)
+                      onEdit?.(sensor)
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-emerald-700 flex items-center gap-2 cursor-pointer"
+                  >
+                    <Pencil className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsMenuOpen(false)
+                      onDelete?.(sensor)
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Hapus</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-4">

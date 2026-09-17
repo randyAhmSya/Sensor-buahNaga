@@ -1,5 +1,5 @@
-import React from 'react'
-import { Maximize2, Radio, RadioTower } from 'lucide-react'
+import React, { useState } from 'react'
+import { Maximize2, Radio, RadioTower, Layers } from 'lucide-react'
 import type { BlockItem } from '@/types/block.types'
 
 interface BlockCardProps {
@@ -8,7 +8,9 @@ interface BlockCardProps {
 }
 
 export const BlockCard: React.FC<BlockCardProps> = ({ block, onClick }) => {
+  const [imgError, setImgError] = useState(false)
   const isOnline = block.status === 'Online'
+  const showFallback = !block.imageUrl || imgError
 
   return (
     <div
@@ -19,12 +21,22 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, onClick }) => {
           : 'bg-slate-50/70 border-slate-200 hover:border-slate-300 opacity-90'
       }`}
     >
-      <div className="w-24 h-24 rounded-lg overflow-hidden shrink-0 border border-slate-100">
-        <img
-          src={block.imageUrl}
-          alt={block.name}
-          className={`w-full h-full object-cover ${!isOnline ? 'grayscale-[40%]' : ''}`}
-        />
+      <div className="w-24 h-24 rounded-lg overflow-hidden shrink-0 border border-slate-100 bg-gradient-to-br from-emerald-50 via-teal-50 to-slate-100 flex items-center justify-center">
+        {showFallback ? (
+          <div className="w-full h-full flex flex-col items-center justify-center text-emerald-700 select-none p-2 text-center">
+            <div className="w-8 h-8 rounded-lg bg-white/80 border border-emerald-200 shadow-2xs flex items-center justify-center mb-1">
+              <Layers className="w-4 h-4 text-emerald-600" />
+            </div>
+            <span className="text-[10px] font-bold text-slate-700 line-clamp-1">{block.name}</span>
+          </div>
+        ) : (
+          <img
+            src={block.imageUrl}
+            alt={block.name}
+            onError={() => setImgError(true)}
+            className={`w-full h-full object-cover ${!isOnline ? 'grayscale-[40%]' : ''}`}
+          />
+        )}
       </div>
 
       <div className="flex-1 flex flex-col justify-between min-h-[96px] py-0.5">

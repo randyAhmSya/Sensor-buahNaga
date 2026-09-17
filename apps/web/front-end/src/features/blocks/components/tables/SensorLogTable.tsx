@@ -89,22 +89,30 @@ export const SensorLogTable: React.FC<SensorLogTableProps> = ({ logs, onRangeFil
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm text-slate-800">
-            {logs.map((log) => (
-              <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="py-3 px-4 font-medium text-slate-900">{log.timestamp}</td>
-                <td className="py-3 px-4 font-bold text-emerald-800">{log.lux}</td>
-                <td className="py-3 px-4 text-slate-700">{log.temperature}</td>
-                <td className="py-3 px-4 text-slate-700">{log.humidity}</td>
-                <td className="py-3 px-4 text-slate-600">{log.battery}</td>
-                <td className="py-3 px-4 text-slate-600">{log.signalQuality}</td>
-                <td className="py-3 px-4 text-right">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    {log.gatewayStatus}
-                  </span>
+            {logs.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="py-8 text-center text-xs text-slate-400 font-medium">
+                  Belum ada log telemetri sensor tercatat untuk blok ini.
                 </td>
               </tr>
-            ))}
+            ) : (
+              logs.map((log) => (
+                <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3 px-4 font-medium text-slate-900">{log.timestamp}</td>
+                  <td className="py-3 px-4 font-bold text-emerald-800">{log.lux}</td>
+                  <td className="py-3 px-4 text-slate-700">{log.temperature}</td>
+                  <td className="py-3 px-4 text-slate-700">{log.humidity}</td>
+                  <td className="py-3 px-4 text-slate-600">{log.battery}</td>
+                  <td className="py-3 px-4 text-slate-600">{log.signalQuality}</td>
+                  <td className="py-3 px-4 text-right">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      {log.gatewayStatus}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

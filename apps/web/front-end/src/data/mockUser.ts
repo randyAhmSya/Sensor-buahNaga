@@ -24,21 +24,20 @@ export interface TenantSubscriptionData extends TenantInfo {
 }
 
 export const MOCK_USER: UserProfile = {
-  id: 'usr-001',
-  fullName: 'Budi Santoso',
-  email: 'budi.santoso@cempakagarden.com',
-  phone: '+62 812 3456 7890',
-  avatarUrl:
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuCIHpTAaMsQ-T1p3mAAVTHR_BMdWpTIZ4ur_Wh6kHx5BLHw2rp-s8dv0fVj5hm5veikdYULA09iIrYSmFiAxwO08yEph43TiJzodQd-VMKAXMziddvcDqZCVA4tzfgF5RBWVTM2qmkpYeld4v7xjWOUv_0GbgVBV5SYNfV0LDlpJBuSNCZKJi4zSfrgvrBJ_ywXJNftMPCoZ0gd2DTCh-NXMd4dqan2sV2o_tfyEQWEK0LN2ixv_z3PDw',
-  role: 'Farmer Admin',
+  id: '',
+  fullName: '',
+  email: '',
+  phone: '',
+  avatarUrl: '',
+  role: '',
 }
 
 export const MOCK_TENANT: TenantInfo = {
-  tenantId: 'tnt-001',
-  tenantName: 'Cempaka Garden',
+  tenantId: '',
+  tenantName: 'AgroLight Smart Farm',
   planName: 'Enterprise Plan',
-  remainingDays: 45,
-  totalDays: 60,
+  remainingDays: 0,
+  totalDays: 30,
   isVerified: true,
 }
 

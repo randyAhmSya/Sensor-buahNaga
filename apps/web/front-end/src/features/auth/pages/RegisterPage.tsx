@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { User, Mail, Phone, Lock, ArrowRight } from 'lucide-react'
+import { User, Mail, Phone, Lock, ArrowRight, Building2, AlertCircle } from 'lucide-react'
 import { BrandLogo } from '@/components/common/BrandLogo'
 import { Button } from '@/components/ui/Button'
 import { InputField } from '@/components/form/InputField'
@@ -8,7 +8,7 @@ import { AuthSideBanner } from '../components/AuthSideBanner'
 import { useRegisterForm } from '../hooks/useRegisterForm'
 
 export const RegisterPage: React.FC = () => {
-  const { formData, errors, handleChange, handleSubmit } = useRegisterForm()
+  const { formData, errors, generalError, isSubmitting, handleChange, handleSubmit } = useRegisterForm()
 
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-slate-50 font-sans">
@@ -33,7 +33,25 @@ export const RegisterPage: React.FC = () => {
             <p className="text-sm text-slate-500 mt-1">Coba gratis 14 hari pertama, tanpa kartu kredit.</p>
           </div>
 
+          {generalError && (
+            <div className="mb-4 p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-medium flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>{generalError}</span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
+            <InputField
+              label="Nama Kebun / Usaha Tani"
+              name="tenantName"
+              placeholder="Contoh: Kebun Naga Makmur"
+              value={formData.tenantName}
+              onChange={handleChange}
+              leftIcon={<Building2 className="w-5 h-5 text-slate-400" />}
+              error={errors.tenantName}
+              required
+            />
+
             <InputField
               label="Nama Lengkap"
               name="fullName"
@@ -125,7 +143,8 @@ export const RegisterPage: React.FC = () => {
               type="submit"
               variant="primary"
               size="lg"
-              className="w-full justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 mt-2 shadow-sm rounded-xl active:scale-[0.98] transition-all duration-150"
+              isLoading={isSubmitting}
+              className="w-full justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 mt-2 shadow-sm rounded-xl active:scale-[0.98] transition-all duration-150 cursor-pointer"
               rightIcon={<ArrowRight className="w-4 h-4" />}
             >
               Buat Akun
@@ -143,3 +162,5 @@ export const RegisterPage: React.FC = () => {
     </div>
   )
 }
+
+export default RegisterPage

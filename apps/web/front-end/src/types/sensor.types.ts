@@ -1,4 +1,4 @@
-export type SensorStatus = 'Online' | 'Offline'
+export type SensorStatus = 'Aktif' | 'Nonaktif' | 'Online' | 'Offline' | string
 
 export interface SensorNodeItem {
   id: string
@@ -7,6 +7,10 @@ export interface SensorNodeItem {
   farmName: string
   blockId: string
   blockName: string
+  gatewayId?: string | null
+  gatewayCode?: string | null
+  gatewayStatus?: string | null
+  tipeSensor?: string
   status: SensorStatus
   luxLevel: number
   temperature: number

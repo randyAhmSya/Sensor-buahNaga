@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle, X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import type { QRCodeItem } from '@/data/mockQRCodes';
+import type { QRCodeItem } from '@/types/qr.types';
 
 interface DeleteQRModalProps {
   isOpen: boolean;

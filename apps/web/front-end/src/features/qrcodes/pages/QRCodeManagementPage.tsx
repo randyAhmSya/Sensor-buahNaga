@@ -1,16 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Download } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Plus, Download, ScanLine } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import type { QRCodeItem } from '@/data/mockQRCodes';
-import { qrCodeService } from '@/services/api';
+import { Toast, type ToastType } from '@/components/feedback/Toast';
+import type { QRCodeItem } from '@/types/qr.types';
+import type { FarmItem } from '@/types/farm.types';
+import { qrCodeService } from '@/services/qrService';
+import { farmService } from '@/services/farmService';
 import { QRCodeFilterBar } from '../components/QRCodeFilterBar';
 import { QRCodeTable } from '../components/QRCodeTable';
 import { QRCodeDetailModal } from '../components/QRCodeDetailModal';
 import { GenerateQRModal } from '../components/GenerateQRModal';
+import { ScanQRModal } from '../components/ScanQRModal';
 import { DeleteQRModal } from '../components/DeleteQRModal';
+
+interface PageToast {
+  type: ToastType;
+  title: string;
+  message?: string;
+}
 
 export const QRCodeManagementPage: React.FC = () => {
   const [items, setItems] = useState<QRCodeItem[]>([]);
+  const [farms, setFarms] = useState<FarmItem[]>([]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFarm, setSelectedFarm] = useState('Semua Kebun');
@@ -21,18 +32,38 @@ export const QRCodeManagementPage: React.FC = () => {
   const [selectedQRToDelete, setSelectedQRToDelete] = useState<QRCodeItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+  const [toast, setToast] = useState<PageToast | null>(null);
+
+  const fetchQRCodes = useCallback(async () => {
+    try {
+      const data = await qrCodeService.getAll();
+      setItems(data);
+    } catch {
+      setItems([]);
+    }
+  }, []);
+
+  const fetchFarms = useCallback(async () => {
+    try {
+      const data = await farmService.getAll();
+      setFarms(data);
+    } catch {
+      setFarms([]);
+    }
+  }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    qrCodeService.getAll().then((data) => {
-      if (isMounted) {
-        setItems(data);
-      }
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    fetchQRCodes();
+    fetchFarms();
+  }, [fetchQRCodes, fetchFarms]);
+
+  const farmOptions = useMemo(() => {
+    return [
+      { label: 'Semua Kebun', value: 'Semua Kebun' },
+      ...farms.map((farm) => ({ label: farm.name, value: farm.name })),
+    ];
+  }, [farms]);
 
   const filteredItems = items.filter((item) => {
     const matchSearch =
@@ -45,40 +76,90 @@ export const QRCodeManagementPage: React.FC = () => {
     return matchSearch && matchFarm && matchStatus && matchPairing;
   });
 
-  const handleToggleStatus = (id: string) => {
+  const handleToggleStatus = async (id: string) => {
+    const currentItem = items.find((item) => item.id === id);
+    if (!currentItem) return;
+    const newStatusBool = currentItem.status !== 'Aktif';
+
+    // Optimistic UI update
     setItems((prev) =>
       prev.map((item) =>
         item.id === id
-          ? { ...item, status: item.status === 'Aktif' ? 'Nonaktif' : 'Aktif' }
+          ? { ...item, status: newStatusBool ? 'Aktif' : 'Nonaktif' }
           : item
       )
     );
+
+    try {
+      await qrCodeService.update(id, { status_qr: newStatusBool ? 1 : 0 });
+      setToast({
+        type: 'success',
+        title: 'Status Diperbarui',
+        message: `Status QR ${currentItem.codeText} berhasil diubah menjadi ${newStatusBool ? 'Aktif' : 'Nonaktif'}.`,
+      });
+    } catch {
+      fetchQRCodes();
+      setToast({
+        type: 'error',
+        title: 'Gagal Mengubah Status',
+        message: 'Terjadi kendala saat mengubah status QR code.',
+      });
+    }
   };
 
   const handleConfirmDelete = async (id: string) => {
     setIsDeleting(true);
-    await qrCodeService.delete(id);
-    setItems((prev) => prev.filter((item) => item.id !== id));
-    setIsDeleting(false);
-    setSelectedQRToDelete(null);
+    try {
+      await qrCodeService.delete(id);
+      setToast({
+        type: 'success',
+        title: 'QR Code Dihapus',
+        message: 'Kode QR berhasil dihapus dari sistem.',
+      });
+      await fetchQRCodes();
+    } catch {
+      setToast({
+        type: 'error',
+        title: 'Gagal Menghapus',
+        message: 'Terjadi kendala saat menghapus kode QR.',
+      });
+    } finally {
+      setIsDeleting(false);
+      setSelectedQRToDelete(null);
+    }
   };
 
-  const handleGenerateNew = (data: { farmName: string; blockName: string; codeText: string }) => {
-    const newItem: QRCodeItem = {
-      id: `qr-${Date.now()}`,
-      codeText: data.codeText,
-      qrImageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${data.codeText}`,
-      farmName: data.farmName,
-      blockName: data.blockName,
-      status: 'Aktif',
-      pairingStatus: 'Belum Terhubung',
-      createdAt: 'Hari Ini',
-    };
-    setItems((prev) => [newItem, ...prev]);
+  const handleGenerateSuccess = async (data: {
+    farmName: string;
+    blockName: string;
+    codeText: string;
+    newItem?: QRCodeItem;
+  }) => {
+    if (data.newItem) {
+      setItems((prev) => [data.newItem!, ...prev]);
+    }
+    await fetchQRCodes();
+    setToast({
+      type: 'success',
+      title: 'QR Code Berhasil Digenerate',
+      message: `Kode ${data.codeText} berhasil dibuat untuk ${data.blockName} (${data.farmName}).`,
+    });
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6 relative">
+      {/* Toast Feedback */}
+      {toast && (
+        <div className="fixed top-20 right-6 z-50 animate-in slide-in-from-top-2 fade-in duration-200">
+          <Toast
+            type={toast.type}
+            title={toast.title}
+            message={toast.message}
+            onClose={() => setToast(null)}
+          />
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Kelola QR Code</h1>
@@ -92,11 +173,27 @@ export const QRCodeManagementPage: React.FC = () => {
             type="button"
             variant="outline"
             size="md"
-            onClick={() => alert('Mengunduh seluruh berkas QR Code...')}
+            onClick={() => {
+              setToast({
+                type: 'info',
+                title: 'Unduh Semua QR Code',
+                message: 'Fitur download batch QR Code sedang diproses...',
+              });
+            }}
             className="w-full sm:w-auto flex flex-row items-center justify-center gap-2 border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold"
           >
             <Download className="w-4 h-4 shrink-0" />
             <span>Download Semua QR</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="md"
+            onClick={() => setIsScanModalOpen(true)}
+            className="w-full sm:w-auto flex flex-row items-center justify-center gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 font-semibold"
+          >
+            <ScanLine className="w-4 h-4 shrink-0" />
+            <span>Scan QR Code</span>
           </Button>
           <Button
             type="button"
@@ -120,6 +217,7 @@ export const QRCodeManagementPage: React.FC = () => {
         onStatusChange={setSelectedStatus}
         selectedPairing={selectedPairing}
         onPairingChange={setSelectedPairing}
+        farmOptions={farmOptions}
       />
 
       <QRCodeTable
@@ -138,7 +236,12 @@ export const QRCodeManagementPage: React.FC = () => {
       <GenerateQRModal
         isOpen={isGenerateModalOpen}
         onClose={() => setIsGenerateModalOpen(false)}
-        onGenerate={handleGenerateNew}
+        onSuccess={handleGenerateSuccess}
+      />
+
+      <ScanQRModal
+        isOpen={isScanModalOpen}
+        onClose={() => setIsScanModalOpen(false)}
       />
 
       <DeleteQRModal
@@ -153,3 +256,4 @@ export const QRCodeManagementPage: React.FC = () => {
 };
 
 export default QRCodeManagementPage;
+

@@ -10,25 +10,43 @@ import type { BlockFormInput } from '../schemas/block.schema'
 
 export const EditBlockPage: React.FC = () => {
   const { farmId, blockId } = useParams<{ farmId: string; blockId: string }>()
-  const effectiveFarmId = farmId || 'farm-1'
-  const effectiveBlockId = blockId || 'blk-1'
+  const effectiveFarmId = farmId || ''
+  const effectiveBlockId = blockId || ''
 
   const [initialData, setInitialData] = useState<BlockFormInput | null>(null)
   const [farmName, setFarmName] = useState<string>('Kebun')
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    if (!effectiveFarmId || !effectiveBlockId) {
+      setIsLoading(false)
+      return
+    }
     blockService.getById(effectiveFarmId, effectiveBlockId).then((block) => {
-      setFarmName(block.farmName)
-      setInitialData({
-        name: block.name,
-        nodeSensor: block.deviceId,
-        description: 'Fase pertumbuhan awal buah naga dengan jadwal penyinaran malam hari.',
-        imageUrl: block.bannerUrl,
-        status: block.deviceStatus,
-        area: block.area.replace(/[^\d.]/g, ''),
-        harvestEstimate: block.harvestCycle?.harvestEstimate || '',
-      })
+      if (block) {
+        setFarmName(block.farmName)
+        const blockAny = block as unknown as Record<string, unknown>
+        const rawEstimate = blockAny.estimasi_panen || blockAny.harvest_date || blockAny.estimasiPanen || block.harvestCycle?.harvestEstimate || ''
+        const cleanEstimate =
+          typeof rawEstimate === 'string' &&
+          rawEstimate.trim() &&
+          rawEstimate !== '--' &&
+          rawEstimate !== block.description
+            ? rawEstimate.trim()
+            : ''
+
+        setInitialData({
+          name: block.name || '',
+          nodeSensor: block.nodeSensorId || (block.deviceId !== 'Belum Terpasang' ? block.deviceId : ''),
+          description: block.description || '',
+          imageUrl: block.bannerUrl || '',
+          status: block.deviceStatus,
+          area: block.area ? block.area.replace(/[^\d.]/g, '') : '',
+          harvestEstimate: cleanEstimate,
+        })
+      }
+      setIsLoading(false)
+    }).catch(() => {
       setIsLoading(false)
     })
   }, [effectiveFarmId, effectiveBlockId])
@@ -111,6 +129,7 @@ const EditBlockPageContent: React.FC<EditBlockPageContentProps> = ({
         <BlockInfoSection
           formData={formData}
           errors={errors}
+          farmId={farmId}
           farmName={farmName}
           isEditMode={true}
           onChange={updateField}

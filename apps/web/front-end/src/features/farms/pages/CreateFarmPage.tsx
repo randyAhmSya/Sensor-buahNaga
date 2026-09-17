@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
-import type { FarmItem } from '@/types/farm'
+import type { FarmItem } from '@/types/farm.types'
 import { FormPageLayout } from '@/components/layout/FormPageLayout'
 import { useCreateFarmPage } from '../hooks/useCreateFarmPage'
 import { CreateFarmInfoSection } from '../components/CreateFarmInfoSection'
@@ -16,6 +16,7 @@ export const CreateFarmPage: React.FC<CreateFarmPageProps> = ({ onAddFarm }) => 
     formData,
     errors,
     imagePreview,
+    isSubmitting,
     handleTextChange,
     setStatus,
     handleImageFile,
@@ -45,6 +46,7 @@ export const CreateFarmPage: React.FC<CreateFarmPageProps> = ({ onAddFarm }) => 
       backLabel="Kembali ke Daftar Kebun"
       onSubmit={handleSubmit}
       submitLabel="Simpan Kebun"
+      isSubmitting={isSubmitting}
       leftContent={
         <CreateFarmInfoSection
           formData={formData}

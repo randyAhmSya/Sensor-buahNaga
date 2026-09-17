@@ -6,23 +6,40 @@ interface HealthBadgeProps {
 }
 
 export function HealthBadge({ status }: HealthBadgeProps) {
-  switch (status) {
-    case 'ONLINE':
+  const normalized = (status || '').toLowerCase()
+
+  switch (normalized) {
+    case 'online':
+    case 'aktif':
       return (
         <Badge variant="success" dot>
-          Normal (Online)
+          Aktif (Online)
         </Badge>
       )
-    case 'DEGRADED':
+    case 'terhubung':
+      return (
+        <Badge variant="success" dot>
+          Terhubung
+        </Badge>
+      )
+    case 'degraded':
       return (
         <Badge variant="warning" dot>
           Degradasi Sinyal
         </Badge>
       )
-    case 'OFFLINE':
+    case 'belum_terhubung':
+    case 'belum terhubung':
+      return (
+        <Badge variant="warning" dot>
+          Belum Terhubung
+        </Badge>
+      )
+    case 'offline':
+    case 'nonaktif':
       return (
         <Badge variant="danger" dot>
-          Terputus (Offline)
+          Nonaktif (Offline)
         </Badge>
       )
     default:

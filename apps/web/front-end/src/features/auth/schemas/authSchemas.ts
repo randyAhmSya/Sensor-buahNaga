@@ -1,10 +1,13 @@
 import { z } from 'zod'
+import { antiScriptRefine } from '@/utils/sanitize'
 
 export const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'Email wajib diisi')
-    .email('Format email tidak valid'),
+  email: antiScriptRefine(
+    z
+      .string()
+      .min(1, 'Email wajib diisi')
+      .email('Format email tidak valid')
+  ),
   password: z
     .string()
     .min(1, 'Password wajib diisi')
@@ -16,18 +19,28 @@ export type LoginFormData = z.infer<typeof loginSchema>
 
 export const registerSchema = z
   .object({
-    fullName: z
-      .string()
-      .min(3, 'Nama lengkap minimal 3 karakter')
-      .max(60, 'Nama lengkap maksimal 60 karakter')
-      .regex(
-        /^[a-zA-Z\s.,'-]+$/,
-        'Nama hanya boleh mengandung huruf, spasi, dan tanda baca nama standar'
-      ),
-    email: z
-      .string()
-      .min(1, 'Email wajib diisi')
-      .email('Format email tidak valid'),
+    tenantName: antiScriptRefine(
+      z
+        .string()
+        .min(2, 'Nama kebun/usaha minimal 2 karakter')
+        .max(100, 'Nama kebun/usaha maksimal 100 karakter')
+    ),
+    fullName: antiScriptRefine(
+      z
+        .string()
+        .min(3, 'Nama lengkap minimal 3 karakter')
+        .max(60, 'Nama lengkap maksimal 60 karakter')
+        .regex(
+          /^[a-zA-Z\s.,'-]+$/,
+          'Nama hanya boleh mengandung huruf, spasi, dan tanda baca nama standar'
+        )
+    ),
+    email: antiScriptRefine(
+      z
+        .string()
+        .min(1, 'Email wajib diisi')
+        .email('Format email tidak valid')
+    ),
     phone: z
       .string()
       .regex(

@@ -2,35 +2,17 @@ import React from 'react';
 import { Lightbulb, Layers, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import type { ActiveBlockOverviewItem } from '../hooks/useDashboardData';
 
-const ACTIVE_BLOCK_ITEMS = [
-  {
-    id: 'blk-a',
-    name: 'Blok A (Utara)',
-    nodeCount: 12,
-    lightIntensity: 85,
-    schedule: '18:00 - 05:00',
-    status: 'Menyala',
-  },
-  {
-    id: 'blk-b',
-    name: 'Blok B (Timur)',
-    nodeCount: 8,
-    lightIntensity: 70,
-    schedule: '18:30 - 04:30',
-    status: 'Menyala',
-  },
-  {
-    id: 'blk-c',
-    name: 'Blok C (Selatan)',
-    nodeCount: 14,
-    lightIntensity: 0,
-    schedule: 'Mati (Istirahat)',
-    status: 'Mati',
-  },
-];
+interface ActiveBlocksOverviewProps {
+  items?: ActiveBlockOverviewItem[];
+  isLoading?: boolean;
+}
 
-export const ActiveBlocksOverview: React.FC = () => {
+export const ActiveBlocksOverview: React.FC<ActiveBlocksOverviewProps> = ({
+  items = [],
+  isLoading = false,
+}) => {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 md:p-6 flex flex-col justify-between h-full">
       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -53,29 +35,40 @@ export const ActiveBlocksOverview: React.FC = () => {
       </div>
 
       <div className="divide-y divide-slate-100 flex-1 flex flex-col justify-around py-1">
-        {ACTIVE_BLOCK_ITEMS.map((item) => (
-          <div key={item.id} className="py-3 flex items-center justify-between gap-3">
-            <div>
-              <h4 className="text-xs font-bold text-slate-900">{item.name}</h4>
-              <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5 font-medium">
-                <span>{item.nodeCount} Node Sensor</span>
-                <span>•</span>
-                <span>{item.schedule}</span>
+        {isLoading ? (
+          <div className="py-6 space-y-3 animate-pulse">
+            <div className="h-4 bg-slate-100 rounded-md w-3/4" />
+            <div className="h-4 bg-slate-100 rounded-md w-1/2" />
+          </div>
+        ) : items.length === 0 ? (
+          <div className="py-8 text-center text-slate-400 text-xs">
+            Belum ada operasional blok lahan aktif
+          </div>
+        ) : (
+          items.slice(0, 4).map((item) => (
+            <div key={item.id} className="py-3 flex items-center justify-between gap-3">
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">{item.name}</h4>
+                <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5 font-medium">
+                  <span>{item.nodeCount} Node Sensor</span>
+                  <span>•</span>
+                  <span>{item.schedule}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-end">
+                {item.status === 'Menyala' ? (
+                  <StatusBadge
+                    status={`${item.lightIntensity}%`}
+                    variant="active"
+                    icon={<Lightbulb className="w-3.5 h-3.5 shrink-0" />}
+                  />
+                ) : (
+                  <StatusBadge status="Standby" variant="standby" />
+                )}
               </div>
             </div>
-            <div className="flex items-center justify-end">
-              {item.status === 'Menyala' ? (
-                <StatusBadge
-                  status={`${item.lightIntensity}%`}
-                  variant="active"
-                  icon={<Lightbulb className="w-3.5 h-3.5 shrink-0" />}
-                />
-              ) : (
-                <StatusBadge status="Standby" variant="standby" />
-              )}
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

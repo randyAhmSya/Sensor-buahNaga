@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { 
   LayoutDashboard, 
   Sprout, 
@@ -7,11 +7,12 @@ import {
   SunDim, 
   Tractor, 
   QrCode, 
-  X 
+  X,
+  LogOut
 } from 'lucide-react'
 import { BrandLogo } from '@/components/common/BrandLogo'
-
-import { getUserProfile } from '@/data/mockUser'
+import { useAuthStore } from '@/store/useAuthStore'
+import { authService } from '@/services/authService'
 
 const SIDEBAR_LINKS = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
@@ -31,7 +32,22 @@ export const DashboardSidebar: FC<DashboardSidebarProps> = ({
   mobileSidebarOpen,
   onClose,
 }) => {
-  const user = getUserProfile()
+  const navigate = useNavigate()
+  const { user: authUser, logout } = useAuthStore()
+
+  const userName = authUser?.name || 'Budi Santoso'
+  const userRole = authUser?.role || 'Farmer Admin'
+  const userAvatar = authUser?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout()
+    } catch {
+      // Abaikan error jaringan saat logout
+    }
+    logout()
+    navigate('/login')
+  }
 
   return (
     <aside
@@ -81,8 +97,8 @@ export const DashboardSidebar: FC<DashboardSidebarProps> = ({
         })}
       </nav>
 
-      {/* User Profile Footer */}
-      <div className="p-4 border-t border-slate-800/80">
+      {/* User Profile & Logout Footer */}
+      <div className="p-4 border-t border-slate-800/80 space-y-2">
         <NavLink
           to="/admin/profile"
           onClick={onClose}
@@ -95,16 +111,26 @@ export const DashboardSidebar: FC<DashboardSidebarProps> = ({
         >
           <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-700 shrink-0">
             <img
-              src={user.avatarUrl}
-              alt={user.fullName}
+              src={userAvatar}
+              alt={userName}
               className="w-full h-full object-cover"
             />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-white truncate">{user.fullName}</p>
-            <p className="text-[10px] text-slate-400 truncate">{user.role}</p>
+            <p className="text-xs font-bold text-white truncate">{userName}</p>
+            <p className="text-[10px] text-slate-400 truncate">{userRole}</p>
           </div>
         </NavLink>
+
+        {/* Tombol Logout Sidebar */}
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:text-white hover:bg-rose-950/70 border border-rose-900/60 transition-all duration-150 active:scale-[0.98] cursor-pointer"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Keluar Akun</span>
+        </button>
       </div>
     </aside>
   )

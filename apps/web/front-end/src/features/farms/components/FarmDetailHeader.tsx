@@ -4,19 +4,25 @@ import { ArrowLeft, MapPin, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 interface FarmDetailHeaderProps {
+  farmId?: string
   name: string
   location: string
   status: 'Aktif' | 'Inaktif'
   bannerUrl: string
+  onEdit?: () => void
 }
 
 export const FarmDetailHeader: React.FC<FarmDetailHeaderProps> = ({
+  farmId,
   name,
   location,
   status,
   bannerUrl,
+  onEdit,
 }) => {
   const navigate = useNavigate()
+  const [imgError, setImgError] = React.useState(false)
+  const showFallback = !bannerUrl || imgError
 
   return (
     <div className="space-y-4">
@@ -30,12 +36,15 @@ export const FarmDetailHeader: React.FC<FarmDetailHeaderProps> = ({
       </button>
 
       {/* Banner */}
-      <div className="relative w-full h-48 md:h-64 rounded-2xl overflow-hidden border border-slate-200 shadow-2xs">
-        <img
-          src={bannerUrl}
-          alt={name}
-          className="w-full h-full object-cover"
-        />
+      <div className="relative w-full h-48 md:h-64 rounded-2xl overflow-hidden border border-slate-200 shadow-2xs bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 flex items-center justify-center">
+        {!showFallback && (
+          <img
+            src={bannerUrl}
+            alt={name}
+            onError={() => setImgError(true)}
+            className="w-full h-full object-cover"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
       </div>
 
@@ -70,8 +79,9 @@ export const FarmDetailHeader: React.FC<FarmDetailHeaderProps> = ({
             type="button"
             variant="outline"
             size="md"
+            onClick={onEdit ? onEdit : () => farmId && navigate(`/admin/farms/${farmId}/edit`)}
             leftIcon={<Pencil className="w-4 h-4 shrink-0" />}
-            className="flex flex-row items-center justify-center gap-2 border-slate-300 text-slate-700 hover:border-emerald-600 hover:text-emerald-700 hover:bg-white font-semibold whitespace-nowrap"
+            className="flex flex-row items-center justify-center gap-2 border-slate-300 text-slate-700 hover:border-emerald-600 hover:text-emerald-700 hover:bg-white font-semibold whitespace-nowrap cursor-pointer"
           >
             Edit Kebun
           </Button>

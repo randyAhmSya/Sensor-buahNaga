@@ -1,18 +1,23 @@
 import { z } from 'zod'
+import { antiScriptRefine } from '@/utils/sanitize'
 
 export const profileInfoSchema = z.object({
-  fullName: z
-    .string()
-    .min(3, 'Nama lengkap minimal 3 karakter')
-    .max(60, 'Nama lengkap maksimal 60 karakter')
-    .regex(
-      /^[a-zA-Z\s.,'-]+$/,
-      'Nama hanya boleh mengandung huruf, spasi, dan tanda baca nama standar'
-    ),
-  email: z
-    .string()
-    .min(1, 'Email wajib diisi')
-    .email('Format email tidak valid'),
+  fullName: antiScriptRefine(
+    z
+      .string()
+      .min(3, 'Nama lengkap minimal 3 karakter')
+      .max(60, 'Nama lengkap maksimal 60 karakter')
+      .regex(
+        /^[a-zA-Z\s.,'-]+$/,
+        'Nama hanya boleh mengandung huruf, spasi, dan tanda baca nama standar'
+      )
+  ),
+  email: antiScriptRefine(
+    z
+      .string()
+      .min(1, 'Email wajib diisi')
+      .email('Format email tidak valid')
+  ),
   phone: z
     .string()
     .regex(

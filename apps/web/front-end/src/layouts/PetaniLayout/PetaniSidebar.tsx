@@ -1,9 +1,11 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { Sprout, QrCode, LogOut, Sun } from 'lucide-react'
 import { useAuthStore } from '../../store/useAuthStore'
+import { authService } from '../../services/authService'
 import { cn } from '../../utils/cn'
 
 export function PetaniSidebar() {
+  const navigate = useNavigate()
   const { user, logout } = useAuthStore()
 
   const navItems = [
@@ -18,6 +20,16 @@ export function PetaniSidebar() {
       icon: <QrCode className="h-5 w-5" />,
     },
   ]
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout()
+    } catch {
+      // Abaikan error jaringan saat logout
+    }
+    logout()
+    navigate('/login')
+  }
 
   return (
     <aside className="w-64 bg-emerald-950 text-slate-200 flex flex-col justify-between shrink-0 border-r border-emerald-900 h-screen sticky top-0">
@@ -74,8 +86,9 @@ export function PetaniSidebar() {
         </div>
 
         <button
-          onClick={logout}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-emerald-300 hover:text-white hover:bg-emerald-900/80 border border-emerald-800 transition-colors"
+          type="button"
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-emerald-300 hover:text-white hover:bg-emerald-900/80 border border-emerald-800 transition-colors cursor-pointer"
         >
           <LogOut className="h-3.5 w-3.5" />
           <span>Keluar Sesi</span>

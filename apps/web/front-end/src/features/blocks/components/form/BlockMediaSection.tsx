@@ -27,14 +27,14 @@ export const BlockMediaSection: FC<BlockMediaSectionProps> = ({
         <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
           <ImageIcon className="w-4 h-4 text-emerald-700" />
           <h3 className="text-sm font-bold text-slate-900">
-            Foto Blok <span className="text-rose-600 font-bold ml-0.5">*</span>
+            Foto Blok (Opsional)
           </h3>
         </div>
 
         <div className="w-full h-48 border-2 border-dashed border-slate-200 hover:border-emerald-600 rounded-2xl flex flex-col items-center justify-center bg-slate-50/50 hover:bg-emerald-50/20 transition-all cursor-pointer relative overflow-hidden group">
           {imagePreview || formData.imageUrl ? (
             <img
-              src={imagePreview || formData.imageUrl}
+              src={imagePreview || formData.imageUrl || ''}
               alt="Preview Blok"
               className="w-full h-full object-cover"
             />
@@ -58,8 +58,8 @@ export const BlockMediaSection: FC<BlockMediaSectionProps> = ({
 
         <InputField
           name="imageUrl"
-          label="Atau masukkan tautan URL Foto"
-          value={formData.imageUrl}
+          label="Atau masukkan tautan URL Foto (Opsional)"
+          value={formData.imageUrl || ''}
           onChange={(e) => onUrlChange(e.target.value)}
           placeholder="https://images.unsplash.com/..."
           error={errors.imageUrl}
