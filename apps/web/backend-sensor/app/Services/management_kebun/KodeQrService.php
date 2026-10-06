@@ -2,19 +2,19 @@
 
 namespace App\Services\management_kebun;
 
-use App\Models\kode_qr;
+use App\Models\KodeQr;
 use Illuminate\Support\Str;
 
 class KodeQrService
 {
     public function getAllQr()
     {
-        return kode_qr::all();
+        return KodeQr::all();
     }
 
     public function getQrById(string $id)
     {
-        return kode_qr::find($id);
+        return KodeQr::find($id);
     }
 
     public function createQr(array $data)
@@ -28,16 +28,16 @@ class KodeQrService
             $data['status_qr'] = true;
         }
 
-        return kode_qr::create($data);
+        return KodeQr::create($data);
     }
 
-    public function updateQr(kode_qr $qr, array $data)
+    public function updateQr(KodeQr $qr, array $data)
     {
         $qr->update($data);
         return $qr;
     }
 
-    public function deleteQr(kode_qr $qr)
+    public function deleteQr(KodeQr $qr)
     {
         $qr->delete();
     }

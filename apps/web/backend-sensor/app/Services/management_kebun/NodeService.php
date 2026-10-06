@@ -18,7 +18,16 @@ class NodeService
 
     public function getNodeById(string $id)
     {
-        return nodeSensor::with(['blok', 'gateway', 'qr'])->find($id);
+        if (\Illuminate\Support\Str::isUuid($id)) {
+            return nodeSensor::with(['blok.kebun', 'gateway', 'qr'])->find($id);
+        }
+
+        return nodeSensor::with(['blok.kebun', 'gateway', 'qr'])
+            ->whereHas('qr', function ($query) use ($id) {
+                $query->where('teks_kode_qr', $id);
+            })
+            ->orWhere('kode_perangkat', $id)
+            ->first();
     }
 
     public function createNode(array $data)

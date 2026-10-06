@@ -26,6 +26,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'is_aktif',
     ];
     protected $hidden = [
         'password',
@@ -42,6 +43,11 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_aktif' => 'boolean',
         ];
+    }
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id', 'tenant_id');
     }
 }

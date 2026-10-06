@@ -1,58 +1,185 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+## ASCII TREE
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
-
-## About Laravel
-
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```
+backend-sensor/
+├── app/
+│   ├── Console/
+│   │   └── Commands/
+│   │       ├── CekLanggananAkanHabis.php
+│   │       └── MqttListen.php
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── admin/
+│   │   │   │   ├── LanggananAdminController.php
+│   │   │   │   ├── LogAktivitasController.php
+│   │   │   │   ├── PaketLanggananAdminController.php
+│   │   │   │   ├── TenantAdminController.php
+│   │   │   │   └── UserAdminController.php
+│   │   │   ├── Auth/
+│   │   │   │   └── AuthController.php
+│   │   │   ├── petani/
+│   │   │   │   ├── AutoDimmingController.php
+│   │   │   │   ├── BlokController.php
+│   │   │   │   ├── BlokStatusController.php
+│   │   │   │   ├── GatewayController.php
+│   │   │   │   ├── JadwalLampuController.php
+│   │   │   │   ├── KebunController.php
+│   │   │   │   ├── KodeQrController.php
+│   │   │   │   ├── LanggananController.php
+│   │   │   │   ├── LogEnergyController.php
+│   │   │   │   ├── NodeController.php
+│   │   │   │   ├── NotifikasiController.php
+│   │   │   │   ├── SiklusPanenController.php
+│   │   │   │   ├── TelemetriController.php
+│   │   │   │   └── TenantAccessController.php
+│   │   │   └── Controller.php
+│   │   ├── Middleware/
+│   │   │   ├── EnsureIsSuperAdmin.php
+│   │   │   ├── EnsureLanggananAktif.php
+│   │   │   └── EnsureTenantAktif.php
+│   │   └── Requests/
+│   │       ├── Auth/
+│   │       │   ├── LoginRequest.php
+│   │       │   └── RegisterRequest.php
+│   │       ├── blok/
+│   │       │   ├── addBlokRequest.php
+│   │       │   └── updateBlokRequest.php
+│   │       ├── gateway/
+│   │       │   ├── addGatewayRequest.php
+│   │       │   ├── pairGatewayRequest.php
+│   │       │   └── updateGatewayRequest.php
+│   │       ├── jadwalLampu/
+│   │       │   ├── addJadwalLampuRequest.php
+│   │       │   └── updateJadwalLampuRequest.php
+│   │       ├── kebun/
+│   │       │   ├── AddKebunRequest.php
+│   │       │   └── UpdateKebunRequest.php
+│   │       ├── langganan/
+│   │       │   ├── AjukanPembelianLanggananRequest.php
+│   │       │   └── TolakTransaksiRequest.php
+│   │       ├── node/
+│   │       │   ├── addNodeRequest.php
+│   │       │   └── updateNodeRequest.php
+│   │       ├── paketLangganan/
+│   │       │   ├── StorePaketLanggananRequest.php
+│   │       │   └── UpdatePaketLanggananRequest.php
+│   │       ├── qr/
+│   │       │   ├── addQrRequest.php
+│   │       │   ├── scanQrRequest.php
+│   │       │   └── updateQrRequest.php
+│   │       ├── siklusPanen/
+│   │       │   ├── addSiklusPanenRequest.php
+│   │       │   └── updateSiklusPanenRequest.php
+│   │       └── userAdmin/
+│   │           └── StoreUserRequest.php
+│   ├── Models/
+│   │   ├── Blok.php
+│   │   ├── Gateway.php
+│   │   ├── JadwalLampu.php
+│   │   ├── Kebun.php
+│   │   ├── KodeQr.php
+│   │   ├── LanggananTenant.php
+│   │   ├── LogAktivitasAdmin.php
+│   │   ├── LogEnergy.php
+│   │   ├── LogPeredupan.php
+│   │   ├── NodeSensor.php
+│   │   ├── Notifikasi.php
+│   │   ├── PaketLangganan.php
+│   │   ├── QrScanLog.php
+│   │   ├── ReadSensor.php
+│   │   ├── SiklusPanen.php
+│   │   ├── Tenant.php
+│   │   ├── TransaksiLangganan.php
+│   │   └── User.php
+│   ├── Policies/
+│   │   └── KebunPolicy.php
+│   ├── Services/
+│   │   ├── management_admin/
+│   │   │   ├── LogAktivitasService.php
+│   │   │   ├── PaketLanggananAdminService.php
+│   │   │   ├── TenantAdminService.php
+│   │   │   └── UserAdminService.php
+│   │   ├── management_kebun/
+│   │   │   ├── AutoDimmingService.php
+│   │   │   ├── BlokService.php
+│   │   │   ├── BlokStatusService.php
+│   │   │   ├── GatewayPairingService.php
+│   │   │   ├── GatewayService.php
+│   │   │   ├── JadwalLampuService.php
+│   │   │   ├── KebunService.php
+│   │   │   ├── KodeQrService.php
+│   │   │   ├── LogEnergyService.php
+│   │   │   ├── MqttPublisherService.php
+│   │   │   ├── NodeService.php
+│   │   │   ├── QrScanService.php
+│   │   │   ├── SiklusPanenService.php
+│   │   │   ├── TelemetriProcessorService.php
+│   │   │   └── TelemetriService.php
+│   │   ├── management_langganan/
+│   │   │   └── LanggananService.php
+│   │   ├── management_notifikasi/
+│   │   │   └── NotifikasiService.php
+│   │   └── AuthService.php
+│   └── Traits/
+│       ├── concern/
+│       │   └── HandlesTenantAccess.php
+│       ├── ApiResponser.php
+│       ├── FileUploadTrait.php
+│       └── GenerateUuid.php
+├── bootstrap/
+│   ├── app.php
+│   └── providers.php
+├── config/
+│   ├── app.php
+│   ├── auth.php
+│   ├── cache.php
+│   ├── cors.php
+│   ├── database.php
+│   ├── filesystems.php
+│   ├── lampu.php
+│   ├── langganan.php
+│   ├── logging.php
+│   ├── mail.php
+│   ├── queue.php
+│   ├── sanctum.php
+│   ├── services.php
+│   └── session.php
+├── database/
+│   └── migrations/
+│       ├── 0001_01_01_000001_create_cache_table.php
+│       ├── 0001_01_01_000002_create_jobs_table.php
+│       ├── 2026_08_21_092214_create_personal_access_tokens_table.php
+│       ├── 2026_08_21_103818_create_tenants_table.php
+│       ├── 2026_08_22_000000_create_users_table.php
+│       ├── 2026_08_22_082135_create_transaksi_langganans_table.php
+│       ├── 2026_08_22_083101_create_langganan_tenants_table.php
+│       ├── 2026_08_23_003311_create_kebuns_table.php
+│       ├── 2026_08_23_003353_create_bloks_table.php
+│       ├── 2026_08_23_003423_create_siklus_panens_table.php
+│       ├── 2026_08_23_003500_create_kode_qrs_table.php
+│       ├── 2026_08_23_003558_create_gateways_table.php
+│       ├── 2026_08_23_003632_create_node_sensors_table.php
+│       ├── 2026_08_23_003710_create_read__sensors_table.php
+│       ├── 2026_08_23_003812_create_jadwal_lampus_table.php
+│       ├── 2026_08_23_003925_create_log_peredupans_table.php
+│       ├── 2026_08_23_003951_create_log_energies_table.php
+│       ├── 2026_08_30_000648_add_is_admin_allowed_to_tenants_table.php
+│       ├── 2026_09_15_131435_create_qr_scan_logs_table.php
+│       ├── 2026_09_16_113657_add_estimasi_fields_to_siklus_panens_table.php
+│       ├── 2026_09_28_022310_create_paket_langganans_table.php
+│       ├── 2026_09_28_031318_add_payment_fields_to_transaksi_langganans_table.php
+│       ├── 2026_10_02_021910_add_is_aktif_to_tenants_table.php
+│       ├── 2026_10_03_014830_add_alasan_penolakan_to_transaksi_langganans_table.php
+│       ├── 2026_10_03_015341_create_notifikasis_table.php
+│       ├── 2026_10_03_103201_create_log_aktivitas_admins_table.php
+│       └── 2026_10_05_003820_add_is_aktif_to_users_table.php
+└── routes/
+    ├── api.php
+    ├── api/
+    │   ├── admin.php
+    │   ├── iot.php
+    │   └── petani.php
+    ├── console.php
+    └── web.php
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

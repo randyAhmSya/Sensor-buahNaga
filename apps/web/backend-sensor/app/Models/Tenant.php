@@ -21,6 +21,7 @@ class Tenant extends Model
         'nama_tenant',
         'paket_langganan',
         'is_admin_allowed',
+        'is_aktif',
     ];
 
     protected $casts = [
@@ -35,7 +36,7 @@ class Tenant extends Model
 
     public function kebuns(): HasMany
     {
-        return $this->hasMany(kebun::class, 'tenant_id', 'tenant_id');
+        return $this->hasMany(Kebun::class, 'tenant_id', 'tenant_id');
     }
     public function tenant()
     {

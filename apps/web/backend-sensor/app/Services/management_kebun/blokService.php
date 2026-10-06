@@ -2,7 +2,7 @@
 
 namespace App\Services\management_kebun;
 
-use App\Models\blok;
+use App\Models\Blok;
 use App\Traits\FileUploadTrait;
 
 class BlokService
@@ -11,12 +11,12 @@ class BlokService
 
     public function getAllBlokByKebun(string $kebunId)
     {
-        return blok::with('kebun')->where('kebun_id', $kebunId)->get();
+        return Blok::with('kebun')->where('kebun_id', $kebunId)->get();
     }
 
     public function getBlokById(string $id)
     {
-        return blok::with('kebun')->find($id);
+        return Blok::with('kebun')->find($id);
     }
 
     public function createBlok(array $data, $fileFoto = null)
@@ -25,7 +25,7 @@ class BlokService
             $data['url_foto'] = $this->uploadFoto($fileFoto, 'foto_blok');
         }
 
-        return blok::create($data);
+        return Blok::create($data);
     }
 
     public function updateBlok(blok $blok, array $data, $fileFoto = null)

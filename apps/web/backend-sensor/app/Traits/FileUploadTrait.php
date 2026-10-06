@@ -51,4 +51,26 @@ trait FileUploadTrait
         // Membatasi hanya gambar murni, maksimal 2MB
         return "$syarat|image|mimes:jpeg,png,jpg,webp|max:2048";
     }
+
+    public function uploadPrivat($file, string $baseFolder, ?string $oldPath = null): ?string
+    {
+    if ($file) {
+        $this->hapusFilePrivat($oldPath);
+
+        $folderTerstruktur = $baseFolder . '/' . date('Y/m');
+
+        return $file->store($folderTerstruktur, 'local');
+    }
+
+    return $oldPath;
+    }
+
+
+    public function hapusFilePrivat(?string $path): void
+    {
+        if ($path && Storage::disk('local')->exists($path)) {
+            Storage::disk('local')->delete($path);
+        }
+    }
 }
+

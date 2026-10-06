@@ -5,7 +5,7 @@ namespace App\Http\Requests\kebun;
 use App\Traits\FileUploadTrait;
 use Illuminate\Foundation\Http\FormRequest;
 
-class updatekebunRequest extends FormRequest
+class UpdateKebunRequest extends FormRequest
 {
     use FileUploadTrait;
     public function authorize(): bool

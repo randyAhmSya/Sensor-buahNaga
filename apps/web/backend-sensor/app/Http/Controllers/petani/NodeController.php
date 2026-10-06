@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\node\addNodeRequest;
 use App\Http\Requests\node\updateNodeRequest;
 use App\Services\management_kebun\NodeService;
-use App\Models\nodeSensor;
-use App\Models\blok;
-use App\Models\kebun;
+use App\Models\NodeSensor;
+use App\Models\Blok;
+use App\Models\Kebun;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -34,7 +34,7 @@ class NodeController extends Controller
 
         if (!$kebunId) return $this->errorResponse('Parameter kebun_id wajib disertakan (?kebun_id=...).', 400);
 
-        $kebun = kebun::find($kebunId);
+        $kebun = Kebun::find($kebunId);
         if (!$kebun) return $this->errorResponse('Data kebun tidak ditemukan.', 404);
         if (Gate::denies('view', $kebun)) return $this->errorResponse('Anda tidak memiliki akses ke kebun ini.', 403);
 
@@ -47,10 +47,10 @@ class NodeController extends Controller
     // ==========================================================
     public function store(addNodeRequest $request): JsonResponse
     {
-        $blok = blok::find($request->blok_id);
+        $blok = Blok::find($request->blok_id);
         if (!$blok) return $this->errorResponse('Data blok tidak ditemukan.', 404);
 
-        $kebun = kebun::find($blok->kebun_id);
+        $kebun = Kebun::find($blok->kebun_id);
         // Cek izin update kebun induknya
         if (Gate::denies('update', $kebun)) return $this->errorResponse('Anda tidak memiliki izin menambah sensor di area ini.', 403);
 
@@ -67,8 +67,8 @@ class NodeController extends Controller
         if (!$node) return $this->errorResponse('Data sensor tidak ditemukan.', 404);
 
         // Lacak ke atas: Sensor -> Blok -> Kebun
-        $blok = blok::find($node->blok_id);
-        $kebun = kebun::find($blok->kebun_id);
+        $blok = Blok::find($node->blok_id);
+        $kebun = Kebun::find($blok->kebun_id);
 
         if (Gate::denies('view', $kebun)) return $this->errorResponse('Anda tidak memiliki akses.', 403);
 
@@ -83,8 +83,8 @@ class NodeController extends Controller
         $node = $this->nodeService->getNodeById($id);
         if (!$node) return $this->errorResponse('Data sensor tidak ditemukan.', 404);
 
-        $blok = blok::find($node->blok_id);
-        $kebun = kebun::find($blok->kebun_id);
+        $blok = Blok::find($node->blok_id);
+        $kebun = Kebun::find($blok->kebun_id);
 
         if (Gate::denies('update', $kebun)) return $this->errorResponse('Anda tidak memiliki izin.', 403);
 
@@ -100,8 +100,8 @@ class NodeController extends Controller
         $node = $this->nodeService->getNodeById($id);
         if (!$node) return $this->errorResponse('Data sensor tidak ditemukan.', 404);
 
-        $blok = blok::find($node->blok_id);
-        $kebun = kebun::find($blok->kebun_id);
+        $blok = Blok::find($node->blok_id);
+        $kebun = Kebun::find($blok->kebun_id);
 
         if (Gate::denies('delete', $kebun)) return $this->errorResponse('Anda tidak memiliki izin.', 403);
 
@@ -109,10 +109,18 @@ class NodeController extends Controller
         return $this->successResponse(null, 'Sensor berhasil dihapus dari sistem.');
     }
 
-    public function generateNewQr($id)
-    {
-        $hasil = $this->nodeService->generateNewQrForSensor($id);
+public function generateNewQr(Request $request, string $id): JsonResponse
+{
+    $node = $this->nodeService->getNodeById($id);
+    if (!$node) return $this->errorResponse('Data sensor tidak ditemukan.', 404);
 
-        return $this->successResponse($hasil, 'QR Code baru berhasil di-generate dan dipasangkan ke sensor.');
-    }
+    $blok = Blok::find($node->blok_id);
+    $kebun = Kebun::find($blok->kebun_id);
+
+    if (Gate::denies('update', $kebun)) return $this->errorResponse('Anda tidak memiliki izin.', 403);
+
+    $hasil = $this->nodeService->generateNewQrForSensor($id);
+
+    return $this->successResponse($hasil, 'QR Code baru berhasil di-generate dan dipasangkan ke sensor.');
+}
 }
