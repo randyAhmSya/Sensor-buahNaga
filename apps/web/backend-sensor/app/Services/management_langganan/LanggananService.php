@@ -6,6 +6,7 @@ use App\Models\LanggananTenant;
 use App\Models\PaketLangganan;
 use App\Models\TransaksiLangganan;
 use App\Services\management_admin\LogAktivitasService;
+use App\Services\management_pembayaran\MidtransService;
 use App\Traits\FileUploadTrait;
 use DomainException;
 use Illuminate\Http\UploadedFile;
@@ -15,7 +16,10 @@ class LanggananService
 {
     use FileUploadTrait;
 
-    public function __construct(protected LogAktivitasService $logAktivitas) {}
+    public function __construct(
+        protected LogAktivitasService $logAktivitas,
+        protected MidtransService $midtransService,
+    ) {}
 
     // ===== Sisi petani =====
 
@@ -135,5 +139,65 @@ class LanggananService
             ['tenant_id' => $tenantId],
             ['status_langganan' => 'belum_aktif', 'sisa_hari' => 0, 'tanggal_aktif_terakhir' => now()]
         );
+    }
+
+    public function ajukanPembelianOnline(string $tenantId, string $paketId): array
+    {
+        $paket = PaketLangganan::where('status_aktif', true)->findOrFail($paketId);
+
+        $transaksi = TransaksiLangganan::create([
+            'tenant_id'          => $tenantId,
+            'paket_langganan_id' => $paket->id_paket,
+            'nama_paket'         => $paket->nama_paket,
+            'tambahan_hari'      => $paket->tambahan_hari,
+            'harga'              => $paket->harga,
+            'status_pembayaran'  => 'menunggu_pembayaran',
+            'metode_pembayaran'  => 'midtrans',
+        ]);
+
+        $snapToken = $this->midtransService->buatSnapToken($transaksi, (int) $paket->harga, $paket->nama_paket);
+
+        return [
+            'id_transaksi' => $transaksi->id_transaksi,
+            'snap_token'   => $snapToken,
+        ];
+    }
+
+    public function verifikasiOtomatisViaGateway(string $idTransaksi, string $referensiGateway): bool
+    {
+        return DB::transaction(function () use ($idTransaksi, $referensiGateway) {
+            $transaksi = TransaksiLangganan::where('id_transaksi', $idTransaksi)->lockForUpdate()->first();
+
+            if (!$transaksi || $transaksi->status_pembayaran !== 'menunggu_pembayaran') {
+                return false;
+            }
+
+            $transaksi->update([
+                'status_pembayaran' => 'diverifikasi',
+                'referensi_gateway' => $referensiGateway,
+                'diverifikasi_pada' => now(),
+            ]);
+
+            $langganan = $this->cariAtauBuatLanggananTanpaTrial($transaksi->tenant_id);
+
+            $langganan->sisa_hari = $langganan->sisaHariAktual() + $transaksi->tambahan_hari; // snapshot, bukan dari relasi paket
+            $langganan->tanggal_aktif_terakhir = now();
+            $langganan->save();
+
+            return true;
+        });
+    }
+
+    public function tolakOtomatisViaGateway(string $idTransaksi, string $alasan): bool
+    {
+        $jumlahDiubah = TransaksiLangganan::where('id_transaksi', $idTransaksi)
+            ->where('status_pembayaran', 'menunggu_pembayaran')
+            ->update([
+                'status_pembayaran' => 'ditolak',
+                'alasan_penolakan'  => $alasan,
+                'diverifikasi_pada' => now(),
+            ]);
+
+        return $jumlahDiubah > 0;
     }
 }

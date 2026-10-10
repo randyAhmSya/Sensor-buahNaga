@@ -35,6 +35,7 @@ Route::prefix('notifikasi')->middleware(['auth:sanctum', EnsureTenantAktif::clas
     Route::patch('{id}/dibaca', [NotifikasiController::class, 'tandaiDibaca'])->whereUuid('id');
     Route::patch('tandai-semua-dibaca', [NotifikasiController::class, 'tandaiSemuaDibaca']);
 });
+Route::post('langganan/beli-online', [LanggananController::class, 'beliOnline']);
 
 // ===== Butuh langganan aktif =====
 Route::middleware(['auth:sanctum', EnsureTenantAktif::class, EnsureLanggananAktif::class])->group(function () {
@@ -43,6 +44,7 @@ Route::middleware(['auth:sanctum', EnsureTenantAktif::class, EnsureLanggananAkti
     Route::post('/node/{id}/generate-qr', [NodeController::class, 'generateNewQr']);
     Route::apiResource('node', NodeController::class);
     Route::apiResource('gateway', GatewayController::class);
+    Route::get('qr/logs', [KodeQrController::class, 'logs']);
     Route::apiResource('qr', KodeQrController::class)->except(['update', 'destroy']);
     Route::post('qr/scan', [KodeQrController::class, 'scan']);
     Route::apiResource('siklus-panen', SiklusPanenController::class);

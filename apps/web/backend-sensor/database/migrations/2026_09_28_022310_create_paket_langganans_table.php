@@ -28,9 +28,5 @@ return new class extends Migration
     {
         
         Schema::dropIfExists('paket_langganans');
-        Schema::table('transaksi_langganans', function (Blueprint $table) {
-    $table->foreignUuid('paket_langganan_id')->nullable()->after('tenant_id')
-        ->constrained('paket_langganans', 'id_paket')->nullOnDelete();
-});
     }
 };

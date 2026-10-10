@@ -80,4 +80,16 @@ class KodeQrController extends Controller
  
         return $this->successResponse($result['data'], 'Scan berhasil, data blok/sensor ditemukan.');
     }
+
+    public function logs(): JsonResponse
+    {
+        $user = auth()->user();
+        $logs = \App\Models\QrScanLog::with(['kodeQr.nodeSensor'])
+            ->where('user_id', $user->id)
+            ->latest('dicatat_pada')
+            ->limit(50)
+            ->get();
+
+        return $this->successResponse($logs, 'Data riwayat scan QR berhasil diambil.');
+    }
 }

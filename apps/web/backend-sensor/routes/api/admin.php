@@ -11,6 +11,7 @@
     use App\Http\Controllers\admin\PaketLanggananAdminController;
     use App\Http\Controllers\admin\LogAktivitasController;
     use App\Http\Controllers\admin\UserAdminController;
+    use App\Http\Controllers\admin\DashboardAdminController;
 
     Route::middleware('superAdmin')->group(function () {
 
@@ -51,4 +52,5 @@
         Route::patch('/{id}/nonaktifkan', [UserAdminController::class, 'nonaktifkan']);
         Route::patch('/{id}/aktifkan', [UserAdminController::class, 'aktifkan']);
     });
+    Route::get('dashboard/ringkasan', [DashboardAdminController::class, 'ringkasan']);
     });

@@ -80,4 +80,17 @@ class LanggananController extends Controller
 
         return Storage::disk('local')->response($transaksi->bukti_transfer);
     }
+    public function beliOnline(Request $request)
+    {
+        $request->validate([
+            'paket_langganan_id' => 'required|uuid|exists:paket_langganans,id_paket',
+        ]);
+
+        $hasil = $this->langgananService->ajukanPembelianOnline(
+            $request->user()->tenant_id,
+            $request->paket_langganan_id,
+        );
+
+        return $this->successResponse($hasil, 'Snap token berhasil dibuat');
+    }
 }
