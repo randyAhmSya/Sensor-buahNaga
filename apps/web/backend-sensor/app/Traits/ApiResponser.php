@@ -20,4 +20,13 @@ trait ApiResponser
             'pesan' => $message,
         ], $code);
     }
+    protected function paginationMeta($paginator): array
+    {
+        return [
+            'current_page' => $paginator->currentPage(),
+            'per_page'     => $paginator->perPage(),
+            'total'        => $paginator->total(),
+            'last_page'    => $paginator->lastPage(),
+        ];
+    }
 }

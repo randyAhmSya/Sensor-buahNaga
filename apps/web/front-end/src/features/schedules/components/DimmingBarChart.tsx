@@ -5,7 +5,23 @@ interface DimmingBarChartProps {
   data: DimmingBarItem[];
 }
 
+import { SunDim } from 'lucide-react';
+
 export const DimmingBarChart: React.FC<DimmingBarChartProps> = ({ data }) => {
+  if (data.length === 0) {
+    return (
+      <div className="w-full bg-slate-50/70 border border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center h-48 text-center space-y-2">
+        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">
+          <SunDim className="w-5 h-5" />
+        </div>
+        <p className="text-sm font-bold text-slate-700">Belum Ada Data Intensitas Lampu</p>
+        <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+          Log siklus pencahayaan malam hari dan modul auto-dimming akan tercatat otomatis saat penyinaran berjalan.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full bg-slate-50/60 border border-slate-200 rounded-xl p-4 sm:p-5">
       <div className="w-full h-44 flex items-end justify-between gap-1.5 sm:gap-2.5 border-b border-slate-200 pb-2.5">

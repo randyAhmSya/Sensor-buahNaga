@@ -1,20 +1,21 @@
-import { MASTER_FARMS, type FarmEntity } from '@/data/centralData';
-import { MOCK_ACTIVE_SCHEDULES, type ActiveScheduleItem } from '@/data/mockSchedules';
-import { MOCK_HARVEST_CYCLES, type HarvestCycleItem } from '@/data/mockHarvests';
-import { MOCK_QR_CODES, type QRCodeItem } from '@/data/mockQRCodes';
+import type { ActiveScheduleItem } from '@/data/mockSchedules';
+import type { QueryParams } from '@/types/api.types';
 
 /**
- * Base API Client with Interceptor & Error Handling
- * Backend-Ready abstraction for REST endpoints with fallback/mock capabilities.
+ * Base API Client with Interceptors, Token Auth & Robust Error Handling
+ * Specially tailored for Laravel Sanctum REST API backend.
  */
 
-export interface ApiRequestOptions extends RequestInit {
-  params?: Record<string, string | number | boolean | undefined>;
+export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
+  body?: BodyInit | null;
+  params?: QueryParams;
   timeout?: number;
 }
 
 export class ApiError extends Error {
   status: number;
+  pesan: string;
+  errors?: Record<string, string[]>;
   data?: unknown;
 
   constructor(message: string, status: number, data?: unknown) {
@@ -22,19 +23,47 @@ export class ApiError extends Error {
     this.name = 'ApiError';
     this.status = status;
     this.data = data;
+    this.pesan = message;
+
+    if (data && typeof data === 'object') {
+      const errObj = data as Record<string, unknown>;
+      if (typeof errObj.pesan === 'string') {
+        this.pesan = errObj.pesan;
+        this.message = errObj.pesan;
+      } else if (typeof errObj.message === 'string') {
+        this.pesan = errObj.message;
+        this.message = errObj.message;
+      }
+
+      if (errObj.errors && typeof errObj.errors === 'object') {
+        this.errors = errObj.errors as Record<string, string[]>;
+      }
+    }
   }
 }
+
+/**
+ * Helper untuk mengecek status sukses respons API Laravel AgroLight ('succes' atau 'success')
+ */
+export const isApiSuccess = (res: unknown): boolean => {
+  if (!res || typeof res !== 'object') return false;
+  const status = (res as { status?: string }).status;
+  return status === 'succes' || status === 'success';
+};
 
 type RequestInterceptor = (config: ApiRequestOptions) => ApiRequestOptions | Promise<ApiRequestOptions>;
 type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
 
-class ApiClient {
+export class ApiClient {
   private baseUrl: string;
   private requestInterceptors: RequestInterceptor[] = [];
   private responseInterceptors: ResponseInterceptor[] = [];
 
-  constructor(baseUrl: string = '/api') {
-    this.baseUrl = baseUrl;
+  constructor(baseUrl?: string) {
+    const defaultUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) 
+      ? import.meta.env.VITE_API_BASE_URL 
+      : 'http://localhost:8000/api';
+    this.baseUrl = (baseUrl || defaultUrl).replace(/\/+$/, '');
   }
 
   useRequestInterceptor(interceptor: RequestInterceptor) {
@@ -46,18 +75,19 @@ class ApiClient {
   }
 
   async request<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
-    let finalOptions = { ...options };
+    let finalOptions: ApiRequestOptions = { ...options };
 
     for (const interceptor of this.requestInterceptors) {
       finalOptions = await interceptor(finalOptions);
     }
 
-    let url = `${this.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    let url = `${this.baseUrl}${cleanEndpoint}`;
 
     if (finalOptions.params) {
       const searchParams = new URLSearchParams();
       for (const [key, value] of Object.entries(finalOptions.params)) {
-        if (value !== undefined) {
+        if (value !== undefined && value !== null) {
           searchParams.append(key, String(value));
         }
       }
@@ -67,19 +97,24 @@ class ApiClient {
       }
     }
 
+    const isFormData = typeof FormData !== 'undefined' && finalOptions.body instanceof FormData;
+
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
       Accept: 'application/json',
       ...((finalOptions.headers as Record<string, string>) || {}),
     };
 
-    const token = localStorage.getItem('agro_auth_token');
-    if (token) {
+    if (!isFormData && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('agro_auth_token') : null;
+    if (token && !headers['Authorization']) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), finalOptions.timeout || 15000);
+    const timeoutId = setTimeout(() => controller.abort(), finalOptions.timeout || 20000);
 
     try {
       let response = await fetch(url, {
@@ -101,21 +136,29 @@ class ApiClient {
         } catch {
           errorData = await response.text();
         }
-        throw new ApiError(
-          `Request failed with status ${response.status}`,
-          response.status,
-          errorData
-        );
+
+        if (response.status === 401 && typeof window !== 'undefined') {
+          // Token expired or invalid
+          localStorage.removeItem('agro_auth_token');
+          localStorage.removeItem('agro_auth_user');
+          if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+            window.location.href = '/login';
+          }
+        }
+
+        const fallbackMsg = `Permintaan gagal dengan status ${response.status}`;
+        throw new ApiError(fallbackMsg, response.status, errorData);
       }
 
-      return (await response.json()) as T;
+      const parsedJson = await response.json();
+      return parsedJson as T;
     } catch (error: unknown) {
       clearTimeout(timeoutId);
       if (error instanceof ApiError) throw error;
       if (error instanceof DOMException && error.name === 'AbortError') {
-        throw new ApiError('Request timed out', 408);
+        throw new ApiError('Koneksi timeout, server tidak merespons tepat waktu', 408);
       }
-      throw new ApiError((error as Error)?.message || 'Network request failed', 500);
+      throw new ApiError((error as Error)?.message || 'Koneksi ke server gagal', 500);
     }
   }
 
@@ -124,18 +167,29 @@ class ApiClient {
   }
 
   post<T>(endpoint: string, data?: unknown, options?: ApiRequestOptions): Promise<T> {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : (data !== undefined ? JSON.stringify(data) : undefined),
     });
   }
 
   put<T>(endpoint: string, data?: unknown, options?: ApiRequestOptions): Promise<T> {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : (data !== undefined ? JSON.stringify(data) : undefined),
+    });
+  }
+
+  patch<T>(endpoint: string, data?: unknown, options?: ApiRequestOptions): Promise<T> {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: isFormData ? data : (data !== undefined ? JSON.stringify(data) : undefined),
     });
   }
 
@@ -146,21 +200,13 @@ class ApiClient {
 
 export const apiClient = new ApiClient();
 
-// ==================== SERVICE LAYER ABSTRACTIONS ====================
-// Simulasi network delay
+// ==================== COMPATIBILITY SERVICE ABSTRACTIONS ====================
 const delay = (ms = 150) => new Promise((resolve) => setTimeout(resolve, ms));
-
-export const farmService = {
-  getAll: async (): Promise<FarmEntity[]> => {
-    await delay();
-    return MASTER_FARMS;
-  },
-};
 
 export const scheduleService = {
   getAll: async (): Promise<ActiveScheduleItem[]> => {
     await delay();
-    return MOCK_ACTIVE_SCHEDULES;
+    return [];
   },
   delete: async (_id: string): Promise<boolean> => {
     await delay();
@@ -168,20 +214,11 @@ export const scheduleService = {
   },
 };
 
-export const harvestService = {
-  getAll: async (): Promise<HarvestCycleItem[]> => {
-    await delay();
-    return MOCK_HARVEST_CYCLES;
-  },
-};
-
-export const qrCodeService = {
-  getAll: async (): Promise<QRCodeItem[]> => {
-    await delay();
-    return MOCK_QR_CODES;
-  },
-  delete: async (_id: string): Promise<boolean> => {
-    await delay();
-    return true;
-  },
-};
+export { farmService } from './farmService';
+export { blockService } from './blockService';
+export { harvestService } from './harvestService';
+export { sensorService } from './sensorService';
+export { gatewayService } from './gatewayService';
+export { qrCodeService } from './qrService';
+export { tenantService } from './tenantService';
+export { authService } from './authService';

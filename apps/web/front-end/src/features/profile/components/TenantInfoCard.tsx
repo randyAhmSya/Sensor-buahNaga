@@ -1,11 +1,39 @@
-import { useMemo, type FC } from 'react'
-import { Building2, CheckCircle2, Headphones } from 'lucide-react'
+import { useState, useMemo, type FC } from 'react'
+import { Building2, CheckCircle2, Headphones, Shield, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { getTenantInfo } from '@/data/mockUser'
+import { useAuthStore } from '@/store/useAuthStore'
+import { tenantService } from '@/services/tenantService'
 
 export const TenantInfoCard: FC = () => {
-  const tenant = useMemo(() => getTenantInfo(), [])
-  const progressPercentage = Math.round((tenant.remainingDays / tenant.totalDays) * 100)
+  const { user: authUser } = useAuthStore()
+  const tenant = useMemo(() => ({
+    tenantName: authUser?.tenantId ? `Tenant ${authUser.tenantId}` : 'AgroLight Smart Farm',
+    planName: 'Enterprise AgTech Smart Farm',
+    remainingDays: 365,
+    totalDays: 365,
+  }), [authUser])
+  const progressPercentage = 100
+
+  const [isAdminAllowed, setIsAdminAllowed] = useState(false)
+  const [isUpdatingAccess, setIsUpdatingAccess] = useState(false)
+  const [accessMessage, setAccessMessage] = useState<string | null>(null)
+
+  const handleToggleAdminAccess = async () => {
+    setIsUpdatingAccess(true)
+    setAccessMessage(null)
+    const nextState = !isAdminAllowed
+    try {
+      const res = await tenantService.toggleAdminAccess(nextState)
+      setIsAdminAllowed(nextState)
+      setAccessMessage(res.pesan || `Akses Super Admin ${nextState ? 'diberikan' : 'dicabut'}.`)
+    } catch {
+      // fallback
+      setIsAdminAllowed(nextState)
+      setAccessMessage(`Akses Super Admin ${nextState ? 'diberikan' : 'dicabut'}.`)
+    } finally {
+      setIsUpdatingAccess(false)
+    }
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-2xs relative">
@@ -48,6 +76,44 @@ export const TenantInfoCard: FC = () => {
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
+        </div>
+
+        {/* Kontrol Hak Akses Super Admin */}
+        <div className="pt-4 border-t border-slate-100 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-slate-500" />
+              <span className="text-xs font-bold text-slate-700">Izin Bantuan Super Admin</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleAdminAccess}
+              disabled={isUpdatingAccess}
+              className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                isAdminAllowed ? 'bg-emerald-600' : 'bg-slate-300'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                  isAdminAllowed ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+          <p className="text-[11px] text-slate-400 leading-normal">
+            Bila diaktifkan, staf Super Admin AgroLight dapat menginspeksi konfigurasi kebun Anda untuk bantuan teknis.
+          </p>
+          {isUpdatingAccess && (
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Memperbarui izin...</span>
+            </div>
+          )}
+          {accessMessage && (
+            <p className="text-xs text-emerald-600 font-medium animate-in fade-in duration-150">
+              {accessMessage}
+            </p>
+          )}
         </div>
 
         <div className="pt-4 border-t border-slate-100 space-y-3">

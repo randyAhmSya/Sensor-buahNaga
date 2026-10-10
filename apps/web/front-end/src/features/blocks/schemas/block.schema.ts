@@ -1,21 +1,32 @@
 import { z } from 'zod'
+import { antiScriptRefine } from '@/utils/sanitize'
 
 export const blockFormSchema = z.object({
-  name: z
-    .string()
-    .min(3, 'Nama blok minimal 3 karakter')
-    .max(60, 'Nama blok maksimal 60 karakter'),
+  name: antiScriptRefine(
+    z
+      .string()
+      .min(3, 'Nama blok minimal 3 karakter')
+      .max(60, 'Nama blok maksimal 60 karakter')
+  ),
   nodeSensor: z
     .string()
-    .min(3, 'ID Node sensor wajib diisi')
-    .max(30, 'Maksimal 30 karakter'),
-  description: z
+    .optional()
+    .default(''),
+  description: antiScriptRefine(
+    z
+      .string()
+      .max(300, 'Maksimal 300 karakter')
+      .optional()
+      .default('')
+  ),
+  area: z
     .string()
-    .min(10, 'Keterangan blok minimal 10 karakter')
-    .max(300, 'Maksimal 300 karakter'),
-  area: z.string().optional(),
-  harvestEstimate: z.string().optional(),
-  imageUrl: z.string().min(1, 'Foto blok wajib diisi atau diunggah'),
+    .optional()
+    .refine((val) => !val || antiScriptRefine(z.string()).safeParse(val).success, {
+      message: 'Input mengandung karakter atau tag yang tidak diizinkan.',
+    }),
+  harvestEstimate: z.string().optional().nullable(),
+  imageUrl: z.string().optional().nullable().default(''),
   status: z.enum(['Online', 'Offline']),
 })
 

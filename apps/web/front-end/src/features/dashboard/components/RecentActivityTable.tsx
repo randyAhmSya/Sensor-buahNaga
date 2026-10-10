@@ -80,9 +80,17 @@ export const RecentActivityTable = memo<RecentActivityTableProps>(({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {activities.map((item) => (
-              <RecentActivityTableRow key={item.nodeCode} item={item} />
-            ))}
+            {activities.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="py-8 text-center text-slate-400 text-xs font-medium">
+                  Belum ada aktivitas sensor tercatat
+                </td>
+              </tr>
+            ) : (
+              activities.map((item) => (
+                <RecentActivityTableRow key={item.nodeCode} item={item} />
+              ))
+            )}
           </tbody>
         </table>
       </div>

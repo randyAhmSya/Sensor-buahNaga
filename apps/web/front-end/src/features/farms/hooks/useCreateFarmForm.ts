@@ -1,5 +1,4 @@
 import { useState, type FormEvent } from 'react'
-import { sanitizeInput } from '@/utils/sanitize'
 import { createFarmSchema, type CreateFarmInput } from '../schemas/farmSchema'
 import type { FarmItem } from '@/types/farm'
 
@@ -21,8 +20,7 @@ export function useCreateFarmForm({ onAddFarm, onClose }: UseCreateFarmFormProps
   const [errors, setErrors] = useState<Partial<Record<keyof CreateFarmInput, string>>>({})
 
   const handleTextChange = (field: keyof CreateFarmInput, value: string) => {
-    const cleaned = sanitizeInput(value)
-    setFormData((prev) => ({ ...prev, [field]: cleaned }))
+    setFormData((prev) => ({ ...prev, [field]: value }))
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }))
     }
@@ -57,8 +55,8 @@ export function useCreateFarmForm({ onAddFarm, onClose }: UseCreateFarmFormProps
       location: formData.location,
       status: formData.status,
       totalBlocks: 0,
-      imageUrl: formData.imageUrl,
-      bannerUrl: formData.imageUrl,
+      imageUrl: formData.imageUrl || '',
+      bannerUrl: formData.imageUrl || '',
       blocks: [],
     }
 

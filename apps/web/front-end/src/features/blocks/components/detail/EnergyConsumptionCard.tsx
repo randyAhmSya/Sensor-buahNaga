@@ -28,27 +28,39 @@ export const EnergyConsumptionCard: React.FC<EnergyConsumptionCardProps> = ({ en
             <span className="text-3xl font-bold text-slate-900 tracking-tight">{energy.kwh}</span>
             <span className="text-sm font-semibold text-slate-500">kWh</span>
           </div>
-          <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-semibold">
-            <TrendingDown className="w-3.5 h-3.5" />
-            <span>4.2% lebih hemat dari rata-rata blok lain</span>
+          <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+            {energy.kwh > 0 ? (
+              <>
+                <TrendingDown className="w-3.5 h-3.5 text-emerald-700" />
+                <span className="text-emerald-700 font-semibold">Efisiensi pemakaian lampu aktif</span>
+              </>
+            ) : (
+              <span>Belum ada konsumsi listrik terakumulasi periode ini</span>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Mini Bar Chart Konsumsi Harian */}
+      {/* Mini Bar Chart Konsumsi Harian atau Empty State */}
       <div className="space-y-2 pt-2 border-t border-slate-100">
-        <div className="flex items-end justify-between gap-1.5 h-14 pt-2">
-          {weeklyUsage.map((val, idx) => (
-            <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
-              <div
-                className="w-full bg-emerald-100 group-hover:bg-emerald-600 rounded-sm transition-colors"
-                style={{ height: `${(val / 24) * 100}%` }}
-                title={`${val} kWh`}
-              />
-              <span className="text-[10px] text-slate-400 font-medium">{days[idx]}</span>
-            </div>
-          ))}
-        </div>
+        {energy.kwh > 0 ? (
+          <div className="flex items-end justify-between gap-1.5 h-14 pt-2">
+            {weeklyUsage.map((val, idx) => (
+              <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
+                <div
+                  className="w-full bg-emerald-100 group-hover:bg-emerald-600 rounded-sm transition-colors"
+                  style={{ height: `${(val / 24) * 100}%` }}
+                  title={`${val} kWh`}
+                />
+                <span className="text-[10px] text-slate-400 font-medium">{days[idx]}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-2 text-center text-[11px] text-slate-400 font-medium">
+            Meteran energi akan mencatat daya otomatis saat lampu penyinaran beroperasi.
+          </div>
+        )}
       </div>
     </div>
   )

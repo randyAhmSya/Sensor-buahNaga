@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\blok\addBlokRequest;
 use App\Http\Requests\blok\updateBlokRequest;
 use App\Services\management_kebun\BlokService;
-use App\Models\kebun;
+use App\Models\Kebun;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -34,7 +34,7 @@ class BlokController extends Controller
             return $this->ErrorResponse('Parameter kebun_id wajib disertakan di URL (?kebun_id=...).', 400);
         }
 
-        $kebun = kebun::find($kebunId);
+        $kebun = Kebun::find($kebunId);
 
         if (!$kebun) return $this->errorResponse('Data kebun tidak ditemukan.', 404);
         if (Gate::denies('view', $kebun)) return $this->errorResponse('Anda tidak memiliki akses ke kebun ini.', 403);
@@ -48,7 +48,7 @@ class BlokController extends Controller
     // ==========================================================
     public function store(addBlokRequest $request): JsonResponse
     {
-        $kebun = kebun::find($request->kebun_id);
+        $kebun = Kebun::find($request->kebun_id);
 
         if (!$kebun) return $this->errorResponse('Data kebun tidak ditemukan.', 404);
         if (Gate::denies('update', $kebun)) return $this->errorResponse('Anda tidak memiliki izin menambah blok di kebun ini.', 403);
@@ -67,7 +67,7 @@ class BlokController extends Controller
         $blok = $this->blokService->getBlokById($id);
         if (!$blok) return $this->errorResponse('Data blok tidak ditemukan.', 404);
 
-        $kebun = kebun::find($blok->kebun_id);
+        $kebun = Kebun::find($blok->kebun_id);
         if (Gate::denies('view', $kebun)) return $this->errorResponse('Anda tidak memiliki akses.', 403);
 
         return $this->successResponse($blok, 'Detail blok berhasil diambil.');
@@ -81,7 +81,7 @@ class BlokController extends Controller
         $blok = $this->blokService->getBlokById($id);
         if (!$blok) return $this->errorResponse('Data blok tidak ditemukan.', 404);
 
-        $kebun = kebun::find($blok->kebun_id);
+        $kebun = Kebun::find($blok->kebun_id);
         if (Gate::denies('update', $kebun)) return $this->errorResponse('Anda tidak memiliki izin.', 403);
 
         $fileFoto = $request->file('foto');
@@ -98,7 +98,7 @@ class BlokController extends Controller
         $blok = $this->blokService->getBlokById($id);
         if (!$blok) return $this->errorResponse('Data blok tidak ditemukan.', 404);
 
-        $kebun = kebun::find($blok->kebun_id);
+        $kebun = Kebun::find($blok->kebun_id);
         if (Gate::denies('delete', $kebun)) return $this->errorResponse('Anda tidak memiliki izin.', 403);
 
         $this->blokService->deleteBlok($blok);

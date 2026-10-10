@@ -2,8 +2,8 @@
 
 namespace App\Services\management_kebun;
 
-use App\Models\nodeSensor;
-use App\Models\kode_qr;
+use App\Models\NodeSensor;
+use App\Models\KodeQr;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
@@ -11,14 +11,25 @@ class NodeService
 {
     public function getAllNodesByKebun(string $kebunId)
     {
-        return nodeSensor::with(['blok', 'gateway'])->whereHas('blok', function ($query) use ($kebunId) {
+        return NodeSensor::with(['blok', 'gateway'])->whereHas('blok', function ($query) use ($kebunId) {
             $query->where('kebun_id', $kebunId);
         })->get();
     }
 
     public function getNodeById(string $id)
     {
-        return nodeSensor::with(['blok', 'gateway', 'qr'])->find($id);
+        if (\Illuminate\Support\Str::isUuid($id)) {
+            return NodeSensor::with(['blok.kebun', 'gateway', 'qr'])->find($id);
+        }
+
+        return NodeSensor::with(['blok.kebun', 'gateway', 'qr'])
+            ->where(function ($query) use ($id) {
+                $query->whereHas('qr', function ($q) use ($id) {
+                    $q->where('teks_kode_qr', $id);
+                })
+                ->orWhere('kode_perangkat', $id);
+            })
+            ->first();
     }
 
     public function createNode(array $data)
@@ -26,7 +37,7 @@ class NodeService
         return DB::transaction(function () use ($data) {
 
             if (empty($data['qr_id'])) {
-                $qrBaru = kode_qr::create([
+                $qrBaru = KodeQr::create([
                     'teks_kode_qr' => 'QR-NODE-' . strtoupper(Str::random(6)),
                     'status_qr'    => true
                 ]);
@@ -38,13 +49,13 @@ class NodeService
         });
     }
 
-    public function updateNode(nodeSensor $node, array $data)
+    public function updateNode(NodeSensor $node, array $data)
     {
         $node->update($data);
         return $node;
     }
 
-    public function deleteNode(nodeSensor $node)
+    public function deleteNode(NodeSensor $node)
     {
         $node->delete();
     }
@@ -55,10 +66,10 @@ class NodeService
             $sensor = NodeSensor::findOrFail($id_sensor);
 
             if ($sensor->qr_id) {
-                kode_qr::where('id_qr', $sensor->qr_id)->delete();
+                KodeQr::where('id_qr', $sensor->qr_id)->delete();
             }
 
-            $qrBaru = kode_qr::create([
+            $qrBaru = KodeQr::create([
                 'teks_kode_qr' => 'QR-NODE-' . strtoupper(Str::random(6)),
                 'status_qr'    => true
             ]);

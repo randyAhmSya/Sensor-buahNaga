@@ -1,6 +1,14 @@
 import type { UserRole } from '../config/constants'
 
-// Export all database schema interfaces
+// Export all database schema interfaces & backend API models
+export * from './api.types'
+export * from './auth.types'
+export * from './kebun.types'
+export * from './block.types'
+export * from './node.types'
+export * from './gateway.types'
+export * from './qr.types'
+export * from './tenant.types'
 export * from './database.types'
 export * from './user'
 export * from './telemetry'

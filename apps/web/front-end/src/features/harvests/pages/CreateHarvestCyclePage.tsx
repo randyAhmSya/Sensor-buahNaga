@@ -1,73 +1,102 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ChevronRight, ArrowLeft, Save, ChevronDown } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Save, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { getAllBlockOptions } from '@/data/centralData';
-import { harvestCycleFormSchema } from '../schemas/harvestSchema';
-import type { HarvestCycleFormInput } from '../schemas/harvestSchema';
+import { farmService } from '@/services/farmService';
+import { harvestService } from '@/services/harvestService';
+import type { BlockOptionItem } from '../components/CreateHarvestCycleModal';
 
 export const CreateHarvestCyclePage: React.FC = () => {
   const navigate = useNavigate();
-  const availableBlockOptions = useMemo(() => getAllBlockOptions(), []);
-  const initialOption = availableBlockOptions[0] || { farm: 'Kebun Raya Bogor', block: 'Blok A (Utara)' };
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
 
-  const [formData, setFormData] = useState<HarvestCycleFormInput>({
-    farmName: initialOption.farm,
-    blockName: initialOption.block,
-    lightingDate: '',
-    bloomingTargetDays: 25,
-    estimatedHarvestDate: '',
-    notes: '',
-  });
+  const [blocks, setBlocks] = useState<BlockOptionItem[]>([]);
+  const [selectedBlockId, setSelectedBlockId] = useState<string>('');
+  const [lightingDate, setLightingDate] = useState<string>(todayStr);
+  const [bloomingTargetDays, setBloomingTargetDays] = useState<number>(20);
 
-  const [errors, setErrors] = useState<Partial<Record<keyof HarvestCycleFormInput, string>>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingBlocks, setIsLoadingBlocks] = useState<boolean>(true);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Hitung estimasi panen otomatis berdasarkan tanggal penyinaran + target hari + durasi pembesaran buah (rata-rata 30 hari pasca berbunga)
-  const calculateEstimatedHarvest = (startDateStr: string, daysToBloom: number) => {
-    if (!startDateStr) return '';
-    const date = new Date(startDateStr);
+  // Ambil daftar kebun & blok riil
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const farms = await farmService.getAll();
+        const extracted: BlockOptionItem[] = farms.flatMap((farm) =>
+          (farm.blocks || []).map((b) => ({
+            id: b.id,
+            name: b.name,
+            farmName: farm.name,
+          }))
+        );
+        if (isMounted) {
+          setBlocks(extracted);
+          if (extracted.length > 0) {
+            setSelectedBlockId(extracted[0].id);
+          }
+          setIsLoadingBlocks(false);
+        }
+      } catch {
+        if (isMounted) {
+          setBlocks([]);
+          setIsLoadingBlocks(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Hitung estimasi panen otomatis
+  const projectedHarvestDate = useMemo(() => {
+    if (!lightingDate) return '';
+    const date = new Date(lightingDate);
     if (isNaN(date.getTime())) return '';
-    
-    // Total hari dari penyinaran ke panen = target bunga + 30 hari pematangan
-    const totalDays = Number(daysToBloom || 0) + 30;
+    const totalDays = Number(bloomingTargetDays || 20) + 30;
     date.setDate(date.getDate() + totalDays);
     return date.toISOString().split('T')[0];
-  };
+  }, [lightingDate, bloomingTargetDays]);
 
-  const handleDateOrDaysChange = (dateVal: string, daysVal: number) => {
-    const est = calculateEstimatedHarvest(dateVal, daysVal);
-    setFormData((prev) => ({
-      ...prev,
-      lightingDate: dateVal,
-      bloomingTargetDays: daysVal,
-      estimatedHarvestDate: est,
-    }));
-    if (errors.lightingDate) setErrors((prev) => ({ ...prev, lightingDate: undefined }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = harvestCycleFormSchema.safeParse(formData);
-
-    if (!result.success) {
-      const fieldErrors: Partial<Record<keyof HarvestCycleFormInput, string>> = {};
-      result.error.issues.forEach((err) => {
-        if (err.path[0]) fieldErrors[err.path[0] as keyof HarvestCycleFormInput] = err.message;
-      });
-      setErrors(fieldErrors);
+    if (!selectedBlockId) {
+      setErrorMessage('Pilih blok lahan terlebih dahulu');
+      return;
+    }
+    if (!lightingDate) {
+      setErrorMessage('Tanggal mulai penyinaran wajib diisi');
+      return;
+    }
+    if (!bloomingTargetDays || bloomingTargetDays < 1) {
+      setErrorMessage('Target hari berbunga minimal 1 hari');
       return;
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setErrorMessage(null);
+
+    try {
+      await harvestService.startHarvestCycle({
+        block_id: selectedBlockId,
+        tanggal_penyinaran: lightingDate,
+        target_hari_berbunga: Number(bloomingTargetDays),
+      });
+
       navigate('/admin/harvests');
-    }, 300);
+    } catch (err: unknown) {
+      setErrorMessage((err as Error)?.message || 'Gagal menyimpan siklus panen baru.');
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Breadcrumb & Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
           <Link to="/admin/harvests" className="hover:text-emerald-700 transition-colors">
@@ -101,29 +130,41 @@ export const CreateHarvestCyclePage: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
         <div className="p-6 md:p-8 space-y-6">
-          {/* Baris 1: Kebun & Blok */}
+          {errorMessage && (
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-700 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {/* Baris 1: Blok Lahan & Tanggal Penyinaran */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1.5">
               <label className="block text-sm font-semibold text-slate-800">
-                Pilih Kebun & Blok <span className="text-rose-600 font-bold">*</span>
+                Pilih Blok Lahan <span className="text-rose-600 font-bold">*</span>
               </label>
               <div className="relative">
                 <select
-                  value={`${formData.farmName}|${formData.blockName}`}
-                  onChange={(e) => {
-                    const [farm, blk] = e.target.value.split('|');
-                    setFormData((prev) => ({ ...prev, farmName: farm, blockName: blk }));
-                  }}
-                  className="w-full appearance-none bg-white border border-slate-300 focus:border-emerald-600 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-900 outline-none cursor-pointer shadow-2xs"
+                  value={selectedBlockId}
+                  onChange={(e) => setSelectedBlockId(e.target.value)}
+                  disabled={isLoadingBlocks || blocks.length === 0}
+                  className="w-full appearance-none bg-white border border-slate-300 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-900 outline-none cursor-pointer shadow-2xs pr-10"
                 >
-                  {availableBlockOptions.map((opt) => (
-                    <option key={`${opt.farm}-${opt.block}`} value={`${opt.farm}|${opt.block}`}>
-                      {opt.farm} — {opt.block}
-                    </option>
-                  ))}
+                  {isLoadingBlocks ? (
+                    <option value="">Memuat daftar blok lahan...</option>
+                  ) : blocks.length === 0 ? (
+                    <option value="">Tidak ada blok lahan aktif</option>
+                  ) : (
+                    blocks.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.farmName ? `${opt.farmName} — ${opt.name}` : opt.name}
+                      </option>
+                    ))
+                  )}
                 </select>
                 <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
+              <p className="text-[11px] text-slate-400">Pilih blok kebun yang akan menerima pencahayaan lampu LED.</p>
             </div>
 
             <div className="space-y-1.5">
@@ -133,14 +174,13 @@ export const CreateHarvestCyclePage: React.FC = () => {
               <div className="relative">
                 <input
                   type="date"
-                  value={formData.lightingDate}
-                  onChange={(e) => handleDateOrDaysChange(e.target.value, formData.bloomingTargetDays)}
-                  className={`w-full bg-white border ${
-                    errors.lightingDate ? 'border-rose-500' : 'border-slate-300 focus:border-emerald-600'
-                  } rounded-xl px-4 py-2.5 text-sm font-medium text-slate-900 outline-none shadow-2xs`}
+                  required
+                  value={lightingDate}
+                  onChange={(e) => setLightingDate(e.target.value)}
+                  className="w-full bg-white border border-slate-300 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-900 outline-none shadow-2xs"
                 />
               </div>
-              {errors.lightingDate && <p className="text-xs text-rose-600 font-medium">{errors.lightingDate}</p>}
+              <p className="text-[11px] text-slate-400">Tanggal pertama induksi lampu dinyalakan malam hari.</p>
             </div>
           </div>
 
@@ -157,13 +197,14 @@ export const CreateHarvestCyclePage: React.FC = () => {
                   type="number"
                   min="1"
                   max="60"
-                  value={formData.bloomingTargetDays}
-                  onChange={(e) => handleDateOrDaysChange(formData.lightingDate, Number(e.target.value))}
-                  className="w-full bg-white border border-slate-300 focus:border-emerald-600 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-900 outline-none shadow-2xs"
-                  placeholder="Standar: 25 hari"
+                  required
+                  value={bloomingTargetDays}
+                  onChange={(e) => setBloomingTargetDays(Number(e.target.value))}
+                  className="w-full bg-white border border-slate-300 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-900 outline-none shadow-2xs"
+                  placeholder="Standar: 20 hari"
                 />
               </div>
-              <p className="text-[11px] text-slate-400">Rata-rata induksi lampu membutuhkan waktu 20–28 hari.</p>
+              <p className="text-[11px] text-slate-400">Rata-rata induksi fotoperiode membutuhkan 20–25 hari.</p>
             </div>
 
             <div className="space-y-1.5">
@@ -174,28 +215,14 @@ export const CreateHarvestCyclePage: React.FC = () => {
                 <input
                   type="text"
                   readOnly
-                  value={formData.estimatedHarvestDate || 'Pilih tanggal penyinaran terlebih dahulu'}
+                  value={projectedHarvestDate || 'Pilih tanggal penyinaran terlebih dahulu'}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-emerald-800 outline-none cursor-not-allowed"
                 />
               </div>
-              <p className="text-[11px] text-slate-400">Dihitung dari induksi bunga + 30 hari pembesaran buah matang.</p>
+              <p className="text-[11px] text-slate-400">
+                Dihitung dari induksi bunga ({bloomingTargetDays} hari) + 30 hari pematangan buah.
+              </p>
             </div>
-          </div>
-
-          <hr className="border-slate-100" />
-
-          {/* Catatan Perlakuan */}
-          <div className="space-y-1.5">
-            <label className="block text-sm font-semibold text-slate-800">
-              Catatan Siklus <span className="text-xs font-normal text-slate-500">(Opsional)</span>
-            </label>
-            <textarea
-              rows={3}
-              value={formData.notes || ''}
-              onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-              placeholder="Catatan pemupukan kalium, target berat buah grade A, kondisi cuaca..."
-              className="w-full rounded-xl p-3 text-sm font-medium text-slate-900 placeholder:text-slate-400 border border-slate-300 focus:border-emerald-600 outline-none transition-colors"
-            />
           </div>
         </div>
 
@@ -214,7 +241,7 @@ export const CreateHarvestCyclePage: React.FC = () => {
             type="submit"
             variant="primary"
             size="md"
-            disabled={isSubmitting}
+            disabled={isSubmitting || blocks.length === 0}
             className="w-full sm:w-auto flex flex-row items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold shadow-xs"
           >
             <Save className="w-4 h-4 shrink-0" />

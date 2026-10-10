@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
-use App\Models\kebun;
+use App\Models\Kebun;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Traits\admin_acces\KebunPolicy;
+use App\Policies\KebunPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -46,5 +46,6 @@ class AppServiceProvider extends ServiceProvider
             }
             return $user->tenant_id === $kebun->tenant_id;
         });
+        Gate::policy(Kebun::class, KebunPolicy::class);
     }
 }

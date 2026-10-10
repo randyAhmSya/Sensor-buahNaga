@@ -15,7 +15,6 @@ class AuthController extends Controller
 
     protected AuthService $authService;
 
-
     public function __construct(AuthService $authService)
     {
         $this->authService = $authService;
@@ -38,6 +37,10 @@ class AuthController extends Controller
 
         if (! $user) {
             return $this->errorResponse('Email atau password salah.', 401);
+        }
+
+        if (! $user->is_aktif) {
+            return $this->errorResponse('Akun ini dinonaktifkan. Hubungi admin AgroLight.', 403);
         }
 
         $token = $this->authService->createNewToken($user);

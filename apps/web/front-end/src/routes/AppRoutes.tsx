@@ -22,6 +22,7 @@ const QrGeneratorPage = lazy(() => import('@/features/manajemen-qr/pages/QrGener
 const ProfilePage = lazy(() => import('@/features/profile/pages/ProfilePage').then((m) => ({ default: m.ProfilePage })))
 const FarmsManagementPage = lazy(() => import('@/features/farms/pages/FarmsManagementPage').then((m) => ({ default: m.FarmsManagementPage })))
 const CreateFarmPage = lazy(() => import('@/features/farms/pages/CreateFarmPage').then((m) => ({ default: m.CreateFarmPage })))
+const EditFarmPage = lazy(() => import('@/features/farms/pages/EditFarmPage').then((m) => ({ default: m.EditFarmPage })))
 const FarmDetailPage = lazy(() => import('@/features/farms/pages/FarmDetailPage').then((m) => ({ default: m.FarmDetailPage })))
 const BlockDetailPage = lazy(() => import('@/features/blocks/pages/BlockDetailPage').then((m) => ({ default: m.BlockDetailPage })))
 const CreateBlockPage = lazy(() => import('@/features/blocks/pages/CreateBlockPage').then((m) => ({ default: m.CreateBlockPage })))
@@ -63,6 +64,8 @@ export function AppRoutes() {
           <Route path="dashboard" element={<FarmerDashboardPage />} />
           <Route path="farms" element={<FarmsManagementPage />} />
           <Route path="farms/new" element={<CreateFarmPage />} />
+          <Route path="farms/:farmId/edit" element={<EditFarmPage />} />
+          <Route path="farms/:id/edit" element={<EditFarmPage />} />
           <Route path="farms/:farmId/blocks/new" element={<CreateBlockPage />} />
           <Route path="farms/:farmId/blocks/:blockId/edit" element={<EditBlockPage />} />
           <Route path="farms/:farmId/blocks/:blockId" element={<BlockDetailPage />} />

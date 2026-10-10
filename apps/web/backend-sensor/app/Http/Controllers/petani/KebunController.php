@@ -22,23 +22,30 @@ class KebunController extends Controller
         $this->kebunService = $kebunService;
     }
 
-    // ==========================================================
-    // 1. GET ALL (READ)
-    // ==========================================================
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        $tenantId = $user->role === 'superAdmin' ? $request->query('tenant_id') : $user->tenant_id;
+        if ($user->role === 'superAdmin') {
+            $tenantId = $request->query('tenant_id');
+            if (!$tenantId) {
+                return $this->errorResponse('Super Admin wajib menyertakan tenant_id (?tenant_id=...).', 400);
+            }
+
+            $tenant = \App\Models\Tenant::find($tenantId);
+            if (!$tenant) return $this->errorResponse('Tenant tidak ditemukan.', 404);
+            if (!$tenant->is_admin_allowed) {
+                return $this->errorResponse('Tenant ini belum mengizinkan akses Super Admin.', 403);
+            }
+        } else {
+            $tenantId = $user->tenant_id;
+        }
 
         $kebuns = $this->kebunService->getAllKebun($tenantId);
 
         return $this->successResponse($kebuns, 'Daftar kebun berhasil diambil.');
     }
 
-    // ==========================================================
-    // 2. CREATE (STORE)
-    // ==========================================================
     public function store(addkebunRequest $request): JsonResponse
     {
         $user = $request->user();
@@ -48,19 +55,23 @@ class KebunController extends Controller
                 return $this->errorResponse('Super Admin wajib menyertakan tenant_id dari pemilik kebun di Body JSON.', 400);
             }
             $tenantId = $request->input('tenant_id');
+
+            $tenant = \App\Models\Tenant::find($tenantId);
+            if (!$tenant) return $this->errorResponse('Tenant tidak ditemukan.', 404);
+            if (!$tenant->is_admin_allowed) {
+                return $this->errorResponse('Tenant ini belum mengizinkan akses Super Admin.', 403);
+            }
         } else {
             $tenantId = $user->tenant_id;
         }
-        $fileFoto = $request->file('foto');
 
+        $fileFoto = $request->file('foto');
         $kebun = $this->kebunService->createKebun($tenantId, $request->validated(), $fileFoto);
 
         return $this->successResponse($kebun, 'Kebun berhasil ditambahkan.', 201);
     }
 
-    // ==========================================================
-    // 3. READ ONE (SHOW)
-    // ==========================================================
+
     public function show(string $id): JsonResponse
     {
         $kebun = $this->kebunService->getKebunById($id);
@@ -76,9 +87,6 @@ class KebunController extends Controller
         return $this->successResponse($kebun, 'Detail kebun berhasil diambil.');
     }
 
-    // ==========================================================
-    // 4. UPDATE
-    // ==========================================================
     public function update(updatekebunRequest $request, string $id): JsonResponse
     {
         $kebun = $this->kebunService->getKebunById($id);
@@ -97,9 +105,7 @@ class KebunController extends Controller
         return $this->successResponse($updatedKebun, 'Data kebun berhasil diperbarui.');
     }
 
-    // ==========================================================
-    // 5. DELETE (DESTROY)
-    // ==========================================================
+
     public function destroy(string $id): JsonResponse
     {
         $kebun = $this->kebunService->getKebunById($id);

@@ -1,6 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { sanitizeInput } from '@/utils/sanitize'
 import { createFarmSchema, type CreateFarmInput } from '../schemas/farm.schema'
 import type { FarmItem } from '@/types/farm.types'
 import { farmService } from '@/services/farmService'
@@ -12,6 +11,7 @@ interface UseCreateFarmPageProps {
 export function useCreateFarmPage({ onAddFarm }: UseCreateFarmPageProps = {}) {
   const navigate = useNavigate()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   const [formData, setFormData] = useState<CreateFarmInput>({
     name: '',
@@ -27,8 +27,7 @@ export function useCreateFarmPage({ onAddFarm }: UseCreateFarmPageProps = {}) {
   const [imagePreview, setImagePreview] = useState<string>('')
 
   const handleTextChange = (field: keyof CreateFarmInput, value: string) => {
-    const cleaned = sanitizeInput(value)
-    setFormData((prev) => ({ ...prev, [field]: cleaned }))
+    setFormData((prev) => ({ ...prev, [field]: value }))
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }))
     }
@@ -44,6 +43,7 @@ export function useCreateFarmPage({ onAddFarm }: UseCreateFarmPageProps = {}) {
   const handleImageFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      setSelectedFile(file)
       const dummyUrl = URL.createObjectURL(file)
       setImagePreview(dummyUrl)
       setFormData((prev) => ({ ...prev, imageUrl: dummyUrl }))
@@ -75,9 +75,10 @@ export function useCreateFarmPage({ onAddFarm }: UseCreateFarmPageProps = {}) {
         location: formData.location,
         description: formData.description,
         status: formData.status,
-        imageUrl: formData.imageUrl,
-        gpsCoordinates: formData.gpsCoordinates,
-        additionalNotes: formData.additionalNotes,
+        imageUrl: formData.imageUrl || undefined,
+        gpsCoordinates: formData.gpsCoordinates || undefined,
+        additionalNotes: formData.additionalNotes || undefined,
+        foto: selectedFile || undefined,
       })
       if (onAddFarm && res.farm) {
         onAddFarm(res.farm)

@@ -3,6 +3,7 @@
 namespace App\Services\management_kebun;
 
 use App\Models\Gateway;
+use Illuminate\Support\Str;
 
 class GatewayService
 {
@@ -20,6 +21,10 @@ class GatewayService
 
     public function createGateway(array $data)
     {
+        if (empty($data['kode_pairing'])) {
+            $data['kode_pairing'] = 'PAIR-' . strtoupper(Str::random(6));
+        }
+
         return Gateway::create($data);
     }
 

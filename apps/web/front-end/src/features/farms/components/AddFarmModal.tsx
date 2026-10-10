@@ -60,28 +60,28 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({ isOpen, onClose, onA
 
           <InputField
             name="imageUrl"
-            label="URL Foto Kebun *"
-            value={formData.imageUrl}
+            label="URL Foto Kebun (Opsional)"
+            value={formData.imageUrl || ''}
             onChange={(e) => handleTextChange('imageUrl', e.target.value)}
             placeholder="https://images.unsplash.com/..."
             error={errors.imageUrl}
             leftIcon={<ImageIcon className="w-4 h-4 text-slate-400" />}
           />
 
-          <div className="space-y-1">
-            <label className="block text-xs font-semibold text-slate-700">
-              Keterangan Kebun *
+          <div className="space-y-1.5">
+            <label className="block text-sm font-semibold text-slate-800">
+              Keterangan Kebun <span className="text-rose-600 font-bold ml-0.5">*</span>
             </label>
             <textarea
               rows={3}
               value={formData.description}
               onChange={(e) => handleTextChange('description', e.target.value)}
               placeholder="Jelaskan jenis tanaman, luasan, atau deskripsi singkat kebun..."
-              className={`w-full rounded-xl p-3 text-xs border ${
+              className={`w-full rounded-xl p-3 text-sm font-medium border ${
                 errors.description
-                  ? 'border-rose-500 focus:border-rose-600'
-                  : 'border-slate-200 focus:border-emerald-600'
-              } focus:outline-none focus:ring-0 text-slate-800 placeholder-slate-400 transition-colors`}
+                  ? 'border-rose-500 focus:border-rose-600 bg-rose-50/20 text-rose-900'
+                  : 'border-slate-300 focus:border-emerald-600 hover:border-slate-400'
+              } focus:outline-none focus:ring-1 focus:ring-emerald-600 text-slate-900 placeholder:text-slate-400 transition-colors`}
             />
             {errors.description && (
               <p className="text-xs text-rose-600 font-medium">{errors.description}</p>
@@ -89,8 +89,8 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({ isOpen, onClose, onA
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-700">
-              Status Kebun *
+            <label className="block text-sm font-semibold text-slate-800">
+              Status Kebun <span className="text-rose-600 font-bold ml-0.5">*</span>
             </label>
             <div className="grid grid-cols-2 gap-3">
               {(['Aktif', 'Inaktif'] as const).map((statusOption) => (

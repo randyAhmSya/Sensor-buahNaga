@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { blockFormSchema, type BlockFormInput } from '../schemas/block.schema'
 import { blockService } from '@/services/blockService'
-import { sanitizeInput } from '@/utils/sanitize'
 
 export const useBlockForm = (
   farmId: string,
@@ -25,13 +24,14 @@ export const useBlockForm = (
   const [errors, setErrors] = useState<Partial<Record<keyof BlockFormInput, string>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [imagePreview, setImagePreview] = useState<string>(initialData?.imageUrl || '')
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   const updateField = (field: keyof BlockFormInput, value: string) => {
-    let cleaned = sanitizeInput(value)
+    let nextValue = value
     if (field === 'area') {
-      cleaned = value.replace(/[^\d.]/g, '')
+      nextValue = value.replace(/[^\d.]/g, '')
     }
-    setFormData((prev) => ({ ...prev, [field]: cleaned }))
+    setFormData((prev) => ({ ...prev, [field]: nextValue }))
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }))
     }
@@ -44,6 +44,7 @@ export const useBlockForm = (
   const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      setSelectedFile(file)
       const dummyUrl = URL.createObjectURL(file)
       setImagePreview(dummyUrl)
       setFormData((prev) => ({ ...prev, imageUrl: dummyUrl }))
@@ -70,11 +71,22 @@ export const useBlockForm = (
 
     setIsSubmitting(true)
     try {
+      const payloadWithFile = {
+        name: parsed.data.name,
+        nodeSensor: parsed.data.nodeSensor,
+        description: parsed.data.description,
+        status: parsed.data.status,
+        area: parsed.data.area || undefined,
+        harvestEstimate: parsed.data.harvestEstimate || undefined,
+        imageUrl: parsed.data.imageUrl || undefined,
+        foto: selectedFile || undefined,
+      }
+
       if (isEdit && blockId) {
-        await blockService.update(farmId, blockId, parsed.data)
+        await blockService.update(farmId, blockId, payloadWithFile)
         navigate(`/admin/farms/${farmId}/blocks/${blockId}`)
       } else {
-        await blockService.create(farmId, parsed.data)
+        await blockService.create(farmId, payloadWithFile)
         navigate(`/admin/farms/${farmId}`)
       }
     } finally {

@@ -4,16 +4,16 @@ import { InputField } from '@/components/form/InputField'
 import { Button } from '@/components/ui/Button'
 import { sanitizeInput } from '@/utils/sanitize'
 import { profileInfoSchema } from '../schemas/profileSchemas'
-import { getUserProfile } from '@/data/mockUser'
+import { useAuthStore } from '@/store/useAuthStore'
 import { ProfileAvatar } from './ProfileAvatar'
 
 export const ProfileInfoSection: FC = () => {
-  const initialUser = getUserProfile()
+  const { user: authUser } = useAuthStore()
   const [formData, setFormData] = useState({
-    fullName: initialUser.fullName,
-    email: initialUser.email,
-    phone: initialUser.phone,
-    avatarUrl: initialUser.avatarUrl,
+    fullName: authUser?.name || '',
+    email: authUser?.email || '',
+    phone: '',
+    avatarUrl: authUser?.avatarUrl || '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saveSuccess, setSaveSuccess] = useState(false)

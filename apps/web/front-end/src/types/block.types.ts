@@ -1,5 +1,47 @@
 export type BlockStatus = 'Online' | 'Offline'
 
+export interface BlokBackend {
+  id_blok: string
+  id?: string
+  kebun_id?: string
+  id_kebun?: string
+  nama_blok: string
+  keterangan: string | null
+  luas_area: number | string | null
+  url_foto: string | null
+  estimasi_panen?: string | null
+  harvest_date?: string | null
+  created_at?: string
+  updated_at?: string
+  kebun?: {
+    id_kebun?: string
+    id?: string
+    nama_kebun?: string
+  }
+  node_sensor?: {
+    id_sensor: string
+    id?: string
+    kode_perangkat: string
+    status_koneksi: string
+  }
+}
+
+export interface CreateBlokPayload {
+  kebun_id: string
+  nama_blok: string
+  keterangan?: string
+  luas_area?: number
+  foto?: File
+}
+
+export interface UpdateBlokPayload {
+  nama_blok?: string
+  keterangan?: string
+  luas_area?: number
+  url_foto?: string
+  foto?: File
+}
+
 export interface BlockItem {
   id: string
   name: string
@@ -36,9 +78,11 @@ export interface BlockDetailFull {
   farmId: string
   farmName: string
   name: string
+  description?: string
   area: string
   bannerUrl: string
   deviceId: string
+  nodeSensorId?: string
   deviceStatus: BlockStatus
   currentLux: string
   temperature: string

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('id_sensor')->primary();
             $table->foreignUuid('blok_id')->unique()->constrained('bloks', 'id_blok')->cascadeOnDelete();
             $table->foreignUuid('gateway_id')->constrained('gateways', 'id_gateway')->cascadeOnDelete();
-            $table->foreignUuid('qr_id')->constrained('kode_qrs', 'id_qr')->cascadeOnDelete();
+            $table->foreignUuid('qr_id')->nullable()->unique()->constrained('kode_qrs', 'id_qr')->nullOnDelete();
             $table->string('kode_perangkat')->unique();
             $table->string('kode_pairing')->unique()->nullable();
             $table->string('token_perangkat')->unique()->nullable();
@@ -31,6 +31,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('node_sensors', function (Blueprint $table) {
+            $table->dropUnique(['qr_id']);
+        });
         Schema::dropIfExists('node_sensors');
     }
 };

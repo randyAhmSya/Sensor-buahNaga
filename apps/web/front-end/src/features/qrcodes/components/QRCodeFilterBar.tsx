@@ -1,7 +1,6 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
-import { getFarmNames } from '@/data/centralData';
 
 interface QRCodeFilterBarProps {
   searchTerm: string;
@@ -12,6 +11,7 @@ interface QRCodeFilterBarProps {
   onStatusChange: (val: string) => void;
   selectedPairing: string;
   onPairingChange: (val: string) => void;
+  farmOptions?: { label: string; value: string }[];
 }
 
 export const QRCodeFilterBar: React.FC<QRCodeFilterBarProps> = ({
@@ -23,12 +23,8 @@ export const QRCodeFilterBar: React.FC<QRCodeFilterBarProps> = ({
   onStatusChange,
   selectedPairing,
   onPairingChange,
+  farmOptions = [{ label: 'Semua Kebun', value: 'Semua Kebun' }],
 }) => {
-  const farmOptions = [
-    { label: 'Semua Kebun', value: 'Semua Kebun' },
-    ...getFarmNames().map((name) => ({ label: name, value: name })),
-  ];
-
   const statusOptions = [
     { label: 'Status (Semua)', value: 'Semua Status' },
     { label: 'Aktif', value: 'Aktif' },
@@ -78,3 +74,4 @@ export const QRCodeFilterBar: React.FC<QRCodeFilterBarProps> = ({
     </div>
   );
 };
+

@@ -26,25 +26,33 @@ export const CycleHistoryTable: React.FC<CycleHistoryTableProps> = ({ history })
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm text-slate-800">
-            {history.map((row) => (
-              <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="py-3.5 px-4 font-semibold text-slate-900">{row.id}</td>
-                <td className="py-3.5 px-4 text-slate-600">{row.startDate}</td>
-                <td className="py-3.5 px-4 text-slate-600">{row.actualHarvestDate}</td>
-                <td className="py-3.5 px-4 font-medium text-slate-700">{row.durationDays} Hari</td>
-                <td className="py-3.5 px-4 text-right">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-                      row.status === 'Selesai'
-                        ? 'border-emerald-600 bg-white text-emerald-700'
-                        : 'border-amber-500 bg-white text-amber-700'
-                    }`}
-                  >
-                    {row.status}
-                  </span>
+            {history.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="py-8 text-center text-xs text-slate-400 font-medium">
+                  Belum ada riwayat siklus panen sebelumnya untuk blok ini.
                 </td>
               </tr>
-            ))}
+            ) : (
+              history.map((row) => (
+                <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3.5 px-4 font-semibold text-slate-900">{row.id}</td>
+                  <td className="py-3.5 px-4 text-slate-600">{row.startDate}</td>
+                  <td className="py-3.5 px-4 text-slate-600">{row.actualHarvestDate}</td>
+                  <td className="py-3.5 px-4 font-medium text-slate-700">{row.durationDays} Hari</td>
+                  <td className="py-3.5 px-4 text-right">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                        row.status === 'Selesai'
+                          ? 'border-emerald-600 bg-white text-emerald-700'
+                          : 'border-amber-500 bg-white text-amber-700'
+                      }`}
+                    >
+                      {row.status}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

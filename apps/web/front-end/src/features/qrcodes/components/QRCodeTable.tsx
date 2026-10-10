@@ -1,6 +1,6 @@
 import React from 'react';
 import { Eye, Trash2 } from 'lucide-react';
-import type { QRCodeItem } from '@/data/mockQRCodes';
+import type { QRCodeItem } from '@/types/qr.types';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 
 interface QRCodeTableProps {

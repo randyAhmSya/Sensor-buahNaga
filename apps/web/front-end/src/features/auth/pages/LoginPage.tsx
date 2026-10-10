@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { 
   Mail, 
   Lock, 
-  ArrowRight
+  ArrowRight,
+  AlertCircle
 } from 'lucide-react'
 import { BrandLogo } from '@/components/common/BrandLogo'
 import { Button } from '@/components/ui/Button'
@@ -12,7 +13,7 @@ import { AuthSideBanner } from '../components/AuthSideBanner'
 import { useLoginForm } from '../hooks/useLoginForm'
 
 export const LoginPage: FC = () => {
-  const { formData, errors, handleChange, handleSubmit } = useLoginForm()
+  const { formData, errors, generalError, isSubmitting, handleChange, handleSubmit } = useLoginForm()
 
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-slate-50 font-sans">
@@ -37,6 +38,13 @@ export const LoginPage: FC = () => {
             <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Masuk ke Akun Anda</h2>
             <p className="text-sm text-slate-500 mt-1">Masukkan kredensial akun untuk mengakses dasbor kebun.</p>
           </div>
+
+          {generalError && (
+            <div className="mb-4 p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-medium flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>{generalError}</span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
@@ -87,6 +95,7 @@ export const LoginPage: FC = () => {
               type="submit"
               variant="primary"
               size="lg"
+              isLoading={isSubmitting}
               className="w-full justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 mt-3 shadow-sm rounded-xl cursor-pointer active:scale-[0.98] transition-all duration-150"
               rightIcon={<ArrowRight className="w-4 h-4" />}
             >

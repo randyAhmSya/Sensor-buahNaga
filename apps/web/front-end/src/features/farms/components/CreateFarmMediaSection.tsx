@@ -27,13 +27,15 @@ export const CreateFarmMediaSection: FC<CreateFarmMediaSectionProps> = ({
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4 flex-1 flex flex-col">
         <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
           <ImageIcon className="w-4 h-4 text-emerald-700" />
-          <h3 className="text-base font-bold text-slate-900">Foto Utama Kebun *</h3>
+          <h3 className="text-base font-bold text-slate-900">
+            Foto Utama Kebun <span className="text-xs font-normal text-slate-500 ml-1">(Opsional)</span>
+          </h3>
         </div>
 
         <div className="flex-1 min-h-48 border-2 border-dashed border-slate-200 hover:border-emerald-600 rounded-2xl flex flex-col items-center justify-center bg-slate-50/50 hover:bg-emerald-50/20 transition-all cursor-pointer relative overflow-hidden group">
           {imagePreview || formData.imageUrl ? (
             <img
-              src={imagePreview || formData.imageUrl}
+              src={imagePreview || formData.imageUrl || ''}
               alt="Preview"
               className="w-full h-full object-cover"
             />
@@ -58,7 +60,7 @@ export const CreateFarmMediaSection: FC<CreateFarmMediaSectionProps> = ({
         <InputField
           name="imageUrl"
           label="Atau masukkan URL Foto Langsung"
-          value={formData.imageUrl}
+          value={formData.imageUrl || ''}
           onChange={(e) => onUrlChange(e.target.value)}
           placeholder="https://images.unsplash.com/..."
           error={errors.imageUrl}
@@ -68,8 +70,8 @@ export const CreateFarmMediaSection: FC<CreateFarmMediaSectionProps> = ({
       {/* Card Status */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-5">
         <div className="space-y-2">
-          <label className="block text-xs font-semibold text-slate-700">
-            Status Operasional Kebun *
+          <label className="block text-sm font-semibold text-slate-800">
+            Status Operasional Kebun <span className="text-rose-600 font-bold ml-0.5">*</span>
           </label>
           <div className="grid grid-cols-2 gap-3">
             {(['Aktif', 'Inaktif'] as const).map((statusOption) => (

@@ -9,10 +9,11 @@ import { farmService } from '@/services/farmService'
 
 export const CreateBlockPage: React.FC = () => {
   const { farmId } = useParams<{ farmId: string }>()
-  const effectiveFarmId = farmId || 'farm-1'
+  const effectiveFarmId = farmId || ''
   const [farmName, setFarmName] = useState<string>('Kebun')
 
   useEffect(() => {
+    if (!effectiveFarmId) return
     farmService.getById(effectiveFarmId).then((farm) => {
       if (farm) setFarmName(farm.name)
     })
@@ -57,6 +58,7 @@ export const CreateBlockPage: React.FC = () => {
         <BlockInfoSection
           formData={formData}
           errors={errors}
+          farmId={effectiveFarmId}
           farmName={farmName}
           isEditMode={false}
           onChange={updateField}

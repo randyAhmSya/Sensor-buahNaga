@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Download, Printer, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import type { QRCodeItem } from '@/data/mockQRCodes';
+import type { QRCodeItem } from '@/types/qr.types';
 
 interface QRCodeDetailModalProps {
   isOpen: boolean;

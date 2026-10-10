@@ -32,56 +32,22 @@ export interface DashboardCardMetricItem {
 }
 
 export const MOCK_METRICS: DashboardMetrics = {
-  totalFarms: 5,
-  activeBlocks: 24,
-  totalNodes: 112,
-  offlineNodes: 3,
-  runningHarvestCycles: 8,
-  currentCycleText: 'Siklus Vegetatif Aktif',
-  currentDateText: 'Senin, 24 Oktober 2023',
-  harvestEstimateText: 'Estimasi Panen Blok A: 24 Nov 2023 (Toleransi ±3 Hari)',
+  totalFarms: 0,
+  activeBlocks: 0,
+  totalNodes: 0,
+  offlineNodes: 0,
+  runningHarvestCycles: 0,
+  currentCycleText: 'Belum Ada Siklus Aktif',
+  currentDateText: '-',
+  harvestEstimateText: 'Belum ada estimasi panen',
 }
 
-export const MOCK_TELEMETRY_NODES: TelemetryNodeRow[] = [
-  {
-    nodeCode: 'ND-001',
-    location: 'Utara - Blok A',
-    luxValue: '12,500 Lux',
-    powerConsumption: '45.2 W',
-    recordedTime: '2 mnt lalu',
-    status: 'Optimal',
-  },
-  {
-    nodeCode: 'ND-042',
-    location: 'Selatan - Blok C',
-    luxValue: '8,200 Lux',
-    powerConsumption: '40.5 W',
-    recordedTime: '5 mnt lalu',
-    status: 'Optimal',
-  },
-  {
-    nodeCode: 'ND-108',
-    location: 'Timur - Blok B',
-    luxValue: '1,200 Lux',
-    powerConsumption: '12.0 W',
-    recordedTime: '15 mnt lalu',
-    status: 'Low Light',
-  },
-  {
-    nodeCode: 'ND-077',
-    location: 'Barat - Blok D',
-    luxValue: '11,800 Lux',
-    powerConsumption: '44.8 W',
-    recordedTime: '22 mnt lalu',
-    status: 'Optimal',
-  },
-]
+export const MOCK_TELEMETRY_NODES: TelemetryNodeRow[] = []
 
 export const getDashboardMetrics = (): DashboardMetrics => ({ ...MOCK_METRICS })
 
 export const getTelemetryNodes = (): TelemetryNodeRow[] => [...MOCK_TELEMETRY_NODES]
 
-// Helper to convert metrics into 4 bento cards
 export const getDashboardMetricCards = (metrics: DashboardMetrics = MOCK_METRICS): DashboardCardMetricItem[] => [
   {
     title: 'Total Lahan Kebun',
@@ -105,7 +71,7 @@ export const getDashboardMetricCards = (metrics: DashboardMetrics = MOCK_METRICS
     icon: Router,
     iconColor: 'text-amber-600',
     badgeText: `${metrics.offlineNodes} Offline`,
-    badgeVariant: 'rose',
+    badgeVariant: 'slate',
   },
   {
     title: 'Siklus Panen Berjalan',
@@ -116,6 +82,5 @@ export const getDashboardMetricCards = (metrics: DashboardMetrics = MOCK_METRICS
   },
 ]
 
-// Backward compatibility helpers
 export const getRecentActivities = getTelemetryNodes
 export const getOfflineNodeCount = (): number => MOCK_METRICS.offlineNodes

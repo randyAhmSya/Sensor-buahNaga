@@ -1,9 +1,12 @@
 import { z } from 'zod'
+import { antiScriptRefine } from '@/utils/sanitize'
 
 export const deviceConfigSchema = z.object({
-  deviceName: z
-    .string()
-    .min(3, { message: 'Nama perangkat / gateway minimal 3 karakter' }),
+  deviceName: antiScriptRefine(
+    z
+      .string()
+      .min(3, { message: 'Nama perangkat / gateway minimal 3 karakter' })
+  ),
   deviceType: z.enum(
     [
       'LoRaWAN Gateway',
@@ -16,7 +19,9 @@ export const deviceConfigSchema = z.object({
       message: 'Pilih tipe perangkat',
     }
   ),
-  blockId: z.string().min(1, { message: 'Pilih blok lahan penempatan' }),
+  blockId: antiScriptRefine(
+    z.string().min(1, { message: 'Pilih blok lahan penempatan' })
+  ),
   targetLux: z
     .number({ message: 'Target lux harus berupa angka' })
     .min(50, { message: 'Target pencahayaan minimal 50 Lux' })

@@ -22,8 +22,10 @@ export const BlockDetailBanner: React.FC<BlockDetailBannerProps> = ({
 }) => {
   const navigate = useNavigate()
   const params = useParams<{ farmId?: string; blockId?: string }>()
-  const effectiveFarmId = farmId || params.farmId || 'farm-1'
-  const effectiveBlockId = blockId || params.blockId || 'blk-1'
+  const effectiveFarmId = farmId || params.farmId || ''
+  const effectiveBlockId = blockId || params.blockId || ''
+  const [imgError, setImgError] = React.useState(false)
+  const showFallback = !bannerUrl || imgError
 
   return (
     <div className="space-y-4">
@@ -45,12 +47,15 @@ export const BlockDetailBanner: React.FC<BlockDetailBannerProps> = ({
       </nav>
 
       {/* Banner Card */}
-      <div className="relative w-full h-56 md:h-64 rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 shadow-2xs group">
-        <img
-          src={bannerUrl}
-          alt={name}
-          className="w-full h-full object-cover opacity-80 group-hover:scale-102 transition-transform duration-500"
-        />
+      <div className="relative w-full h-56 md:h-64 rounded-2xl overflow-hidden border border-slate-200 bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 shadow-2xs group">
+        {!showFallback && (
+          <img
+            src={bannerUrl}
+            alt={name}
+            onError={() => setImgError(true)}
+            className="w-full h-full object-cover opacity-80 group-hover:scale-102 transition-transform duration-500"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/35 to-transparent" />
 
         <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end">

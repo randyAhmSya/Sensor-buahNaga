@@ -16,8 +16,16 @@ export const FarmDetailPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    farmService.getById(id || 'farm-1').then((res) => {
+    if (!id || id === 'farm-1') {
+      setFarm(null)
+      setIsLoading(false)
+      return
+    }
+    farmService.getById(id).then((res) => {
       setFarm(res || null)
+      setIsLoading(false)
+    }).catch(() => {
+      setFarm(null)
       setIsLoading(false)
     })
   }, [id])
@@ -40,6 +48,7 @@ export const FarmDetailPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       <FarmDetailHeader
+        farmId={farm.id}
         name={farm.name}
         location={farm.location}
         status={farm.status}

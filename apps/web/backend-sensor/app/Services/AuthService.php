@@ -20,11 +20,11 @@ class AuthService
 
             // 2. Buat user-nya, lalu hubungkan dengan ID perusahaan yang baru dibuat
             return User::create([
-                'tenant_id' => $tenant->tenant_id, // <-- Perbaikan Bug 2
+                'tenant_id' => $tenant->tenant_id,
                 'nama_lengkap' => $data['nama_lengkap'],
                 'email' => $data['email'],
-                'password' => Hash::make($data['password']), // <-- Perbaikan Bug 3
-                'role' => 'petani_biasa' // <-- Perbaikan Bug 4
+                'password' => Hash::make($data['password']),
+                'role' => 'petani_biasa'
             ]);
         });
     }
