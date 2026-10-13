@@ -5,6 +5,7 @@ namespace App\Http\Controllers\petani;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\kebun\addkebunRequest;
 use App\Http\Requests\Kebun\updatekebunRequest;
+use App\Services\management_admin\AksesTenantService;
 use App\Services\management_kebun\KebunService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,11 +16,16 @@ class KebunController extends Controller
 {
     use ApiResponser;
 
-    protected KebunService $kebunService;
+    private const PESAN_KEBUN_TIDAK_DITEMUKAN = 'Data kebun tidak ditemukan.';
+    private const PESAN_TENANT_TIDAK_DITEMUKAN = 'Tenant tidak ditemukan.';
 
-    public function __construct(KebunService $kebunService)
+    protected KebunService $kebunService;
+    protected AksesTenantService $aksesTenantService;
+
+    public function __construct(KebunService $kebunService, AksesTenantService $aksesTenantService)
     {
         $this->kebunService = $kebunService;
+        $this->aksesTenantService = $aksesTenantService;
     }
 
     public function index(Request $request): JsonResponse
@@ -33,16 +39,18 @@ class KebunController extends Controller
             }
 
             $tenant = \App\Models\Tenant::find($tenantId);
-            if (!$tenant) return $this->errorResponse('Tenant tidak ditemukan.', 404);
-            if (!$tenant->is_admin_allowed) {
-                return $this->errorResponse('Tenant ini belum mengizinkan akses Super Admin.', 403);
+            if (!$tenant) {
+                return $this->errorResponse(self::PESAN_TENANT_TIDAK_DITEMUKAN, 404);
+            }
+
+            if (!$this->aksesTenantService->bolehAkses($tenantId, $user->id)) {
+                return $this->errorResponse('Anda belum mendapat izin akses ke tenant ini.', 403);
             }
         } else {
             $tenantId = $user->tenant_id;
         }
 
         $kebuns = $this->kebunService->getAllKebun($tenantId);
-
         return $this->successResponse($kebuns, 'Daftar kebun berhasil diambil.');
     }
 
@@ -57,9 +65,15 @@ class KebunController extends Controller
             $tenantId = $request->input('tenant_id');
 
             $tenant = \App\Models\Tenant::find($tenantId);
-            if (!$tenant) return $this->errorResponse('Tenant tidak ditemukan.', 404);
-            if (!$tenant->is_admin_allowed) {
-                return $this->errorResponse('Tenant ini belum mengizinkan akses Super Admin.', 403);
+            if (!$tenant) {
+                return $this->errorResponse(self::PESAN_TENANT_TIDAK_DITEMUKAN, 404);
+            }
+
+            // Disamakan dengan index()/KebunPolicy: satu mekanisme consent
+            // (AksesTenantService::bolehAkses) untuk semua aksi superAdmin
+            // lintas tenant, bukan cek tenant->is_admin_allowed terpisah.
+            if (!$this->aksesTenantService->bolehAkses($tenantId, $user->id)) {
+                return $this->errorResponse('Anda belum mendapat izin akses ke tenant ini.', 403);
             }
         } else {
             $tenantId = $user->tenant_id;
@@ -71,13 +85,12 @@ class KebunController extends Controller
         return $this->successResponse($kebun, 'Kebun berhasil ditambahkan.', 201);
     }
 
-
     public function show(string $id): JsonResponse
     {
         $kebun = $this->kebunService->getKebunById($id);
 
         if (!$kebun) {
-            return $this->errorResponse('Data kebun tidak ditemukan.', 404);
+            return $this->errorResponse(self::PESAN_KEBUN_TIDAK_DITEMUKAN, 404);
         }
 
         if (Gate::denies('view', $kebun)) {
@@ -92,7 +105,7 @@ class KebunController extends Controller
         $kebun = $this->kebunService->getKebunById($id);
 
         if (!$kebun) {
-            return $this->errorResponse('Data kebun tidak ditemukan.', 404);
+            return $this->errorResponse(self::PESAN_KEBUN_TIDAK_DITEMUKAN, 404);
         }
 
         if (Gate::denies('update', $kebun)) {
@@ -105,13 +118,12 @@ class KebunController extends Controller
         return $this->successResponse($updatedKebun, 'Data kebun berhasil diperbarui.');
     }
 
-
     public function destroy(string $id): JsonResponse
     {
         $kebun = $this->kebunService->getKebunById($id);
 
         if (!$kebun) {
-            return $this->errorResponse('Data kebun tidak ditemukan.', 404);
+            return $this->errorResponse(self::PESAN_KEBUN_TIDAK_DITEMUKAN, 404);
         }
 
         if (Gate::denies('delete', $kebun)) {

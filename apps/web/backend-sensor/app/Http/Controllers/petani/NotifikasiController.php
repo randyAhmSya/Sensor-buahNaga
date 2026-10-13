@@ -13,13 +13,15 @@ class NotifikasiController extends Controller
 {
     use ApiResponser;
 
+    private const PESAN_TENANT_TIDAK_TERHUBUNG = 'Akun ini tidak terhubung ke tenant.';
+
     public function __construct(protected NotifikasiService $notifikasiService) {}
 
     public function index(Request $request): JsonResponse
     {
         $tenantId = $request->user()->tenant_id;
         if (!$tenantId) {
-            return $this->ErrorResponse('Akun ini tidak terhubung ke tenant.', 403);
+            return $this->errorResponse(self::PESAN_TENANT_TIDAK_TERHUBUNG, 403);
         }
 
         $perPage = max(1, min((int) $request->query('per_page', 15), 100));
@@ -32,11 +34,13 @@ class NotifikasiController extends Controller
     {
         $tenantId = $request->user()->tenant_id;
         if (!$tenantId) {
-            return $this->ErrorResponse('Akun ini tidak terhubung ke tenant.', 403);
+            return $this->errorResponse(self::PESAN_TENANT_TIDAK_TERHUBUNG, 403);
         }
 
         $notifikasi = Notifikasi::where('tenant_id', $tenantId)->find($id);
-        if (!$notifikasi) return $this->errorResponse('Notifikasi tidak ditemukan.', 404);
+        if (!$notifikasi) {
+            return $this->errorResponse('Notifikasi tidak ditemukan.', 404);
+        }
 
         return $this->successResponse($this->notifikasiService->tandaiDibaca($notifikasi));
     }
@@ -45,7 +49,7 @@ class NotifikasiController extends Controller
     {
         $tenantId = $request->user()->tenant_id;
         if (!$tenantId) {
-            return $this->ErrorResponse('Akun ini tidak terhubung ke tenant.', 403);
+            return $this->errorResponse(self::PESAN_TENANT_TIDAK_TERHUBUNG, 403);
         }
 
         $jumlah = $this->notifikasiService->tandaiSemuaDibaca($tenantId);

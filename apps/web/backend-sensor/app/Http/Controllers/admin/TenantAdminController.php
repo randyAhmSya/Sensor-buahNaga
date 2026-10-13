@@ -13,6 +13,8 @@ class TenantAdminController extends Controller
 {
     use ApiResponser;
 
+    private const PESAN_TENANT_TIDAK_DITEMUKAN = 'Tenant tidak ditemukan.';
+
     public function __construct(protected TenantAdminService $tenantAdminService) {}
 
     public function index(Request $request): JsonResponse
@@ -26,7 +28,9 @@ class TenantAdminController extends Controller
     public function show(string $id): JsonResponse
     {
         $detail = $this->tenantAdminService->getDetailTenant($id);
-        if (!$detail) return $this->errorResponse('Tenant tidak ditemukan.', 404);
+        if (!$detail) {
+            return $this->errorResponse(self::PESAN_TENANT_TIDAK_DITEMUKAN, 404);
+        }
 
         return $this->successResponse($detail);
     }
@@ -34,7 +38,9 @@ class TenantAdminController extends Controller
     public function nonaktifkan(Request $request, string $id): JsonResponse
     {
         $tenant = Tenant::find($id);
-        if (!$tenant) return $this->errorResponse('Tenant tidak ditemukan.', 404);
+        if (!$tenant) {
+            return $this->errorResponse(self::PESAN_TENANT_TIDAK_DITEMUKAN, 404);
+        }
 
         $this->tenantAdminService->nonaktifkanTenant($tenant, $request->user()->id);
         return $this->successResponse($tenant->fresh(), 'Tenant dinonaktifkan.');
@@ -43,7 +49,9 @@ class TenantAdminController extends Controller
     public function aktifkan(Request $request, string $id): JsonResponse
     {
         $tenant = Tenant::find($id);
-        if (!$tenant) return $this->errorResponse('Tenant tidak ditemukan.', 404);
+        if (!$tenant) {
+            return $this->errorResponse(self::PESAN_TENANT_TIDAK_DITEMUKAN, 404);
+        }
 
         $this->tenantAdminService->aktifkanTenant($tenant, $request->user()->id);
         return $this->successResponse($tenant->fresh(), 'Tenant diaktifkan kembali.');

@@ -31,7 +31,11 @@ class BlokService
     public function updateBlok(blok $blok, array $data, $fileFoto = null)
     {
         if ($fileFoto) {
-            $data['url_foto'] = $this->uploadFoto($fileFoto, 'foto_blok');
+            // Dulu foto lama nggak pernah kehapus di sini karena $oldPath
+            // nggak dikirim ke uploadFoto() -- beda dari KebunService yang
+            // udah bener. Sekarang disamain biar foto lama ikut dibersihkan
+            // tiap kali ada foto baru di-upload.
+            $data['url_foto'] = $this->uploadFoto($fileFoto, 'foto_blok', $blok->url_foto);
         }
 
         $blok->update($data);

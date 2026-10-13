@@ -35,9 +35,9 @@ class LanggananAdminController extends Controller
         try {
             $transaksi = $this->langgananService->verifikasiPembelian($id, $request->user()->id);
         } catch (ModelNotFoundException $e) {
-            return $this->ErrorResponse('Transaksi tidak ditemukan.', 404);
+            return $this->errorResponse('Transaksi tidak ditemukan.', 404);
         } catch (DomainException $e) {
-            return $this->ErrorResponse($e->getMessage(), 409);
+            return $this->errorResponse($e->getMessage(), 409);
         }
 
         return $this->successResponse($transaksi, 'Transaksi diverifikasi, langganan tenant diperpanjang.');
@@ -48,9 +48,9 @@ class LanggananAdminController extends Controller
         try {
             $transaksi = $this->langgananService->tolakPembelian($id, $request->user()->id, $request->validated('alasan'));
         } catch (ModelNotFoundException $e) {
-            return $this->ErrorResponse('Transaksi tidak ditemukan.', 404);
+            return $this->errorResponse('Transaksi tidak ditemukan.', 404);
         } catch (DomainException $e) {
-            return $this->ErrorResponse($e->getMessage(), 409);
+            return $this->errorResponse($e->getMessage(), 409);
         }
 
         return $this->successResponse($transaksi, 'Transaksi ditolak.');
@@ -59,7 +59,7 @@ class LanggananAdminController extends Controller
     {
         $transaksi = TransaksiLangganan::find($id);
         if (!$transaksi || !$transaksi->bukti_transfer) {
-            return $this->ErrorResponse('Bukti transfer tidak ditemukan.', 404);
+            return $this->errorResponse('Bukti transfer tidak ditemukan.', 404);
         }
 
         $isi = Storage::disk('local')->get($transaksi->bukti_transfer);

@@ -18,6 +18,10 @@ class JadwalLampuController extends Controller
 {
     use ApiResponser;
 
+    private const PESAN_AKSES_DITOLAK = 'Akses ditolak.';
+    private const PESAN_SENSOR_TIDAK_DITEMUKAN = 'Node sensor tidak ditemukan.';
+    private const PESAN_JADWAL_TIDAK_DITEMUKAN = 'Data jadwal lampu tidak ditemukan.';
+
     protected JadwalLampuService $jadwalService;
 
     public function __construct(JadwalLampuService $jadwalService)
@@ -36,16 +40,24 @@ class JadwalLampuController extends Controller
 
         if ($kebunId) {
             $kebun = Kebun::find($kebunId);
-            if (!$kebun) return $this->errorResponse('Data kebun tidak ditemukan.', 404);
-            if (Gate::denies('view', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+            if (!$kebun) {
+                return $this->errorResponse('Data kebun tidak ditemukan.', 404);
+            }
+            if (Gate::denies('view', $kebun)) {
+                return $this->errorResponse(self::PESAN_AKSES_DITOLAK, 403);
+            }
 
             $jadwalList = $this->jadwalService->getAllJadwalByKebun($kebunId);
         } else {
             $sensor = NodeSensor::with('blok')->find($sensorId);
-            if (!$sensor) return $this->errorResponse('Node sensor tidak ditemukan.', 404);
+            if (!$sensor) {
+                return $this->errorResponse(self::PESAN_SENSOR_TIDAK_DITEMUKAN, 404);
+            }
 
             $kebun = Kebun::find($sensor->blok->kebun_id);
-            if (Gate::denies('view', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+            if (Gate::denies('view', $kebun)) {
+                return $this->errorResponse(self::PESAN_AKSES_DITOLAK, 403);
+            }
 
             $jadwalList = $this->jadwalService->getAllJadwalBySensor($sensorId);
         }
@@ -56,16 +68,24 @@ class JadwalLampuController extends Controller
     public function aktif(Request $request): JsonResponse
     {
         $sensorId = $request->query('sensor_id');
-        if (!$sensorId) return $this->errorResponse('Parameter sensor_id wajib disertakan.', 400);
+        if (!$sensorId) {
+            return $this->errorResponse('Parameter sensor_id wajib disertakan.', 400);
+        }
 
         $sensor = NodeSensor::with('blok')->find($sensorId);
-        if (!$sensor) return $this->errorResponse('Node sensor tidak ditemukan.', 404);
+        if (!$sensor) {
+            return $this->errorResponse(self::PESAN_SENSOR_TIDAK_DITEMUKAN, 404);
+        }
 
         $kebun = Kebun::find($sensor->blok->kebun_id);
-        if (Gate::denies('view', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+        if (Gate::denies('view', $kebun)) {
+            return $this->errorResponse(self::PESAN_AKSES_DITOLAK, 403);
+        }
 
         $jadwal = $this->jadwalService->resolveJadwalAktifUntukSensor($sensorId);
-        if (!$jadwal) return $this->errorResponse('Belum ada jadwal aktif (default kebun maupun override) untuk node ini.', 404);
+        if (!$jadwal) {
+            return $this->errorResponse('Belum ada jadwal aktif (default kebun maupun override) untuk node ini.', 404);
+        }
 
         return $this->successResponse($jadwal, 'Jadwal lampu aktif berhasil diambil.');
     }
@@ -76,12 +96,18 @@ class JadwalLampuController extends Controller
             $kebun = Kebun::find($request->kebun_id);
         } else {
             $sensor = NodeSensor::with('blok')->find($request->sensor_id);
-            if (!$sensor) return $this->errorResponse('Node sensor tidak ditemukan.', 404);
+            if (!$sensor) {
+                return $this->errorResponse(self::PESAN_SENSOR_TIDAK_DITEMUKAN, 404);
+            }
             $kebun = Kebun::find($sensor->blok->kebun_id);
         }
 
-        if (!$kebun) return $this->errorResponse('Data kebun tidak ditemukan.', 404);
-        if (Gate::denies('update', $kebun)) return $this->errorResponse('Anda tidak memiliki izin.', 403);
+        if (!$kebun) {
+            return $this->errorResponse('Data kebun tidak ditemukan.', 404);
+        }
+        if (Gate::denies('update', $kebun)) {
+            return $this->errorResponse('Anda tidak memiliki izin.', 403);
+        }
 
         $jadwal = $this->jadwalService->createJadwal($request->validated());
         return $this->successResponse($jadwal, 'Jadwal lampu berhasil dibuat dan diaktifkan.', 201);
@@ -90,10 +116,14 @@ class JadwalLampuController extends Controller
     public function show(string $id): JsonResponse
     {
         $jadwal = $this->jadwalService->getJadwalById($id);
-        if (!$jadwal) return $this->errorResponse('Data jadwal lampu tidak ditemukan.', 404);
+        if (!$jadwal) {
+            return $this->errorResponse(self::PESAN_JADWAL_TIDAK_DITEMUKAN, 404);
+        }
 
         $kebun = $this->resolveKebunFromJadwal($jadwal);
-        if (!$kebun || Gate::denies('view', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+        if (!$kebun || Gate::denies('view', $kebun)) {
+            return $this->errorResponse(self::PESAN_AKSES_DITOLAK, 403);
+        }
 
         return $this->successResponse($jadwal, 'Detail jadwal lampu berhasil diambil.');
     }
@@ -101,10 +131,14 @@ class JadwalLampuController extends Controller
     public function update(updateJadwalLampuRequest $request, string $id): JsonResponse
     {
         $jadwal = $this->jadwalService->getJadwalById($id);
-        if (!$jadwal) return $this->errorResponse('Data jadwal lampu tidak ditemukan.', 404);
+        if (!$jadwal) {
+            return $this->errorResponse(self::PESAN_JADWAL_TIDAK_DITEMUKAN, 404);
+        }
 
         $kebun = $this->resolveKebunFromJadwal($jadwal);
-        if (!$kebun || Gate::denies('update', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+        if (!$kebun || Gate::denies('update', $kebun)) {
+            return $this->errorResponse(self::PESAN_AKSES_DITOLAK, 403);
+        }
 
         $updatedJadwal = $this->jadwalService->updateJadwal($jadwal, $request->validated());
         return $this->successResponse($updatedJadwal, 'Data jadwal lampu berhasil diperbarui.');
@@ -113,16 +147,20 @@ class JadwalLampuController extends Controller
     public function destroy(string $id): JsonResponse
     {
         $jadwal = $this->jadwalService->getJadwalById($id);
-        if (!$jadwal) return $this->errorResponse('Data jadwal lampu tidak ditemukan.', 404);
+        if (!$jadwal) {
+            return $this->errorResponse(self::PESAN_JADWAL_TIDAK_DITEMUKAN, 404);
+        }
 
         $kebun = $this->resolveKebunFromJadwal($jadwal);
-        if (!$kebun || Gate::denies('delete', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+        if (!$kebun || Gate::denies('delete', $kebun)) {
+            return $this->errorResponse(self::PESAN_AKSES_DITOLAK, 403);
+        }
 
         $this->jadwalService->deleteJadwal($jadwal);
         return $this->successResponse(null, 'Jadwal lampu berhasil dihapus.');
     }
 
-    private function resolveKebunFromJadwal(jadwal_lampu $jadwal): ?kebun
+    private function resolveKebunFromJadwal(JadwalLampu $jadwal): ?Kebun
     {
         if ($jadwal->kebun_id) {
             return Kebun::find($jadwal->kebun_id);

@@ -35,10 +35,14 @@ class AutoDimmingController extends Controller
         ]);
 
         $sensor = NodeSensor::with('blok')->find($sensorId);
-        if (!$sensor) return $this->errorResponse('Node sensor tidak ditemukan.', 404);
+        if (!$sensor) {
+            return $this->errorResponse('Node sensor tidak ditemukan.', 404);
+        }
 
         $kebun = Kebun::find($sensor->blok->kebun_id);
-        if (Gate::denies('view', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+        if (Gate::denies('view', $kebun)) {
+            return $this->errorResponse('Akses ditolak.', 403);
+        }
 
         $result = $this->dimmingService->hitungDanCatat($sensorId, (float) $request->nilai_lux, $request->fase_bulan);
 

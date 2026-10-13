@@ -18,6 +18,9 @@ class NodeController extends Controller
 {
     use ApiResponser;
 
+    private const PESAN_SENSOR_TIDAK_DITEMUKAN = 'Data sensor tidak ditemukan.';
+    private const PESAN_TIDAK_PUNYA_IZIN = 'Anda tidak memiliki izin.';
+
     protected NodeService $nodeService;
 
     public function __construct(NodeService $nodeService)
@@ -25,102 +28,113 @@ class NodeController extends Controller
         $this->nodeService = $nodeService;
     }
 
-    // ==========================================================
-    // 1. GET ALL SENSOR (Berdasarkan ID Kebun)
-    // ==========================================================
     public function index(Request $request): JsonResponse
     {
         $kebunId = $request->query('kebun_id');
 
-        if (!$kebunId) return $this->errorResponse('Parameter kebun_id wajib disertakan (?kebun_id=...).', 400);
+        if (!$kebunId) {
+            return $this->errorResponse('Parameter kebun_id wajib disertakan (?kebun_id=...).', 400);
+        }
 
         $kebun = Kebun::find($kebunId);
-        if (!$kebun) return $this->errorResponse('Data kebun tidak ditemukan.', 404);
-        if (Gate::denies('view', $kebun)) return $this->errorResponse('Anda tidak memiliki akses ke kebun ini.', 403);
+        if (!$kebun) {
+            return $this->errorResponse('Data kebun tidak ditemukan.', 404);
+        }
+        if (Gate::denies('view', $kebun)) {
+            return $this->errorResponse('Anda tidak memiliki akses ke kebun ini.', 403);
+        }
 
         $nodes = $this->nodeService->getAllNodesByKebun($kebunId);
         return $this->successResponse($nodes, 'Daftar sensor berhasil diambil.');
     }
 
-    // ==========================================================
-    // 2. CREATE SENSOR BARU
-    // ==========================================================
     public function store(addNodeRequest $request): JsonResponse
     {
         $blok = Blok::find($request->blok_id);
-        if (!$blok) return $this->errorResponse('Data blok tidak ditemukan.', 404);
+        if (!$blok) {
+            return $this->errorResponse('Data blok tidak ditemukan.', 404);
+        }
 
         $kebun = Kebun::find($blok->kebun_id);
         // Cek izin update kebun induknya
-        if (Gate::denies('update', $kebun)) return $this->errorResponse('Anda tidak memiliki izin menambah sensor di area ini.', 403);
+        if (Gate::denies('update', $kebun)) {
+            return $this->errorResponse('Anda tidak memiliki izin menambah sensor di area ini.', 403);
+        }
 
         $node = $this->nodeService->createNode($request->validated());
         return $this->successResponse($node, 'Sensor berhasil didaftarkan dan dipasang pada blok.', 201);
     }
 
-    // ==========================================================
-    // 3. LIHAT DETAIL 1 SENSOR
-    // ==========================================================
     public function show(string $id): JsonResponse
     {
         $node = $this->nodeService->getNodeById($id);
-        if (!$node) return $this->errorResponse('Data sensor tidak ditemukan.', 404);
+        if (!$node) {
+            return $this->errorResponse(self::PESAN_SENSOR_TIDAK_DITEMUKAN, 404);
+        }
 
         // Lacak ke atas: Sensor -> Blok -> Kebun
         $blok = Blok::find($node->blok_id);
         $kebun = Kebun::find($blok->kebun_id);
 
-        if (Gate::denies('view', $kebun)) return $this->errorResponse('Anda tidak memiliki akses.', 403);
+        if (Gate::denies('view', $kebun)) {
+            return $this->errorResponse('Anda tidak memiliki akses.', 403);
+        }
 
         return $this->successResponse($node, 'Detail sensor berhasil diambil.');
     }
 
-    // ==========================================================
-    // 4. UPDATE SENSOR
-    // ==========================================================
     public function update(updateNodeRequest $request, string $id): JsonResponse
     {
         $node = $this->nodeService->getNodeById($id);
-        if (!$node) return $this->errorResponse('Data sensor tidak ditemukan.', 404);
+        if (!$node) {
+            return $this->errorResponse(self::PESAN_SENSOR_TIDAK_DITEMUKAN, 404);
+        }
 
         $blok = Blok::find($node->blok_id);
         $kebun = Kebun::find($blok->kebun_id);
 
-        if (Gate::denies('update', $kebun)) return $this->errorResponse('Anda tidak memiliki izin.', 403);
+        if (Gate::denies('update', $kebun)) {
+            return $this->errorResponse(self::PESAN_TIDAK_PUNYA_IZIN, 403);
+        }
 
         $updatedNode = $this->nodeService->updateNode($node, $request->validated());
         return $this->successResponse($updatedNode, 'Data sensor berhasil diperbarui.');
     }
 
-    // ==========================================================
-    // 5. DELETE SENSOR
-    // ==========================================================
     public function destroy(string $id): JsonResponse
     {
         $node = $this->nodeService->getNodeById($id);
-        if (!$node) return $this->errorResponse('Data sensor tidak ditemukan.', 404);
+        if (!$node) {
+            return $this->errorResponse(self::PESAN_SENSOR_TIDAK_DITEMUKAN, 404);
+        }
 
         $blok = Blok::find($node->blok_id);
         $kebun = Kebun::find($blok->kebun_id);
 
-        if (Gate::denies('delete', $kebun)) return $this->errorResponse('Anda tidak memiliki izin.', 403);
+        if (Gate::denies('delete', $kebun)) {
+            return $this->errorResponse(self::PESAN_TIDAK_PUNYA_IZIN, 403);
+        }
 
         $this->nodeService->deleteNode($node);
         return $this->successResponse(null, 'Sensor berhasil dihapus dari sistem.');
     }
 
-public function generateNewQr(Request $request, string $id): JsonResponse
-{
-    $node = $this->nodeService->getNodeById($id);
-    if (!$node) return $this->errorResponse('Data sensor tidak ditemukan.', 404);
+    public function generateNewQr(Request $request, string $id): JsonResponse
+    {
+        $node = $this->nodeService->getNodeById($id);
+        if (!$node) {
+            return $this->errorResponse(self::PESAN_SENSOR_TIDAK_DITEMUKAN, 404);
+        }
 
-    $blok = Blok::find($node->blok_id);
-    $kebun = Kebun::find($blok->kebun_id);
+        $blok = Blok::find($node->blok_id);
+        $kebun = Kebun::find($blok->kebun_id);
 
-    if (Gate::denies('update', $kebun)) return $this->errorResponse('Anda tidak memiliki izin.', 403);
+        if (Gate::denies('update', $kebun)) {
+            return $this->errorResponse(self::PESAN_TIDAK_PUNYA_IZIN, 403);
+        }
 
-    $hasil = $this->nodeService->generateNewQrForSensor($id);
+        $hasil = $this->nodeService->generateNewQrForSensor($id);
 
-    return $this->successResponse($hasil, 'QR Code baru berhasil di-generate dan dipasangkan ke sensor.');
-}
+        return $this->successResponse($hasil, 'QR Code baru berhasil di-generate dan dipasangkan ke sensor.');
+    }
 }

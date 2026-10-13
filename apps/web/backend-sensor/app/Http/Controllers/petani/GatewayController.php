@@ -19,6 +19,9 @@ class GatewayController extends Controller
 {
     use ApiResponser;
 
+    private const PESAN_GATEWAY_TIDAK_DITEMUKAN = 'Data gateway tidak ditemukan.';
+    private const PESAN_AKSES_DITOLAK = 'Akses ditolak.';
+
     protected GatewayService $gatewayService;
     protected GatewayPairingService $pairingService;
 
@@ -31,11 +34,17 @@ class GatewayController extends Controller
     public function index(Request $request): JsonResponse
     {
         $kebunId = $request->query('kebun_id');
-        if (!$kebunId) return $this->errorResponse('Parameter kebun_id wajib disertakan.', 400);
+        if (!$kebunId) {
+            return $this->errorResponse('Parameter kebun_id wajib disertakan.', 400);
+        }
 
         $kebun = Kebun::find($kebunId);
-        if (!$kebun) return $this->errorResponse('Data kebun tidak ditemukan.', 404);
-        if (Gate::denies('view', $kebun)) return $this->errorResponse('Anda tidak memiliki akses ke kebun ini.', 403);
+        if (!$kebun) {
+            return $this->errorResponse('Data kebun tidak ditemukan.', 404);
+        }
+        if (Gate::denies('view', $kebun)) {
+            return $this->errorResponse('Anda tidak memiliki akses ke kebun ini.', 403);
+        }
 
         $gateways = $this->gatewayService->getAllGatewaysByKebun($kebunId);
         return $this->successResponse($gateways, 'Data gateway berhasil diambil.');
@@ -44,10 +53,14 @@ class GatewayController extends Controller
     public function store(addGatewayRequest $request): JsonResponse
     {
         $blok = Blok::find($request->blok_id);
-        if (!$blok) return $this->errorResponse('Data blok tidak ditemukan.', 404);
+        if (!$blok) {
+            return $this->errorResponse('Data blok tidak ditemukan.', 404);
+        }
 
         $kebun = Kebun::find($blok->kebun_id);
-        if (Gate::denies('update', $kebun)) return $this->errorResponse('Anda tidak memiliki izin menambah gateway di area ini.', 403);
+        if (Gate::denies('update', $kebun)) {
+            return $this->errorResponse('Anda tidak memiliki izin menambah gateway di area ini.', 403);
+        }
 
         $gateway = $this->gatewayService->createGateway($request->validated());
         return $this->successResponse($gateway, 'Gateway berhasil didaftarkan.', 201);
@@ -56,12 +69,16 @@ class GatewayController extends Controller
     public function show(string $id): JsonResponse
     {
         $gateway = $this->gatewayService->getGatewayById($id);
-        if (!$gateway) return $this->errorResponse('Data gateway tidak ditemukan.', 404);
+        if (!$gateway) {
+            return $this->errorResponse(self::PESAN_GATEWAY_TIDAK_DITEMUKAN, 404);
+        }
 
         $blok = Blok::find($gateway->blok_id);
         $kebun = Kebun::find($blok->kebun_id);
 
-        if (Gate::denies('view', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+        if (Gate::denies('view', $kebun)) {
+            return $this->errorResponse(self::PESAN_AKSES_DITOLAK, 403);
+        }
 
         return $this->successResponse($gateway, 'Detail gateway berhasil diambil.');
     }
@@ -69,12 +86,16 @@ class GatewayController extends Controller
     public function update(updateGatewayRequest $request, string $id): JsonResponse
     {
         $gateway = $this->gatewayService->getGatewayById($id);
-        if (!$gateway) return $this->errorResponse('Data gateway tidak ditemukan.', 404);
+        if (!$gateway) {
+            return $this->errorResponse(self::PESAN_GATEWAY_TIDAK_DITEMUKAN, 404);
+        }
 
         $blok = Blok::find($gateway->blok_id);
         $kebun = Kebun::find($blok->kebun_id);
 
-        if (Gate::denies('update', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+        if (Gate::denies('update', $kebun)) {
+            return $this->errorResponse(self::PESAN_AKSES_DITOLAK, 403);
+        }
 
         $updatedGateway = $this->gatewayService->updateGateway($gateway, $request->validated());
         return $this->successResponse($updatedGateway, 'Data gateway berhasil diperbarui.');
@@ -83,12 +104,16 @@ class GatewayController extends Controller
     public function destroy(string $id): JsonResponse
     {
         $gateway = $this->gatewayService->getGatewayById($id);
-        if (!$gateway) return $this->errorResponse('Data gateway tidak ditemukan.', 404);
+        if (!$gateway) {
+            return $this->errorResponse(self::PESAN_GATEWAY_TIDAK_DITEMUKAN, 404);
+        }
 
         $blok = Blok::find($gateway->blok_id);
         $kebun = Kebun::find($blok->kebun_id);
 
-        if (Gate::denies('delete', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+        if (Gate::denies('delete', $kebun)) {
+            return $this->errorResponse(self::PESAN_AKSES_DITOLAK, 403);
+        }
 
         $this->gatewayService->deleteGateway($gateway);
         return $this->successResponse(null, 'Gateway berhasil dihapus.');

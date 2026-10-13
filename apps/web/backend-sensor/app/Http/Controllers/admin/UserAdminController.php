@@ -14,6 +14,8 @@ class UserAdminController extends Controller
 {
     use ApiResponser;
 
+    private const PESAN_USER_TIDAK_DITEMUKAN = 'User tidak ditemukan.';
+
     public function __construct(protected UserAdminService $userAdminService) {}
 
     public function index(Request $request): JsonResponse
@@ -31,7 +33,9 @@ class UserAdminController extends Controller
     public function show(string $id): JsonResponse
     {
         $user = $this->userAdminService->getUserById($id);
-        if (!$user) return $this->errorResponse('User tidak ditemukan.', 404);
+        if (!$user) {
+            return $this->errorResponse(self::PESAN_USER_TIDAK_DITEMUKAN, 404);
+        }
 
         return $this->successResponse($user);
     }
@@ -45,7 +49,9 @@ class UserAdminController extends Controller
     public function nonaktifkan(Request $request, string $id): JsonResponse
     {
         $user = User::find($id);
-        if (!$user) return $this->errorResponse('User tidak ditemukan.', 404);
+        if (!$user) {
+            return $this->errorResponse(self::PESAN_USER_TIDAK_DITEMUKAN, 404);
+        }
 
         if ($user->id === $request->user()->id) {
             return $this->errorResponse('Tidak bisa menonaktifkan akun sendiri.', 422);
@@ -58,7 +64,9 @@ class UserAdminController extends Controller
     public function aktifkan(Request $request, string $id): JsonResponse
     {
         $user = User::find($id);
-        if (!$user) return $this->errorResponse('User tidak ditemukan.', 404);
+        if (!$user) {
+            return $this->errorResponse(self::PESAN_USER_TIDAK_DITEMUKAN, 404);
+        }
 
         $this->userAdminService->aktifkanUser($user, $request->user()->id);
         return $this->successResponse($user->fresh(), 'User diaktifkan kembali.');

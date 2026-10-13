@@ -19,10 +19,14 @@ class BlokStatusController extends Controller
     public function statusLampu(string $blokId): JsonResponse
     {
         $blok = Blok::find($blokId);
-        if (!$blok) return $this->errorResponse('Data blok tidak ditemukan.', 404);
+        if (!$blok) {
+            return $this->errorResponse('Data blok tidak ditemukan.', 404);
+        }
 
         $kebun = Kebun::find($blok->kebun_id);
-        if (Gate::denies('view', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+        if (Gate::denies('view', $kebun)) {
+            return $this->errorResponse('Akses ditolak.', 403);
+        }
 
         return $this->successResponse(
             $this->blokStatusService->getRingkasanBlok($blokId),

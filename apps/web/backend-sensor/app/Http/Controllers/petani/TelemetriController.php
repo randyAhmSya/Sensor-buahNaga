@@ -25,13 +25,19 @@ class TelemetriController extends Controller
     public function index(Request $request): JsonResponse
     {
         $sensorId = $request->query('sensor_id');
-        if (!$sensorId) return $this->errorResponse('Parameter sensor_id wajib disertakan.', 400);
+        if (!$sensorId) {
+            return $this->errorResponse('Parameter sensor_id wajib disertakan.', 400);
+        }
 
         $sensor = NodeSensor::with('blok')->find($sensorId);
-        if (!$sensor) return $this->errorResponse('Node sensor tidak ditemukan.', 404);
+        if (!$sensor) {
+            return $this->errorResponse('Node sensor tidak ditemukan.', 404);
+        }
 
         $kebun = Kebun::find($sensor->blok->kebun_id);
-        if (Gate::denies('view', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+        if (Gate::denies('view', $kebun)) {
+            return $this->errorResponse('Akses ditolak.', 403);
+        }
 
         $limit = (int) $request->query('limit', 100);
         $data = $this->telemetriService->getTelemetriBySensor($sensorId, $limit);

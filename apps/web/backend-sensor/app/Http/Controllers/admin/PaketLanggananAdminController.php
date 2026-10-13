@@ -15,6 +15,8 @@ class PaketLanggananAdminController extends Controller
 {
     use ApiResponser;
 
+    private const PESAN_PAKET_TIDAK_DITEMUKAN = 'Paket tidak ditemukan.';
+
     public function __construct(protected PaketLanggananAdminService $paketService) {}
 
     public function index(): JsonResponse
@@ -25,7 +27,9 @@ class PaketLanggananAdminController extends Controller
     public function show(string $id): JsonResponse
     {
         $paket = $this->paketService->getPaketById($id);
-        if (!$paket) return $this->errorResponse('Paket tidak ditemukan.', 404);
+        if (!$paket) {
+            return $this->errorResponse(self::PESAN_PAKET_TIDAK_DITEMUKAN, 404);
+        }
 
         return $this->successResponse($paket);
     }
@@ -39,7 +43,9 @@ class PaketLanggananAdminController extends Controller
     public function update(UpdatePaketLanggananRequest $request, string $id): JsonResponse
     {
         $paket = $this->paketService->getPaketById($id);
-        if (!$paket) return $this->errorResponse('Paket tidak ditemukan.', 404);
+        if (!$paket) {
+            return $this->errorResponse(self::PESAN_PAKET_TIDAK_DITEMUKAN, 404);
+        }
 
         $updated = $this->paketService->updatePaket($paket, $request->validated(), $request->user()->id);
         return $this->successResponse($updated, 'Paket langganan berhasil diperbarui.');
@@ -48,7 +54,9 @@ class PaketLanggananAdminController extends Controller
     public function nonaktifkan(Request $request, string $id): JsonResponse
     {
         $paket = $this->paketService->getPaketById($id);
-        if (!$paket) return $this->errorResponse('Paket tidak ditemukan.', 404);
+        if (!$paket) {
+            return $this->errorResponse(self::PESAN_PAKET_TIDAK_DITEMUKAN, 404);
+        }
 
         $this->paketService->nonaktifkanPaket($paket, $request->user()->id);
         return $this->successResponse($paket->fresh(), 'Paket dinonaktifkan - nggak muncul lagi di daftar beli petani.');
@@ -57,7 +65,9 @@ class PaketLanggananAdminController extends Controller
     public function aktifkan(Request $request, string $id): JsonResponse
     {
         $paket = $this->paketService->getPaketById($id);
-        if (!$paket) return $this->errorResponse('Paket tidak ditemukan.', 404);
+        if (!$paket) {
+            return $this->errorResponse(self::PESAN_PAKET_TIDAK_DITEMUKAN, 404);
+        }
 
         $this->paketService->aktifkanPaket($paket, $request->user()->id);
         return $this->successResponse($paket->fresh(), 'Paket diaktifkan lagi.');
@@ -66,7 +76,9 @@ class PaketLanggananAdminController extends Controller
     public function destroy(Request $request, string $id): JsonResponse
     {
         $paket = $this->paketService->getPaketById($id);
-        if (!$paket) return $this->errorResponse('Paket tidak ditemukan.', 404);
+        if (!$paket) {
+            return $this->errorResponse(self::PESAN_PAKET_TIDAK_DITEMUKAN, 404);
+        }
 
         try {
             $this->paketService->hapusPaket($paket, $request->user()->id);
