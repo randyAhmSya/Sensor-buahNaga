@@ -17,6 +17,9 @@ class SiklusPanenController extends Controller
 {
     use ApiResponser;
 
+    private const PESAN_SIKLUS_TIDAK_DITEMUKAN = 'Data siklus panen tidak ditemukan.';
+    private const PESAN_AKSES_DITOLAK = 'Akses ditolak.';
+
     protected SiklusPanenService $siklusService;
 
     public function __construct(SiklusPanenService $siklusService)
@@ -27,13 +30,19 @@ class SiklusPanenController extends Controller
     public function index(Request $request): JsonResponse
     {
         $blokId = $request->query('blok_id');
-        if (!$blokId) return $this->errorResponse('Parameter blok_id wajib disertakan.', 400);
+        if (!$blokId) {
+            return $this->errorResponse('Parameter blok_id wajib disertakan.', 400);
+        }
 
         $blok = Blok::find($blokId);
-        if (!$blok) return $this->errorResponse('Data blok tidak ditemukan.', 404);
+        if (!$blok) {
+            return $this->errorResponse('Data blok tidak ditemukan.', 404);
+        }
 
         $kebun = Kebun::find($blok->kebun_id);
-        if (Gate::denies('view', $kebun)) return $this->errorResponse('Anda tidak memiliki akses ke blok ini.', 403);
+        if (Gate::denies('view', $kebun)) {
+            return $this->errorResponse('Anda tidak memiliki akses ke blok ini.', 403);
+        }
 
         $siklusList = $this->siklusService->getAllSiklusByBlok($blokId);
         return $this->successResponse($siklusList, 'Data siklus panen berhasil diambil.');
@@ -42,10 +51,14 @@ class SiklusPanenController extends Controller
     public function store(addSiklusPanenRequest $request): JsonResponse
     {
         $blok = Blok::find($request->block_id);
-        if (!$blok) return $this->errorResponse('Data blok tidak ditemukan.', 404);
+        if (!$blok) {
+            return $this->errorResponse('Data blok tidak ditemukan.', 404);
+        }
 
         $kebun = Kebun::find($blok->kebun_id);
-        if (Gate::denies('update', $kebun)) return $this->errorResponse('Anda tidak memiliki izin di blok ini.', 403);
+        if (Gate::denies('update', $kebun)) {
+            return $this->errorResponse('Anda tidak memiliki izin di blok ini.', 403);
+        }
 
         $siklus = $this->siklusService->createSiklus($request->validated());
         return $this->successResponse($siklus, 'Siklus panen berhasil dimulai.', 201);
@@ -54,11 +67,15 @@ class SiklusPanenController extends Controller
     public function show(string $id): JsonResponse
     {
         $siklus = $this->siklusService->getSiklusById($id);
-        if (!$siklus) return $this->errorResponse('Data siklus panen tidak ditemukan.', 404);
+        if (!$siklus) {
+            return $this->errorResponse(self::PESAN_SIKLUS_TIDAK_DITEMUKAN, 404);
+        }
 
         $blok = Blok::find($siklus->block_id);
         $kebun = Kebun::find($blok->kebun_id);
-        if (Gate::denies('view', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+        if (Gate::denies('view', $kebun)) {
+            return $this->errorResponse(self::PESAN_AKSES_DITOLAK, 403);
+        }
 
         return $this->successResponse($siklus, 'Detail siklus panen berhasil diambil.');
     }
@@ -66,11 +83,15 @@ class SiklusPanenController extends Controller
     public function update(updateSiklusPanenRequest $request, string $id): JsonResponse
     {
         $siklus = $this->siklusService->getSiklusById($id);
-        if (!$siklus) return $this->errorResponse('Data siklus panen tidak ditemukan.', 404);
+        if (!$siklus) {
+            return $this->errorResponse(self::PESAN_SIKLUS_TIDAK_DITEMUKAN, 404);
+        }
 
         $blok = Blok::find($siklus->block_id);
         $kebun = Kebun::find($blok->kebun_id);
-        if (Gate::denies('update', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+        if (Gate::denies('update', $kebun)) {
+            return $this->errorResponse(self::PESAN_AKSES_DITOLAK, 403);
+        }
 
         $updatedSiklus = $this->siklusService->updateSiklus($siklus, $request->validated());
         return $this->successResponse($updatedSiklus, 'Data siklus panen berhasil diperbarui.');
@@ -79,11 +100,15 @@ class SiklusPanenController extends Controller
     public function destroy(string $id): JsonResponse
     {
         $siklus = $this->siklusService->getSiklusById($id);
-        if (!$siklus) return $this->errorResponse('Data siklus panen tidak ditemukan.', 404);
+        if (!$siklus) {
+            return $this->errorResponse(self::PESAN_SIKLUS_TIDAK_DITEMUKAN, 404);
+        }
 
         $blok = Blok::find($siklus->block_id);
         $kebun = Kebun::find($blok->kebun_id);
-        if (Gate::denies('delete', $kebun)) return $this->errorResponse('Akses ditolak.', 403);
+        if (Gate::denies('delete', $kebun)) {
+            return $this->errorResponse(self::PESAN_AKSES_DITOLAK, 403);
+        }
 
         $this->siklusService->deleteSiklus($siklus);
         return $this->successResponse(null, 'Siklus panen berhasil dihapus.');

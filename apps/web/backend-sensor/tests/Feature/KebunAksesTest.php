@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AksesTenantAdmin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\Feature\Concerns\BuatDataUji;
@@ -22,7 +23,7 @@ class KebunAksesTest extends TestCase
 
     public function test_superadmin_ditolak_kalau_tenant_belum_mengizinkan(): void
     {
-        $tenant = $this->buatTenant(['is_admin_allowed' => false]);
+        $tenant = $this->buatTenant();
         $superAdmin = $this->buatUser(role: 'superAdmin');
         Sanctum::actingAs($superAdmin);
 
@@ -32,9 +33,17 @@ class KebunAksesTest extends TestCase
 
     public function test_superadmin_bisa_list_kebun_kalau_tenant_mengizinkan(): void
     {
-        $tenant = $this->buatTenant(['is_admin_allowed' => true]);
+        $tenant = $this->buatTenant();
         $this->buatKebun($tenant);
         $superAdmin = $this->buatUser(role: 'superAdmin');
+
+        AksesTenantAdmin::create([
+            'tenant_id'    => $tenant->tenant_id,
+            'admin_id'     => $superAdmin->id,
+            'status'       => 'disetujui',
+            'diminta_pada' => now(),
+        ]);
+
         Sanctum::actingAs($superAdmin);
 
         $this->getJson("/api/admin/kebun?tenant_id={$tenant->tenant_id}")
@@ -44,7 +53,7 @@ class KebunAksesTest extends TestCase
 
     public function test_superadmin_ditolak_bikin_kebun_kalau_tenant_belum_mengizinkan(): void
     {
-        $tenant = $this->buatTenant(['is_admin_allowed' => false]);
+        $tenant = $this->buatTenant();
         $superAdmin = $this->buatUser(role: 'superAdmin');
         Sanctum::actingAs($superAdmin);
 

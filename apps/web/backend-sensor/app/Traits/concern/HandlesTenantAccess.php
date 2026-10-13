@@ -2,8 +2,8 @@
 
 namespace App\Traits\concern;
 
-use App\Models\Tenant;
 use App\Models\User;
+use App\Services\management_admin\AksesTenantService;
 
 trait HandlesTenantAccess
 {
@@ -18,8 +18,7 @@ trait HandlesTenantAccess
         }
 
         if ($user->role === 'superAdmin') {
-            $tenant = Tenant::find($targetTenantId);
-            return $tenant ? (bool) $tenant->is_admin_allowed : false;
+            return app(AksesTenantService::class)->bolehAkses($targetTenantId, $user->id);
         }
 
         return false;

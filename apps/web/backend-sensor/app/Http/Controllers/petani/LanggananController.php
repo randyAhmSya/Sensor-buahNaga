@@ -14,6 +14,8 @@ class LanggananController extends Controller
 {
     use ApiResponser;
 
+    private const PESAN_TENANT_TIDAK_TERHUBUNG = 'Akun ini tidak terhubung ke tenant.';
+
     public function __construct(protected LanggananService $langgananService) {}
 
     public function paket(Request $request)
@@ -26,7 +28,7 @@ class LanggananController extends Controller
     {
         $tenantId = $request->user()->tenant_id;
         if (!$tenantId) {
-            return $this->ErrorResponse('Akun ini tidak terhubung ke tenant.', 403);
+            return $this->errorResponse(self::PESAN_TENANT_TIDAK_TERHUBUNG, 403);
         }
 
         $langganan = $this->langgananService->getStatus($tenantId);
@@ -42,7 +44,7 @@ class LanggananController extends Controller
     {
         $tenantId = $request->user()->tenant_id;
         if (!$tenantId) {
-            return $this->ErrorResponse('Akun ini tidak terhubung ke tenant.', 403);
+            return $this->errorResponse(self::PESAN_TENANT_TIDAK_TERHUBUNG, 403);
         }
 
         $perPage = max(1, min((int) $request->query('per_page', 15), 100));
@@ -55,7 +57,7 @@ class LanggananController extends Controller
     {
         $tenantId = $request->user()->tenant_id;
         if (!$tenantId) {
-            return $this->ErrorResponse('Akun ini tidak terhubung ke tenant.', 403);
+            return $this->errorResponse(self::PESAN_TENANT_TIDAK_TERHUBUNG, 403);
         }
 
         $transaksi = $this->langgananService->ajukanPembelian(
@@ -66,20 +68,22 @@ class LanggananController extends Controller
 
         return $this->successResponse($transaksi, 'Pengajuan pembelian berhasil dikirim, menunggu verifikasi admin.', 201);
     }
+
     public function buktiTransfer(Request $request, string $id)
     {
         $tenantId = $request->user()->tenant_id;
         if (!$tenantId) {
-            return $this->ErrorResponse('Akun ini tidak terhubung ke tenant.', 403);
+            return $this->errorResponse(self::PESAN_TENANT_TIDAK_TERHUBUNG, 403);
         }
 
         $transaksi = TransaksiLangganan::where('tenant_id', $tenantId)->find($id);
         if (!$transaksi || !$transaksi->bukti_transfer) {
-            return $this->ErrorResponse('Bukti transfer tidak ditemukan.', 404);
+            return $this->errorResponse('Bukti transfer tidak ditemukan.', 404);
         }
 
         return Storage::disk('local')->response($transaksi->bukti_transfer);
     }
+
     public function beliOnline(Request $request)
     {
         $request->validate([
