@@ -28,7 +28,7 @@ export const FarmDetailHeader: React.FC<FarmDetailHeaderProps> = ({
     <div className="space-y-4">
       <button
         type="button"
-        onClick={() => navigate('/admin/farms')}
+        onClick={() => navigate('/kebun/farms')}
         className="flex flex-row items-center gap-2 text-slate-600 hover:text-emerald-700 text-sm font-semibold transition-colors group cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
@@ -79,7 +79,7 @@ export const FarmDetailHeader: React.FC<FarmDetailHeaderProps> = ({
             type="button"
             variant="outline"
             size="md"
-            onClick={onEdit ? onEdit : () => farmId && navigate(`/admin/farms/${farmId}/edit`)}
+            onClick={onEdit ? onEdit : () => farmId && navigate(`/kebun/farms/${farmId}/edit`)}
             leftIcon={<Pencil className="w-4 h-4 shrink-0" />}
             className="flex flex-row items-center justify-center gap-2 border-slate-300 text-slate-700 hover:border-emerald-600 hover:text-emerald-700 hover:bg-white font-semibold whitespace-nowrap cursor-pointer"
           >

@@ -14,9 +14,14 @@ export const BlockDetailCard: React.FC<BlockDetailCardProps> = ({ block, farmId 
   const [imgError, setImgError] = useState(false)
   const showFallback = !block.imageUrl || imgError
 
+  const blockId = block.id_blok ?? block.id
+  const targetUrl = farmId
+    ? `/kebun/farms/${farmId}/blocks/${blockId}`
+    : `/kebun/blocks/${blockId}`
+
   return (
     <div
-      onClick={() => farmId && navigate(`/admin/farms/${farmId}/blocks/${block.id}`)}
+      onClick={() => navigate(targetUrl)}
       className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:border-emerald-500 hover:shadow-md transition-all duration-200 group cursor-pointer flex flex-col"
     >
       <div className="h-44 w-full overflow-hidden relative border-b border-slate-100 bg-slate-100">

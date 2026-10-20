@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Flower2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { formatDate } from '@/utils/formatters';
 import { harvestService } from '@/services/harvestService';
 import type { HarvestCycle } from '../types/harvest.types';
 
@@ -68,7 +69,7 @@ export const RecordFlowerModal: React.FC<RecordFlowerModalProps> = ({
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden">
         <div className="p-6 pb-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
               <Flower2 className="w-5 h-5" />
             </div>
             <div>
@@ -99,7 +100,9 @@ export const RecordFlowerModal: React.FC<RecordFlowerModalProps> = ({
             </div>
             <div className="flex items-center justify-between pt-1">
               <span>Mulai Penyinaran:</span>
-              <span className="font-semibold text-slate-800">{cycle.tanggal_penyinaran}</span>
+              <span className="font-semibold text-slate-800">
+                {cycle.tanggal_penyinaran ? formatDate(cycle.tanggal_penyinaran) : '-'}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span>Target Berbunga Awal:</span>
@@ -141,7 +144,7 @@ export const RecordFlowerModal: React.FC<RecordFlowerModalProps> = ({
               variant="primary"
               size="md"
               disabled={isSubmitting}
-              className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-xs"
+              className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold shadow-xs"
             >
               {isSubmitting ? 'Menyimpan...' : 'Simpan Bunga'}
             </Button>

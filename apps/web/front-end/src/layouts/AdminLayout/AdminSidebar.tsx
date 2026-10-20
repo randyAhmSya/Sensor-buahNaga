@@ -1,10 +1,12 @@
 import { NavLink } from 'react-router-dom'
 import { Activity, Sprout, QrCode, LogOut, ShieldCheck, Sun } from 'lucide-react'
-import { useAuthStore } from '../../store/useAuthStore'
+import { useAuthStore, getRoleLabel } from '../../store/useAuthStore'
+import { USER_ROLES } from '../../config/constants'
 import { cn } from '../../utils/cn'
 
 export function AdminSidebar() {
   const { user, logout } = useAuthStore()
+  const isSuperAdmin = user?.role === USER_ROLES.SUPER_ADMIN
 
   const navItems = [
     {
@@ -37,7 +39,7 @@ export function AdminSidebar() {
               Agro<span className="text-emerald-400">Light</span>
             </span>
             <span className="text-[10px] text-emerald-500 font-semibold uppercase tracking-wider block -mt-1">
-              Portal Admin Kebun
+              {isSuperAdmin ? 'Portal Super Admin' : 'Portal Admin Kebun'}
             </span>
           </div>
         </div>
@@ -85,7 +87,7 @@ export function AdminSidebar() {
             <p className="text-xs font-bold text-white truncate">{user?.name || 'Administrator'}</p>
             <p className="text-[10px] text-emerald-400 flex items-center gap-1 truncate">
               <ShieldCheck className="h-3 w-3" />
-              {user?.role || 'ADMIN_KEBUN'}
+              {getRoleLabel(user?.role)}
             </p>
           </div>
         </div>

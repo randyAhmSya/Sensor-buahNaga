@@ -9,32 +9,54 @@ import { farmService } from '@/services/farmService'
 import type { FarmItem } from '@/types/farm.types'
 
 export const FarmDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>()
+  const params = useParams<{ farmId?: string; id?: string }>()
+  const farmId = params.farmId ?? params.id
   const navigate = useNavigate()
   const [filter, setFilter] = useState('Semua Blok')
   const [farm, setFarm] = useState<FarmItem | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (!id || id === 'farm-1') {
+    if (!farmId || farmId === 'farm-1') {
       setFarm(null)
       setIsLoading(false)
       return
     }
-    farmService.getById(id).then((res) => {
+    farmService.getById(farmId).then((res) => {
       setFarm(res || null)
       setIsLoading(false)
     }).catch(() => {
       setFarm(null)
       setIsLoading(false)
     })
-  }, [id])
+  }, [farmId])
 
-  if (isLoading || !farm) {
+  if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto py-16 text-center">
         <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
         <p className="text-sm font-semibold text-slate-500">Memuat detail kebun...</p>
+      </div>
+    )
+  }
+
+  if (!farm) {
+    return (
+      <div className="max-w-7xl mx-auto py-16 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-300 flex items-center justify-center text-slate-700 mx-auto mb-3">
+          <span className="text-xl font-bold">!</span>
+        </div>
+        <h3 className="text-base font-bold text-slate-800 mb-1">Kebun Tidak Ditemukan</h3>
+        <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
+          Data kebun tidak ditemukan atau telah dihapus.
+        </p>
+        <Button
+          type="button"
+          onClick={() => navigate('/kebun/farms')}
+          className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs px-4 py-2 rounded-xl"
+        >
+          Kembali ke Daftar Kebun
+        </Button>
       </div>
     )
   }
@@ -69,7 +91,7 @@ export const FarmDetailPage: React.FC = () => {
               type="button"
               variant="primary"
               size="md"
-              onClick={() => navigate(`/admin/farms/${farm.id}/blocks/new`)}
+              onClick={() => navigate(`/kebun/farms/${farm.id}/blocks/new`)}
               leftIcon={<Plus className="w-4 h-4 shrink-0" />}
               className="flex flex-row items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold whitespace-nowrap shadow-xs"
             >

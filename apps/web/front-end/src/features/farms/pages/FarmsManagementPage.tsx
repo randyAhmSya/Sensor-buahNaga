@@ -83,9 +83,9 @@ export const FarmsManagementPage: React.FC = () => {
             type="button"
             variant="primary"
             size="md"
-            onClick={() => navigate('/admin/farms/new')}
+            onClick={() => navigate('/kebun/farms/new')}
             leftIcon={<Plus className="w-4 h-4 shrink-0" />}
-            className="flex flex-row items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold shadow-xs whitespace-nowrap cursor-pointer"
+            className="w-full sm:w-auto min-h-[44px] px-4 flex flex-row items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold shadow-xs whitespace-nowrap cursor-pointer active:scale-98"
           >
             <span>Tambah Kebun</span>
           </Button>
@@ -93,13 +93,13 @@ export const FarmsManagementPage: React.FC = () => {
 
         {/* Grid Kartu Kebun atau Empty State Kebun */}
         {hasFarms ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredFarms.map((farm) => (
               <FarmCard
                 key={farm.id}
                 farm={farm}
                 isSelected={farm.id === selectedFarmId}
-                onSelect={(id) => navigate(`/admin/farms/${id}`)}
+                onSelect={(id) => navigate(`/kebun/farms/${id}`)}
                 onEdit={(f) => setFarmToEdit(f)}
                 onDelete={(f) => setFarmToDelete(f)}
               />
@@ -120,7 +120,7 @@ export const FarmsManagementPage: React.FC = () => {
               type="button"
               variant="primary"
               size="md"
-              onClick={() => navigate('/admin/farms/new')}
+              onClick={() => navigate('/kebun/farms/new')}
               leftIcon={<Plus className="w-4 h-4 shrink-0" />}
               className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold cursor-pointer mx-auto"
             >
@@ -159,7 +159,7 @@ export const FarmsManagementPage: React.FC = () => {
                 <BlockCard
                   key={block.id}
                   block={block}
-                  onClick={() => navigate(`/admin/farms/${selectedFarm.id}`)}
+                  onClick={() => navigate(`/kebun/farms/${selectedFarm.id}`)}
                 />
               ))}
             </div>
@@ -179,7 +179,7 @@ export const FarmsManagementPage: React.FC = () => {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate(`/admin/farms/${selectedFarm.id}/blocks/new`)}
+                  onClick={() => navigate(`/kebun/farms/${selectedFarm.id}/blocks/new`)}
                   leftIcon={<Plus className="w-3.5 h-3.5" />}
                   className="mt-2 text-xs font-semibold cursor-pointer border-slate-300 hover:border-emerald-600 hover:text-emerald-700"
                 >

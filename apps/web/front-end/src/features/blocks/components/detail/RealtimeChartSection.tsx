@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Activity } from 'lucide-react'
+import type { ReadSensor } from '@/services/telemetryService'
 
 export type TimeFilter = '24 Jam' | '7 Hari' | '30 Hari'
 
@@ -9,6 +10,7 @@ interface RealtimeChartSectionProps {
   hasTelemetry?: boolean
   isOnline?: boolean
   deviceId?: string
+  telemetryData?: ReadSensor[]
 }
 
 export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
@@ -17,6 +19,7 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
   hasTelemetry = false,
   isOnline = false,
   deviceId = 'Belum Terpasang',
+  telemetryData = [],
 }) => {
   const [internalRange, setInternalRange] = useState<TimeFilter>('24 Jam')
   const selectedRange = externalRange || internalRange
@@ -30,7 +33,92 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
   }
 
   const timeRanges: TimeFilter[] = ['24 Jam', '7 Hari', '30 Hari']
-  const showChart = hasTelemetry && isOnline && deviceId !== 'Belum Terpasang'
+  const isInstalled = deviceId && deviceId !== 'Belum Terpasang'
+  const hasData = telemetryData.length > 0 || hasTelemetry
+  const showChart = isInstalled && hasData && (isOnline || telemetryData.length > 0)
+
+  // Filter data sesuai rentang waktu jika ada timestamp
+  const displayData = useMemo(() => {
+    if (telemetryData.length === 0) return []
+    // Jika data banyak, bisa disesuaikan atau tampilkan semua
+    return telemetryData
+  }, [telemetryData])
+
+  // Koordinat grafik SVG dinamis
+  const chartPoints = useMemo(() => {
+    if (displayData.length === 0) return null
+
+    const N = displayData.length
+    const luxValues = displayData.map((d) => Number(d.nilai_lux ?? d.lux ?? 0))
+    const tempValues = displayData.map((d) => Number(d.suhu ?? d.temperature ?? 0))
+
+    const maxLux = Math.max(...luxValues, 100)
+    const minLux = Math.min(...luxValues, 0)
+    const luxRange = maxLux - minLux || 1
+
+    const maxTemp = Math.max(...tempValues, 40)
+    const minTemp = Math.min(...tempValues, 15)
+    const tempRange = maxTemp - minTemp || 1
+
+    const width = 500
+    const topY = 20
+    const bottomY = 130
+    const usableHeight = bottomY - topY
+
+    const points = displayData.map((_, i) => {
+      const x = N > 1 ? (i / (N - 1)) * (width - 20) + 10 : width / 2
+      const yLux = bottomY - ((luxValues[i] - minLux) / luxRange) * usableHeight
+      const yTemp = bottomY - ((tempValues[i] - minTemp) / tempRange) * usableHeight
+      return { x, yLux, yTemp, lux: luxValues[i], temp: tempValues[i] }
+    })
+
+    const luxLinePath = points.reduce(
+      (acc, pt, i) => (i === 0 ? `M ${pt.x},${pt.yLux}` : `${acc} L ${pt.x},${pt.yLux}`),
+      ''
+    )
+    const luxAreaPath = `${luxLinePath} L ${points[points.length - 1].x},${bottomY + 10} L ${points[0].x},${bottomY + 10} Z`
+
+    const tempLinePath = points.reduce(
+      (acc, pt, i) => (i === 0 ? `M ${pt.x},${pt.yTemp}` : `${acc} L ${pt.x},${pt.yTemp}`),
+      ''
+    )
+
+    return {
+      points,
+      luxLinePath,
+      luxAreaPath,
+      tempLinePath,
+      latestLux: luxValues[luxValues.length - 1],
+      latestTemp: tempValues[tempValues.length - 1],
+    }
+  }, [displayData])
+
+  // Ekstrak label waktu sumbu horizontal dari dicatat_pada
+  const timeLabels = useMemo(() => {
+    if (displayData.length === 0) return []
+
+    const formatTime = (timeStr?: string) => {
+      if (!timeStr) return '00:00'
+      const dt = new Date(timeStr)
+      if (!isNaN(dt.getTime())) {
+        return dt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      }
+      const parts = timeStr.split(' ')
+      return parts[1] ? parts[1].substring(0, 5) : timeStr.substring(0, 5)
+    }
+
+    const count = Math.min(5, displayData.length)
+    if (count <= 1) {
+      return [formatTime(displayData[0]?.dicatat_pada)]
+    }
+
+    const labels: string[] = []
+    for (let i = 0; i < count; i++) {
+      const idx = Math.round((i / (count - 1)) * (displayData.length - 1))
+      labels.push(formatTime(displayData[idx]?.dicatat_pada))
+    }
+    return labels
+  }, [displayData])
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs h-full flex flex-col justify-between space-y-5">
@@ -39,6 +127,11 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-emerald-700" />
           <h3 className="text-base font-bold text-slate-900">Telemetri Intensitas & Suhu</h3>
+          {chartPoints && (
+            <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 ml-1">
+              {chartPoints.latestLux} lx | {chartPoints.latestTemp}°C
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
@@ -62,16 +155,16 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
       {/* Konten Grafik atau Empty State Murni */}
       {!showChart ? (
         <div className="flex-1 flex flex-col items-center justify-center py-12 px-4 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 mb-3 shadow-2xs">
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 mb-3 shadow-2xs">
             <Activity className="w-6 h-6" />
           </div>
           <h4 className="text-sm font-bold text-slate-800 mb-1">
-            {deviceId === 'Belum Terpasang' ? 'Node Belum Dipasangkan' : 'Sensor Terhubung'}
+            {!isInstalled ? 'Node Belum Dipasangkan' : 'Sensor Terhubung'}
           </h4>
-          <p className="text-xs text-slate-500 max-w-sm">
-            {deviceId === 'Belum Terpasang'
+          <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
+            {!isInstalled
               ? 'Pasangkan perangkat node sensor IoT pada blok ini untuk mulai mengukur intensitas cahaya dan suhu secara real-time.'
-              : 'Sensor terhubung. Menunggu pengiriman data telemetri pertama...'}
+              : 'Sensor terhubung. Menunggu data telemetri pertama...'}
           </p>
         </div>
       ) : (
@@ -80,44 +173,87 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
             <div className="relative h-44 w-full">
               <svg className="w-full h-full overflow-visible" viewBox="0 0 500 150" preserveAspectRatio="none">
                 <line x1="0" y1="20" x2="500" y2="20" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
-                <line x1="0" y1="70" x2="500" y2="70" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
-                <line x1="0" y1="120" x2="500" y2="120" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
+                <line x1="0" y1="75" x2="500" y2="75" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
+                <line x1="0" y1="130" x2="500" y2="130" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
 
                 <defs>
-                  <linearGradient id="luxGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#059669" stopOpacity="0.18" />
+                  <linearGradient id="luxGradientDynamic" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#059669" stopOpacity="0.22" />
                     <stop offset="100%" stopColor="#059669" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
 
-                <path
-                  d="M0,110 Q50,90 100,60 T200,40 T300,55 T400,25 T500,45 L500,140 L0,140 Z"
-                  fill="url(#luxGradient)"
-                />
-                <path
-                  d="M0,110 Q50,90 100,60 T200,40 T300,55 T400,25 T500,45"
-                  fill="none"
-                  stroke="#059669"
-                  strokeWidth="2.5"
-                />
-                <path
-                  d="M0,125 Q60,115 120,105 T220,95 T320,100 T420,85 T500,90"
-                  fill="none"
-                  stroke="#d97706"
-                  strokeWidth="2"
-                  strokeDasharray="4 4"
-                />
+                {chartPoints ? (
+                  <>
+                    <path d={chartPoints.luxAreaPath} fill="url(#luxGradientDynamic)" />
+                    <path
+                      d={chartPoints.luxLinePath}
+                      fill="none"
+                      stroke="#059669"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d={chartPoints.tempLinePath}
+                      fill="none"
+                      stroke="#d97706"
+                      strokeWidth="2"
+                      strokeDasharray="4 4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    {chartPoints.points.length <= 25 &&
+                      chartPoints.points.map((pt, idx) => (
+                        <circle
+                          key={idx}
+                          cx={pt.x}
+                          cy={pt.yLux}
+                          r="3"
+                          fill="#059669"
+                          className="hover:r-4 transition-all"
+                        >
+                          <title>{`${pt.lux} lx`}</title>
+                        </circle>
+                      ))}
+                  </>
+                ) : (
+                  <>
+                    <path
+                      d="M0,110 Q50,90 100,60 T200,40 T300,55 T400,25 T500,45 L500,140 L0,140 Z"
+                      fill="url(#luxGradientDynamic)"
+                    />
+                    <path
+                      d="M0,110 Q50,90 100,60 T200,40 T300,55 T400,25 T500,45"
+                      fill="none"
+                      stroke="#059669"
+                      strokeWidth="2.5"
+                    />
+                    <path
+                      d="M0,125 Q60,115 120,105 T220,95 T320,100 T420,85 T500,90"
+                      fill="none"
+                      stroke="#d97706"
+                      strokeWidth="2"
+                      strokeDasharray="4 4"
+                    />
+                  </>
+                )}
               </svg>
             </div>
 
+            {/* Sumbu Waktu Horisontal dicatat_pada */}
             <div className="flex justify-between text-[10px] text-slate-400 font-semibold pt-3 px-1 border-t border-slate-100">
-              <span>00:00</span>
-              <span>04:00</span>
-              <span>08:00</span>
-              <span>12:00</span>
-              <span>16:00</span>
-              <span>20:00</span>
-              <span>Sekarang</span>
+              {timeLabels.length > 0 ? (
+                timeLabels.map((lbl, idx) => <span key={idx}>{lbl}</span>)
+              ) : (
+                <>
+                  <span>00:00</span>
+                  <span>06:00</span>
+                  <span>12:00</span>
+                  <span>18:00</span>
+                  <span>Sekarang</span>
+                </>
+              )}
             </div>
           </div>
 
@@ -133,7 +269,9 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
                 <span className="text-slate-600 font-medium">Suhu Udara</span>
               </div>
             </div>
-            <span className="text-slate-400 text-[11px] font-medium hidden sm:inline">Interval: 5 Menit</span>
+            <span className="text-slate-400 text-[11px] font-medium hidden sm:inline">
+              Data riil sensor ({displayData.length} sampel)
+            </span>
           </div>
         </>
       )}

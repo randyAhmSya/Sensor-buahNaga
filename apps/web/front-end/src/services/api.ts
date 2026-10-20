@@ -1,4 +1,3 @@
-import type { ActiveScheduleItem } from '@/data/mockSchedules';
 import type { QueryParams } from '@/types/api.types';
 
 /**
@@ -200,20 +199,6 @@ export class ApiClient {
 
 export const apiClient = new ApiClient();
 
-// ==================== COMPATIBILITY SERVICE ABSTRACTIONS ====================
-const delay = (ms = 150) => new Promise((resolve) => setTimeout(resolve, ms));
-
-export const scheduleService = {
-  getAll: async (): Promise<ActiveScheduleItem[]> => {
-    await delay();
-    return [];
-  },
-  delete: async (_id: string): Promise<boolean> => {
-    await delay();
-    return true;
-  },
-};
-
 export { farmService } from './farmService';
 export { blockService } from './blockService';
 export { harvestService } from './harvestService';
@@ -222,3 +207,8 @@ export { gatewayService } from './gatewayService';
 export { qrCodeService } from './qrService';
 export { tenantService } from './tenantService';
 export { authService } from './authService';
+export { scheduleService } from './scheduleService';
+export { telemetryService } from './telemetryService';
+export { energyService } from './energyService';
+export { petaniSubscriptionService } from './petaniSubscriptionService';
+

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useParams } from 'react-router-dom'
 import type { SensorNodeItem, SensorSummaryMetrics } from '@/types/sensor.types'
 import type { FarmItem } from '@/types/farm.types'
 import type { CreateNodePayload } from '@/types/node.types'
@@ -12,10 +13,12 @@ export interface SensorToast {
 }
 
 export const useSensorMonitoring = () => {
+  const params = useParams<{ sensorId?: string; id?: string }>()
+  const routeSensorId = params.sensorId ?? params.id
   const [sensors, setSensors] = useState<SensorNodeItem[]>([])
   const [farms, setFarms] = useState<FarmItem[]>([])
   const [farmOptions, setFarmOptions] = useState<string[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = useState(routeSensorId || '')
   const [selectedFarm, setSelectedFarm] = useState('Semua Kebun')
   const [selectedStatus, setSelectedStatus] = useState('Semua Status')
   const [isLoading, setIsLoading] = useState(true)
@@ -93,6 +96,7 @@ export const useSensorMonitoring = () => {
           type: 'success',
           message: `Node sensor ${payload.kode_perangkat} berhasil didaftarkan.`,
         })
+        return res
       } catch (err: unknown) {
         setToast({
           type: 'error',
@@ -113,7 +117,6 @@ export const useSensorMonitoring = () => {
       try {
         await sensorService.update(sensorId, {
           kode_perangkat: data.nodeCode,
-          blok_id: data.blockId || null,
           gateway_id: data.gatewayId || null,
           status_koneksi: data.status.toLowerCase(),
           tipe_sensor: data.tipeSensor,

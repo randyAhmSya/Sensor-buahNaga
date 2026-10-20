@@ -14,6 +14,7 @@ export * from './user'
 export * from './telemetry'
 export * from './farm'
 export * from './sensor.types'
+export * from './petaniSubscription.types'
 
 // User & Auth Types
 export interface UserProfile {

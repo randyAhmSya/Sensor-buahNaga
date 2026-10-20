@@ -26,7 +26,7 @@ export const ActiveBlocksOverview: React.FC<ActiveBlocksOverviewProps> = ({
           </div>
         </div>
         <Link
-          to="/admin/farms"
+          to="/kebun/farms"
           className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
         >
           <span>Semua Blok</span>

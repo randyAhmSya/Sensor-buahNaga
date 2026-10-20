@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, Info } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { formatDate } from '@/utils/formatters';
 import { harvestService } from '@/services/harvestService';
 import type { HarvestCycle } from '../types/harvest.types';
 
@@ -102,12 +103,16 @@ export const RecordHarvestModal: React.FC<RecordHarvestModalProps> = ({
             </div>
             <div className="flex items-center justify-between pt-1">
               <span>Estimasi Tanggal Panen:</span>
-              <span className="font-semibold text-slate-800">{cycle.estimasi_tanggal_panen}</span>
+              <span className="font-semibold text-slate-800">
+                {cycle.estimasi_tanggal_panen ? formatDate(cycle.estimasi_tanggal_panen) : '-'}
+              </span>
             </div>
             {cycle.tanggal_berbunga_aktual && (
               <div className="flex items-center justify-between">
                 <span>Bunga Aktual:</span>
-                <span className="font-semibold text-amber-700">{cycle.tanggal_berbunga_aktual}</span>
+                <span className="font-semibold text-amber-700">
+                  {formatDate(cycle.tanggal_berbunga_aktual)}
+                </span>
               </div>
             )}
           </div>

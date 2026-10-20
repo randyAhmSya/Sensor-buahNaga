@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { formatDate } from '@/utils/formatters';
 import { harvestService } from '@/services/harvestService';
 import type { HarvestCycle } from '../types/harvest.types';
 
@@ -73,11 +74,15 @@ export const DeleteHarvestCycleModal: React.FC<DeleteHarvestCycleModalProps> = (
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-600 space-y-1">
             <div className="flex justify-between">
               <span>Mulai Penyinaran:</span>
-              <span className="font-semibold text-slate-800">{cycle.tanggal_penyinaran}</span>
+              <span className="font-semibold text-slate-800">
+                {cycle.tanggal_penyinaran ? formatDate(cycle.tanggal_penyinaran) : '-'}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Estimasi Panen:</span>
-              <span className="font-semibold text-slate-800">{cycle.estimasi_tanggal_panen}</span>
+              <span className="font-semibold text-slate-800">
+                {cycle.estimasi_tanggal_panen ? formatDate(cycle.estimasi_tanggal_panen) : '-'}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Status:</span>

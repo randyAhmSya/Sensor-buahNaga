@@ -54,7 +54,7 @@ export const LightingScheduleCard: React.FC<LightingScheduleCardProps> = ({ sche
           type="button"
           variant="outline"
           size="md"
-          onClick={() => navigate('/admin/schedules')}
+          onClick={() => navigate('/kebun/schedules')}
           leftIcon={<Sliders className="w-4 h-4 shrink-0" />}
           className="w-full flex flex-row items-center justify-center gap-2 border-slate-300 hover:border-emerald-600 text-slate-700 hover:text-emerald-700 bg-white font-semibold py-2.5 rounded-xl cursor-pointer"
         >

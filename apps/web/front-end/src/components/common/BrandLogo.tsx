@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import logoImg from '../../assets/images/logo.png'
+import logoImg from '@/assets/logo.png'
 import { cn } from '../../utils/cn'
 
 export interface BrandLogoProps {
@@ -27,7 +27,7 @@ export function BrandLogo({
     <Link
       to={to}
       className={cn(
-        'inline-flex items-center transition-colors select-none',
+        'inline-flex items-center gap-2.5 transition-colors select-none',
         className
       )}
       aria-label="AgroLight Home"
@@ -35,7 +35,7 @@ export function BrandLogo({
       <img
         src={logoImg}
         alt="AgroLight Logo"
-        className={cn('h-12 sm:h-13 w-auto object-contain shrink-0', imgClassName)}
+        className={cn('w-8 h-8 object-contain shrink-0', imgClassName)}
       />
       {showText && (
         <span

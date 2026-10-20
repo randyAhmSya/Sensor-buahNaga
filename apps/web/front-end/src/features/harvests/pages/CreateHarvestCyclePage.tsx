@@ -4,6 +4,7 @@ import { ChevronRight, ArrowLeft, Save, ChevronDown, AlertCircle } from 'lucide-
 import { Button } from '@/components/ui/Button';
 import { farmService } from '@/services/farmService';
 import { harvestService } from '@/services/harvestService';
+import { formatDate } from '@/utils/formatters';
 import type { BlockOptionItem } from '../components/CreateHarvestCycleModal';
 
 export const CreateHarvestCyclePage: React.FC = () => {
@@ -87,7 +88,7 @@ export const CreateHarvestCyclePage: React.FC = () => {
         target_hari_berbunga: Number(bloomingTargetDays),
       });
 
-      navigate('/admin/harvests');
+      navigate('/kebun/harvests');
     } catch (err: unknown) {
       setErrorMessage((err as Error)?.message || 'Gagal menyimpan siklus panen baru.');
       setIsSubmitting(false);
@@ -99,7 +100,7 @@ export const CreateHarvestCyclePage: React.FC = () => {
       {/* Breadcrumb & Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-          <Link to="/admin/harvests" className="hover:text-emerald-700 transition-colors">
+          <Link to="/kebun/harvests" className="hover:text-emerald-700 transition-colors">
             Estimasi Panen
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
@@ -119,7 +120,7 @@ export const CreateHarvestCyclePage: React.FC = () => {
             type="button"
             variant="outline"
             size="md"
-            onClick={() => navigate('/admin/harvests')}
+            onClick={() => navigate('/kebun/harvests')}
             className="flex flex-row items-center gap-2 border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold"
           >
             <ArrowLeft className="w-4 h-4 shrink-0" />
@@ -157,7 +158,7 @@ export const CreateHarvestCyclePage: React.FC = () => {
                   ) : (
                     blocks.map((opt) => (
                       <option key={opt.id} value={opt.id}>
-                        {opt.farmName ? `${opt.farmName} — ${opt.name}` : opt.name}
+                        {opt.farmName ? `${opt.farmName} - ${opt.name}` : opt.name}
                       </option>
                     ))
                   )}
@@ -204,7 +205,7 @@ export const CreateHarvestCyclePage: React.FC = () => {
                   placeholder="Standar: 20 hari"
                 />
               </div>
-              <p className="text-[11px] text-slate-400">Rata-rata induksi fotoperiode membutuhkan 20–25 hari.</p>
+              <p className="text-[11px] text-slate-400">Rata-rata induksi fotoperiode membutuhkan 20-25 hari.</p>
             </div>
 
             <div className="space-y-1.5">
@@ -215,7 +216,11 @@ export const CreateHarvestCyclePage: React.FC = () => {
                 <input
                   type="text"
                   readOnly
-                  value={projectedHarvestDate || 'Pilih tanggal penyinaran terlebih dahulu'}
+                  value={
+                    projectedHarvestDate
+                      ? formatDate(projectedHarvestDate)
+                      : 'Pilih tanggal penyinaran terlebih dahulu'
+                  }
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-emerald-800 outline-none cursor-not-allowed"
                 />
               </div>
@@ -232,7 +237,7 @@ export const CreateHarvestCyclePage: React.FC = () => {
             type="button"
             variant="outline"
             size="md"
-            onClick={() => navigate('/admin/harvests')}
+            onClick={() => navigate('/kebun/harvests')}
             className="w-full sm:w-auto border-slate-300 text-slate-700 hover:bg-white font-semibold"
           >
             Batal

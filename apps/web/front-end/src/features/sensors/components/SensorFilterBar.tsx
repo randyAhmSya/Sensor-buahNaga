@@ -1,14 +1,15 @@
-import type { FC } from 'react'
-import { Search, ChevronDown } from 'lucide-react'
+import type { FC } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { DebouncedSearchInput } from '@/components/common/DebouncedSearchInput';
 
 interface SensorFilterBarProps {
-  searchTerm: string
-  onSearchChange: (value: string) => void
-  selectedFarm: string
-  onFarmChange: (value: string) => void
-  selectedStatus: string
-  onStatusChange: (value: string) => void
-  farmOptions?: string[]
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+  selectedFarm: string;
+  onFarmChange: (value: string) => void;
+  selectedStatus: string;
+  onStatusChange: (value: string) => void;
+  farmOptions?: string[];
 }
 
 export const SensorFilterBar: FC<SensorFilterBarProps> = ({
@@ -20,29 +21,30 @@ export const SensorFilterBar: FC<SensorFilterBarProps> = ({
   onStatusChange,
   farmOptions = [],
 }) => {
-  const uniqueFarms = ['Semua Kebun', ...Array.from(new Set(farmOptions))]
+  const uniqueFarms = ['Semua Kebun', ...Array.from(new Set(farmOptions))];
 
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+    <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5">
       {/* Input Pencarian */}
-      <div className="relative flex-1 max-w-sm">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-        <input
-          type="text"
+      <div className="flex-1 max-w-full md:max-w-sm">
+        <DebouncedSearchInput
           value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Cari kode node (ND-001)..."
-          className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-600 shadow-2xs"
+          onDebouncedChange={onSearchChange}
+          delay={1000}
+          placeholder="Cari kode node (misal: ND-001)..."
+          ariaLabel="Cari kode node sensor"
+          className="w-full min-h-[44px] bg-white border-slate-200/90"
         />
       </div>
 
       {/* Filter Dropdown */}
-      <div className="flex items-center gap-3">
-        <div className="relative">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        {/* Dropdown Filter Kebun */}
+        <div className="relative flex-1 sm:flex-none sm:w-52">
           <select
             value={selectedFarm}
             onChange={(e) => onFarmChange(e.target.value)}
-            className="appearance-none pl-3.5 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:border-slate-300 focus:outline-none focus:border-emerald-600 cursor-pointer shadow-2xs"
+            className="w-full appearance-none pl-3.5 pr-9 py-2.5 min-h-[44px] bg-white border border-slate-200/90 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-none focus:border-emerald-600 cursor-pointer shadow-2xs transition-colors"
           >
             {uniqueFarms.map((farm) => (
               <option key={farm} value={farm}>
@@ -50,22 +52,23 @@ export const SensorFilterBar: FC<SensorFilterBarProps> = ({
               </option>
             ))}
           </select>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
 
-        <div className="relative">
+        {/* Dropdown Filter Status */}
+        <div className="relative flex-1 sm:flex-none sm:w-44">
           <select
             value={selectedStatus}
             onChange={(e) => onStatusChange(e.target.value)}
-            className="appearance-none pl-3.5 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:border-slate-300 focus:outline-none focus:border-emerald-600 cursor-pointer shadow-2xs"
+            className="w-full appearance-none pl-3.5 pr-9 py-2.5 min-h-[44px] bg-white border border-slate-200/90 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-none focus:border-emerald-600 cursor-pointer shadow-2xs transition-colors"
           >
             <option value="Semua Status">Semua Status</option>
             <option value="Aktif">Aktif</option>
             <option value="Nonaktif">Nonaktif</option>
           </select>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

@@ -1,60 +1,32 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React from 'react'
 import { useParams } from 'react-router-dom'
 import { BlockDetailBanner } from '../components/detail/BlockDetailBanner'
 import { DeviceStatusCard } from '../components/detail/DeviceStatusCard'
-import { RealtimeChartSection, type TimeFilter } from '../components/detail/RealtimeChartSection'
+import { BlockLampStatusCard } from '../components/detail/BlockLampStatusCard'
+import { RealtimeChartSection } from '../components/detail/RealtimeChartSection'
 import { LightingScheduleCard } from '../components/detail/LightingScheduleCard'
 import { EnergyConsumptionCard } from '../components/detail/EnergyConsumptionCard'
 import { HarvestCycleCard } from '../components/detail/HarvestCycleCard'
 import { CycleHistoryTable } from '../components/tables/CycleHistoryTable'
 import { SensorLogTable } from '../components/tables/SensorLogTable'
-import { blockService } from '@/services/blockService'
-import type { BlockDetailFull } from '@/types/block.types'
+import { useBlockDetail } from '../hooks/useBlockDetail'
 
 export const BlockDetailPage: React.FC = () => {
   const { farmId, id, blockId } = useParams<{ farmId?: string; id?: string; blockId?: string }>()
   const effectiveBlockId = (blockId || id || '').trim()
   const effectiveFarmId = (farmId && farmId !== 'farm-1' && farmId !== 'undefined' ? farmId : '').trim()
 
-  const [data, setData] = useState<BlockDetailFull | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [telemetryRange, setTelemetryRange] = useState<TimeFilter>('24 Jam')
-
-  const lastFetchedBlockIdRef = useRef<string>('')
-
-  const fetchBlock = useCallback(
-    async (force = false) => {
-      if (!effectiveBlockId || effectiveBlockId === 'blk-1') {
-        setIsLoading(false)
-        setData(null)
-        return
-      }
-
-      // Cegah duplikasi pemanggilan request jika blockId yang sama sudah diambil
-      if (!force && lastFetchedBlockIdRef.current === effectiveBlockId) {
-        return
-      }
-      lastFetchedBlockIdRef.current = effectiveBlockId
-
-      setIsLoading(true)
-      setError(null)
-      try {
-        const result = await blockService.getById(effectiveFarmId, effectiveBlockId)
-        setData(result)
-      } catch (err: unknown) {
-        setError((err as Error)?.message || 'Gagal memuat detail blok')
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    [effectiveBlockId, effectiveFarmId]
-  )
-
-  // Dependency array dirapikan: HANYA dipicu saat effectiveBlockId berubah
-  useEffect(() => {
-    fetchBlock()
-  }, [effectiveBlockId])
+  const {
+    data,
+    statusLampu,
+    telemetryData,
+    energyData,
+    isLoading,
+    error,
+    telemetryRange,
+    setTelemetryRange,
+    refetch,
+  } = useBlockDetail(effectiveFarmId, effectiveBlockId)
 
   if (isLoading || (!data && !error)) {
     return (
@@ -68,14 +40,14 @@ export const BlockDetailPage: React.FC = () => {
   if (error && !data) {
     return (
       <div className="max-w-7xl mx-auto py-16 text-center">
-        <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 mx-auto mb-3">
+        <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-300 flex items-center justify-center text-slate-700 mx-auto mb-3">
           <span className="text-xl font-bold">!</span>
         </div>
         <h3 className="text-base font-bold text-slate-800 mb-1">Gagal Memuat Detail Blok</h3>
         <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">{error}</p>
         <button
           type="button"
-          onClick={() => fetchBlock(true)}
+          onClick={() => refetch()}
           className="px-4 py-2 bg-emerald-700 text-white text-xs font-semibold rounded-xl cursor-pointer hover:bg-emerald-800 transition-colors"
         >
           Coba Lagi
@@ -97,9 +69,9 @@ export const BlockDetailPage: React.FC = () => {
         bannerUrl={data.bannerUrl}
       />
 
-      {/* Grid Status Perangkat & Grafik Realtime */}
+      {/* Grid Status Perangkat, Status Lampu & Grafik Realtime */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        <div className="lg:col-span-4 flex flex-col">
+        <div className="lg:col-span-5 flex flex-col gap-6">
           <DeviceStatusCard
             deviceId={data.deviceId}
             deviceStatus={data.deviceStatus}
@@ -108,14 +80,20 @@ export const BlockDetailPage: React.FC = () => {
             gateway={data.gateway}
             lastSeen={data.lastSeen}
           />
+          <BlockLampStatusCard statusLampu={statusLampu} />
         </div>
-        <div className="lg:col-span-8 flex flex-col">
+        <div className="lg:col-span-7 flex flex-col">
           <RealtimeChartSection
             selectedRange={telemetryRange}
             onRangeChange={setTelemetryRange}
-            hasTelemetry={data.sensorLogs.length > 0}
-            isOnline={data.deviceStatus === 'Online'}
+            hasTelemetry={telemetryData.length > 0 || data.sensorLogs.length > 0}
+            isOnline={
+              data.deviceStatus === 'Online' ||
+              (data.deviceStatus as string) === 'Terhubung' ||
+              (data.deviceStatus as string) === 'Aktif'
+            }
             deviceId={data.deviceId}
+            telemetryData={telemetryData}
           />
         </div>
       </div>
@@ -123,7 +101,10 @@ export const BlockDetailPage: React.FC = () => {
       {/* Grid Kontrol Operasional 3 Kolom */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <LightingScheduleCard schedule={data.lightingSchedule} />
-        <EnergyConsumptionCard energy={data.energyConsumption} />
+        <EnergyConsumptionCard
+          energy={data.energyConsumption}
+          history={energyData?.riwayat}
+        />
         <HarvestCycleCard harvest={data.harvestCycle} />
       </div>
 

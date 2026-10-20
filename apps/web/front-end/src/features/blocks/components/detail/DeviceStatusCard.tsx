@@ -72,8 +72,8 @@ export const DeviceStatusCard: React.FC<DeviceStatusCardProps> = ({
           <span
             className={`px-2.5 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
               isOnline
-                ? 'bg-white border-emerald-600 text-emerald-700'
-                : 'bg-white border-slate-300 text-slate-600'
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                : 'bg-slate-50 border-slate-300 text-slate-600'
             }`}
           >
             <span
@@ -86,7 +86,7 @@ export const DeviceStatusCard: React.FC<DeviceStatusCardProps> = ({
         {/* Intensitas Cahaya (Hero Metric) */}
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold">
-            <Sun className="w-4 h-4 text-amber-500" />
+            <Sun className="w-4 h-4 text-emerald-600" />
             <span>Intensitas Cahaya Saat Ini</span>
           </div>
           <div className="flex items-baseline gap-2">
@@ -108,7 +108,7 @@ export const DeviceStatusCard: React.FC<DeviceStatusCardProps> = ({
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 space-y-1">
             <div className="flex items-center gap-1.5 text-slate-500 text-xs">
-              <Thermometer className="w-3.5 h-3.5 text-rose-500" />
+              <Thermometer className="w-3.5 h-3.5 text-slate-500" />
               <span>Suhu Udara</span>
             </div>
             <p className="text-lg font-bold text-slate-900">

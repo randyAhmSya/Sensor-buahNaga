@@ -1,9 +1,11 @@
 import type { BlockItem } from './block.types'
+export type { KebunBackend, CreateKebunPayload, UpdateKebunPayload } from './kebun.types'
 
 export type FarmStatus = 'Aktif' | 'Inaktif'
 
 export interface FarmItem {
   id: string
+  id_kebun?: string
   name: string
   description?: string
   location: string
@@ -17,3 +19,4 @@ export interface FarmItem {
 }
 
 export type FarmDetail = FarmItem
+export type Farm = FarmItem

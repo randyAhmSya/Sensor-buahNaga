@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { PublicLayout } from '../layouts/PublicLayout/PublicLayout'
 import { PetaniLayout } from '../layouts/PetaniLayout/PetaniLayout'
 import { DashboardLayout } from '../layouts/DashboardLayout/DashboardLayout'
+import { SuperAdminLayout } from '../layouts/SuperAdminLayout/SuperAdminLayout'
 import { RoleGuard } from './guards/RoleGuard'
 import { USER_ROLES } from '../config/constants'
 import { PageLoadingSpinner } from '../components/common/PageLoadingSpinner'
@@ -15,6 +16,15 @@ const PricingPage = lazy(() => import('@/features/landing/pages/PricingPage').th
 const AboutUsPage = lazy(() => import('@/features/landing/pages/AboutUsPage').then((m) => ({ default: m.AboutUsPage })))
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage })))
 const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage').then((m) => ({ default: m.RegisterPage })))
+const SuperAdminDashboardPage = lazy(() => import('@/features/super-admin/pages/SuperAdminDashboardPage').then((m) => ({ default: m.SuperAdminDashboardPage })))
+const SuperAdminTenantsPage = lazy(() => import('@/features/super-admin/pages/SuperAdminTenantsPage').then((m) => ({ default: m.SuperAdminTenantsPage })))
+const SuperAdminUsersPage = lazy(() => import('@/features/super-admin/pages/SuperAdminUsersPage').then((m) => ({ default: m.SuperAdminUsersPage })))
+const SubscriptionPackagesPage = lazy(() => import('@/features/super-admin/pages/SubscriptionPackagesPage').then((m) => ({ default: m.SubscriptionPackagesPage })))
+const TenantInspectionPage = lazy(() => import('@/features/super-admin/pages/TenantInspectionPage').then((m) => ({ default: m.TenantInspectionPage })))
+const AccessRequestsPage = lazy(() => import('@/features/super-admin/pages/AccessRequestsPage').then((m) => ({ default: m.AccessRequestsPage })))
+const SubscriptionsPage = lazy(() => import('@/features/super-admin/pages/SubscriptionsPage').then((m) => ({ default: m.SubscriptionsPage })))
+const AdminAuditLogsPage = lazy(() => import('@/features/super-admin/pages/AdminAuditLogsPage').then((m) => ({ default: m.AdminAuditLogsPage })))
+const SuperAdminSettingsPage = lazy(() => import('@/features/super-admin/pages/SuperAdminSettingsPage').then((m) => ({ default: m.SuperAdminSettingsPage })))
 const FarmerDashboardPage = lazy(() => import('@/features/dashboard/pages/FarmerDashboardPage').then((m) => ({ default: m.FarmerDashboardPage })))
 const DeviceHealthPage = lazy(() => import('@/features/monitoring-alat/pages/DeviceHealthPage').then((m) => ({ default: m.DeviceHealthPage })))
 const HarvestEstimationPage = lazy(() => import('@/features/estimasi-panen/pages/HarvestEstimationPage').then((m) => ({ default: m.HarvestEstimationPage })))
@@ -34,6 +44,8 @@ const EditSchedulePage = lazy(() => import('@/features/schedules/pages/EditSched
 const AdminHarvestsPage = lazy(() => import('@/features/harvests/pages/HarvestEstimationPage').then((m) => ({ default: m.HarvestEstimationPage })))
 const CreateHarvestCyclePage = lazy(() => import('@/features/harvests/pages/CreateHarvestCyclePage').then((m) => ({ default: m.CreateHarvestCyclePage })))
 const QRCodeManagementPage = lazy(() => import('@/features/qrcodes/pages/QRCodeManagementPage').then((m) => ({ default: m.QRCodeManagementPage })))
+const FarmerAccessRequestsPage = lazy(() => import('@/features/tenant-access/pages/FarmerAccessRequestsPage').then((m) => ({ default: m.FarmerAccessRequestsPage })))
+const PetaniSubscriptionPage = lazy(() => import('@/features/subscription/pages/PetaniSubscriptionPage').then((m) => ({ default: m.PetaniSubscriptionPage })))
 
 export function AppRoutes() {
   return (
@@ -51,16 +63,44 @@ export function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* Rute Farmer Admin (Portal Pengelola Kebun) */}
+        {/* Rute Super Admin (Portal Sistem Terpusat) */}
         <Route
           path="/admin"
           element={
-            <RoleGuard allowedRoles={[USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN_KEBUN]}>
+            <RoleGuard allowedRoles={[USER_ROLES.SUPER_ADMIN]}>
+              <SuperAdminLayout />
+            </RoleGuard>
+          }
+        >
+          <Route index element={<SuperAdminDashboardPage />} />
+          <Route path="dashboard" element={<SuperAdminDashboardPage />} />
+          <Route path="tenant" element={<SuperAdminTenantsPage />} />
+          <Route path="tenant/:tenantId/inspeksi" element={<TenantInspectionPage />} />
+          <Route path="tenants" element={<Navigate to="/admin/tenant" replace />} />
+          <Route path="users" element={<SuperAdminUsersPage />} />
+          <Route path="paket" element={<SubscriptionPackagesPage />} />
+          <Route path="langganan" element={<SubscriptionsPage />} />
+          <Route path="subscriptions" element={<Navigate to="/admin/langganan" replace />} />
+          <Route path="log-aktivitas" element={<AdminAuditLogsPage />} />
+          <Route path="access-requests" element={<AccessRequestsPage />} />
+          <Route path="settings" element={<SuperAdminSettingsPage />} />
+          <Route path="profile" element={<SuperAdminSettingsPage />} />
+        </Route>
+
+        {/* Alias Backward Compatibility Super Admin */}
+        <Route path="/super-admin" element={<Navigate to="/admin" replace />} />
+        <Route path="/super-admin/*" element={<Navigate to="/admin" replace />} />
+
+        {/* Rute Farmer Admin (Portal Pengelola Kebun) */}
+        <Route
+          path="/kebun"
+          element={
+            <RoleGuard allowedRoles={[USER_ROLES.ADMIN_KEBUN]}>
               <DashboardLayout />
             </RoleGuard>
           }
         >
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route index element={<Navigate to="/kebun/farms" replace />} />
           <Route path="dashboard" element={<FarmerDashboardPage />} />
           <Route path="farms" element={<FarmsManagementPage />} />
           <Route path="farms/new" element={<CreateFarmPage />} />
@@ -69,8 +109,13 @@ export function AppRoutes() {
           <Route path="farms/:farmId/blocks/new" element={<CreateBlockPage />} />
           <Route path="farms/:farmId/blocks/:blockId/edit" element={<EditBlockPage />} />
           <Route path="farms/:farmId/blocks/:blockId" element={<BlockDetailPage />} />
+          <Route path="farms/:farmId/blocks/:id" element={<BlockDetailPage />} />
+          <Route path="blocks/:blockId" element={<BlockDetailPage />} />
+          <Route path="blocks/:id" element={<BlockDetailPage />} />
+          <Route path="farms/:farmId" element={<FarmDetailPage />} />
           <Route path="farms/:id" element={<FarmDetailPage />} />
           <Route path="sensors" element={<SensorMonitoringPage />} />
+          <Route path="sensors/:sensorId" element={<SensorMonitoringPage />} />
           <Route path="schedules" element={<LightingSchedulePage />} />
           <Route path="schedules/new" element={<CreateSchedulePage />} />
           <Route path="schedules/:scheduleId/edit" element={<EditSchedulePage />} />
@@ -81,23 +126,38 @@ export function AppRoutes() {
           <Route path="harvests/new" element={<CreateHarvestCyclePage />} />
           <Route path="qrcodes" element={<QRCodeManagementPage />} />
           <Route path="qr" element={<QrGeneratorPage />} />
+          <Route path="langganan" element={<PetaniSubscriptionPage />} />
+          <Route path="akses-tenant" element={<FarmerAccessRequestsPage />} />
         </Route>
 
-        {/* Redirects */}
-        <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="/farms" element={<Navigate to="/admin/farms" replace />} />
-        <Route path="/sensors" element={<Navigate to="/admin/sensors" replace />} />
-        <Route path="/schedules" element={<Navigate to="/admin/schedules" replace />} />
-        <Route path="/harvests" element={<Navigate to="/admin/harvests" replace />} />
-        <Route path="/qrcodes" element={<Navigate to="/admin/qrcodes" replace />} />
-        <Route path="/profile" element={<Navigate to="/admin/profile" replace />} />
+        {/* Alias Backward Compatibility URL Operasional Petani dari /admin/* */}
+        <Route path="/admin/farms" element={<Navigate to="/kebun/farms" replace />} />
+        <Route path="/admin/farms/*" element={<Navigate to="/kebun/farms" replace />} />
+        <Route path="/admin/sensors" element={<Navigate to="/kebun/sensors" replace />} />
+        <Route path="/admin/sensors/*" element={<Navigate to="/kebun/sensors" replace />} />
+        <Route path="/admin/schedules" element={<Navigate to="/kebun/schedules" replace />} />
+        <Route path="/admin/schedules/*" element={<Navigate to="/kebun/schedules" replace />} />
+        <Route path="/admin/harvests" element={<Navigate to="/kebun/harvests" replace />} />
+        <Route path="/admin/harvests/*" element={<Navigate to="/kebun/harvests" replace />} />
+        <Route path="/admin/qrcodes" element={<Navigate to="/kebun/qrcodes" replace />} />
+        <Route path="/admin/qrcodes/*" element={<Navigate to="/kebun/qrcodes" replace />} />
+
+        {/* Redirects Operasional Kebun & Root Fallbacks */}
+        <Route path="/dashboard" element={<Navigate to="/kebun/dashboard" replace />} />
+        <Route path="/farms" element={<Navigate to="/kebun/farms" replace />} />
+        <Route path="/sensors" element={<Navigate to="/kebun/sensors" replace />} />
+        <Route path="/schedules" element={<Navigate to="/kebun/schedules" replace />} />
+        <Route path="/harvests" element={<Navigate to="/kebun/harvests" replace />} />
+        <Route path="/qrcodes" element={<Navigate to="/kebun/qrcodes" replace />} />
+        <Route path="/langganan" element={<Navigate to="/kebun/langganan" replace />} />
+        <Route path="/profile" element={<Navigate to="/kebun/profile" replace />} />
 
         {/* Rute Petani (Simplified Operasional Lapangan) */}
         <Route
           path="/petani"
           element={
             <RoleGuard
-              allowedRoles={[USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN_KEBUN, USER_ROLES.PETANI]}
+              allowedRoles={[USER_ROLES.ADMIN_KEBUN, USER_ROLES.PETANI]}
             >
               <PetaniLayout />
             </RoleGuard>
@@ -106,6 +166,7 @@ export function AppRoutes() {
           <Route index element={<Navigate to="/petani/estimasi" replace />} />
           <Route path="estimasi" element={<HarvestEstimationPage />} />
           <Route path="qr" element={<QrGeneratorPage />} />
+          <Route path="akses-tenant" element={<FarmerAccessRequestsPage />} />
         </Route>
 
         {/* Fallback */}

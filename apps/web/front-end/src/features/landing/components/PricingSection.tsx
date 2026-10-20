@@ -14,7 +14,7 @@ export interface PricingSectionProps {
 export function PricingSection({
   id = 'pricing',
   title = 'Paket Harga yang Fleksibel',
-  description = 'Langganan dihitung berdasarkan masa aktif (hari), bukan biaya bulanan otomatis — bayar sesuai durasi yang dibutuhkan.',
+  description = 'Langganan dihitung berdasarkan masa aktif (hari), bukan biaya bulanan otomatis, bayar sesuai durasi yang dibutuhkan.',
 }: PricingSectionProps) {
   return (
     <SectionContainer id={id} className="py-20 md:py-24">

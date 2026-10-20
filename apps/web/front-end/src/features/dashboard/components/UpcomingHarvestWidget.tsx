@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Sprout, ArrowRight, Calendar } from 'lucide-react';
+import { Trees, ArrowRight, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { harvestService } from '@/services/harvestService';
 import type { HarvestCycle } from '@/features/harvests/types/harvest.types';
@@ -79,20 +79,18 @@ export const UpcomingHarvestWidget: React.FC<UpcomingHarvestWidgetProps> = ({ in
     <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 md:p-6 flex flex-col justify-between h-full">
       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-            <Sprout className="w-4 h-4" />
-          </div>
+          <Trees className="w-4 h-4 text-slate-400 shrink-0" strokeWidth={1.75} />
           <div>
             <h3 className="text-sm font-bold text-slate-900">Progres Panen Terdekat</h3>
             <p className="text-xs text-slate-500">
               {activeCycle
-                ? `${activeCycle.farmName} — ${activeCycle.blockName}`
+                ? `${activeCycle.farmName} - ${activeCycle.blockName}`
                 : 'Belum ada siklus aktif'}
             </p>
           </div>
         </div>
         <Link
-          to="/admin/harvests"
+          to="/kebun/harvests"
           className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
         >
           <span>Detail</span>
@@ -112,7 +110,7 @@ export const UpcomingHarvestWidget: React.FC<UpcomingHarvestWidgetProps> = ({ in
             Mulai siklus induksi pencahayaan baru di modul Estimasi Panen.
           </p>
           <Link
-            to="/admin/harvests"
+            to="/kebun/harvests"
             className="text-xs font-bold text-emerald-700 hover:text-emerald-800 underline mt-1"
           >
             Mulai Siklus Panen
@@ -125,7 +123,7 @@ export const UpcomingHarvestWidget: React.FC<UpcomingHarvestWidgetProps> = ({ in
               <span className="text-3xl font-extrabold text-slate-900">{daysRemaining}</span>
               <span className="text-xs font-semibold text-slate-500 ml-1.5">Hari Menuju Panen</span>
             </div>
-            <span className="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2.5 py-0.5 rounded-full">
+            <span className="text-xs font-bold text-slate-800 bg-slate-100 border border-slate-300 px-2.5 py-0.5 rounded-full">
               {activeCycle.tanggal_berbunga_aktual ? 'Fase Pematangan Buah' : 'Fase Induksi Bunga'}
             </span>
           </div>

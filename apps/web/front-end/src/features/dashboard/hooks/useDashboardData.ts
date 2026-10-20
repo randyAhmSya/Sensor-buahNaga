@@ -3,7 +3,7 @@ import { Trees, Grid, Router, Repeat } from 'lucide-react';
 import { farmService } from '@/services/farmService';
 import { nodeService } from '@/services/nodeService';
 import { harvestService } from '@/services/api';
-import type { DashboardCardMetricItem, TelemetryNodeRow } from '@/data/mockTelemetry';
+import type { DashboardCardMetricItem, TelemetryNodeRow } from '@/types/telemetry';
 import type { FarmItem } from '@/types/farm.types';
 import type { NodeSensorBackend } from '@/types/node.types';
 import type { HarvestCycle } from '@/features/harvests/types/harvest.types';
@@ -120,7 +120,7 @@ export function useDashboardData(): DashboardData {
       unit: 'Online',
       unitColor: 'text-emerald-600',
       icon: Router,
-      iconColor: 'text-amber-600',
+      iconColor: 'text-emerald-700',
       badgeText: totalNodes > 0 ? `${offlineNodes} Offline` : '0 Terpasang',
       badgeVariant: offlineNodes > 0 ? 'rose' : 'slate',
     },
@@ -129,7 +129,7 @@ export function useDashboardData(): DashboardData {
       value: runningHarvestCycles,
       unit: 'Batch',
       icon: Repeat,
-      iconColor: 'text-purple-600',
+      iconColor: 'text-emerald-700',
       badgeText: runningHarvestCycles > 0 ? 'Berjalan' : undefined,
       badgeVariant: 'emerald',
     },

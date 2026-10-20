@@ -1,6 +1,5 @@
 import type { FC, ChangeEvent } from 'react'
 import { Image as ImageIcon, UploadCloud } from 'lucide-react'
-import { InputField } from '@/components/form/InputField'
 import type { CreateFarmInput } from '../schemas/farmSchema'
 
 interface CreateFarmMediaSectionProps {
@@ -8,7 +7,6 @@ interface CreateFarmMediaSectionProps {
   errors: Partial<Record<keyof CreateFarmInput, string>>
   imagePreview: string
   onImageFileChange: (e: ChangeEvent<HTMLInputElement>) => void
-  onUrlChange: (url: string) => void
   onStatusChange: (status: 'Aktif' | 'Inaktif') => void
   onCancel?: () => void
 }
@@ -18,7 +16,6 @@ export const CreateFarmMediaSection: FC<CreateFarmMediaSectionProps> = ({
   errors,
   imagePreview,
   onImageFileChange,
-  onUrlChange,
   onStatusChange,
 }) => {
   return (
@@ -32,45 +29,44 @@ export const CreateFarmMediaSection: FC<CreateFarmMediaSectionProps> = ({
           </h3>
         </div>
 
-        <div className="flex-1 min-h-48 border-2 border-dashed border-slate-200 hover:border-emerald-600 rounded-2xl flex flex-col items-center justify-center bg-slate-50/50 hover:bg-emerald-50/20 transition-all cursor-pointer relative overflow-hidden group">
-          {imagePreview || formData.imageUrl ? (
-            <img
-              src={imagePreview || formData.imageUrl || ''}
-              alt="Preview"
-              className="w-full h-full object-cover"
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">
+            File Foto Kebun <span className="text-slate-400 font-normal ml-1">(Maks 2MB)</span>
+          </label>
+          <div className="flex-1 min-h-48 border-2 border-dashed border-slate-200 hover:border-emerald-600 rounded-2xl flex flex-col items-center justify-center bg-slate-50/50 hover:bg-emerald-50/20 transition-all cursor-pointer relative overflow-hidden group">
+            {imagePreview || formData.imageUrl ? (
+              <img
+                src={imagePreview || formData.imageUrl || ''}
+                alt="Preview Kebun"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="flex flex-col items-center text-center p-4">
+                <UploadCloud className="w-10 h-10 text-slate-400 group-hover:text-emerald-700 transition-colors mb-2" />
+                <p className="text-xs font-bold text-slate-700 group-hover:text-emerald-800">
+                  Tarik & Lepas Foto
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5">atau klik untuk menelusuri file</p>
+                <p className="text-[10px] text-slate-400 mt-2">JPG, PNG (Maks 2MB)</p>
+              </div>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={onImageFileChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
-          ) : (
-            <div className="flex flex-col items-center text-center p-4">
-              <UploadCloud className="w-10 h-10 text-slate-400 group-hover:text-emerald-700 transition-colors mb-2" />
-              <p className="text-xs font-bold text-slate-700 group-hover:text-emerald-800">
-                Tarik & Lepas Foto
-              </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">atau klik untuk menelusuri file</p>
-              <p className="text-[10px] text-slate-400 mt-2">JPG, PNG (Maks 5MB)</p>
-            </div>
+          </div>
+          {errors.imageUrl && (
+            <p className="text-xs text-rose-600 font-medium mt-1">{errors.imageUrl}</p>
           )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={onImageFileChange}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          />
         </div>
-
-        <InputField
-          name="imageUrl"
-          label="Atau masukkan URL Foto Langsung"
-          value={formData.imageUrl || ''}
-          onChange={(e) => onUrlChange(e.target.value)}
-          placeholder="https://images.unsplash.com/..."
-          error={errors.imageUrl}
-        />
       </div>
 
       {/* Card Status */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-5">
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-slate-800">
+          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">
             Status Operasional Kebun <span className="text-rose-600 font-bold ml-0.5">*</span>
           </label>
           <div className="grid grid-cols-2 gap-3">

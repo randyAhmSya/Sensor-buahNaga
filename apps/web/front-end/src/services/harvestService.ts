@@ -55,7 +55,7 @@ const normalizeHarvestCycle = (raw: unknown, defaultBlockName?: string, defaultF
     target_hari_panen_setelah_bunga:
       item.target_hari_panen_setelah_bunga !== undefined
         ? Number(item.target_hari_panen_setelah_bunga)
-        : 30,
+        : 50,
     estimasi_tanggal_panen: String(item.estimasi_tanggal_panen || item.estimatedHarvestDate || item.estimasi_panen || ''),
     tanggal_berbunga_aktual:
       item.tanggal_berbunga_aktual !== undefined && item.tanggal_berbunga_aktual !== null

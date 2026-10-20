@@ -1,8 +1,12 @@
 import { apiClient } from './api';
 import type { ApiResponse } from '@/types/api.types';
-import type { BlokBackend, BlockItem, BlockDetailFull, SensorLogItem } from '@/types/block.types';
+import type { BlokBackend, BlockItem, BlockDetailFull, SensorLogItem, BlokStatusLampuResponse } from '@/types/block.types';
 import { nodeService } from './nodeService';
 import { harvestService } from './harvestService';
+import { gatewayService } from './gatewayService';
+import { scheduleService } from './scheduleService';
+import { fetchTelemetri, type ReadSensor } from './telemetryService';
+import { fetchLogEnergy, type EnergyLogResponse } from './energyService';
 import type { NodeSensorBackend } from '@/types/node.types';
 
 export interface CreateBlockPayload {
@@ -287,11 +291,26 @@ export const blockService = {
         isNodeConnected &&
         (nodeStatusRaw === 'aktif' || nodeStatusRaw === 'online' || nodeStatusRaw === 'terhubung');
 
-      const gateway =
+      let gateway =
         activeNode?.gateway?.kode_perangkat ||
-        (activeNode?.gateway_id
-          ? `GW-${activeNode.gateway_id.substring(0, 4)}`
-          : 'GW-01');
+        (activeNode as unknown as Record<string, unknown>)?.gateway_kode as string | undefined;
+
+      if (!gateway && activeNode?.gateway_id) {
+        try {
+          const gw = await gatewayService.getById(activeNode.gateway_id);
+          if (gw?.kode_perangkat) {
+            gateway = gw.kode_perangkat;
+          }
+        } catch {
+          // ignore
+        }
+      }
+      if (!gateway && activeNode?.gateway_id) {
+        gateway = `GW-${activeNode.gateway_id.substring(0, 4).toUpperCase()}`;
+      }
+      if (!gateway) {
+        gateway = 'GW-01';
+      }
 
       const lastSeen = activeNode?.terakhir_terlihat
         ? new Date(activeNode.terakhir_terlihat).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
@@ -320,10 +339,88 @@ export const blockService = {
       const cycleHistory = cycles.map((c) => ({
         id: c.id_siklus_panen ? c.id_siklus_panen.substring(0, 8) : 'Siklus',
         startDate: c.tanggal_penyinaran || '--',
-        actualHarvestDate: c.tanggal_panen || c.estimasi_tanggal_panen || '—',
+        actualHarvestDate: c.tanggal_panen || c.estimasi_tanggal_panen || '-',
         durationDays: (c.target_hari_berbunga || 20) + (c.target_hari_panen_setelah_bunga || 30),
         status: (String(c.status_siklus).toUpperCase() === 'SELESAI' ? 'Selesai' : 'Berjalan') as 'Selesai' | 'Berjalan',
       }));
+
+      // 4. Ambil jadwal pencahayaan aktif dari backend
+      let lightingSchedule = {
+        activeCycle: activeCycle ? 'Sedang Berjalan' : 'Belum Ada Jadwal',
+        intensity: isOnline ? '80%' : '0%',
+      };
+
+      try {
+        const sensorId = activeNode?.id_sensor || blok.node_sensor?.id_sensor;
+        if (sensorId) {
+          const activeSched = await scheduleService.getActive(sensorId);
+          if (activeSched && (activeSched.status_aktif === true || activeSched.status_aktif === 1)) {
+            lightingSchedule = {
+              activeCycle: activeSched.nama_jadwal || `${activeSched.jam_mulai.substring(0, 5)} - ${activeSched.jam_selesai.substring(0, 5)}`,
+              intensity: `${activeSched.instensitas_cahaya ?? activeSched.intensitas_cahaya ?? 80}%`,
+            };
+          }
+        }
+        if (lightingSchedule.activeCycle === 'Belum Ada Jadwal' && targetFarmId) {
+          const farmScheds = await scheduleService.getAll({ kebun_id: targetFarmId });
+          const activeFarmSched = farmScheds.find((s) => s.status_aktif === true || s.status_aktif === 1);
+          if (activeFarmSched) {
+            lightingSchedule = {
+              activeCycle: activeFarmSched.nama_jadwal || `${activeFarmSched.jam_mulai.substring(0, 5)} - ${activeFarmSched.jam_selesai.substring(0, 5)}`,
+              intensity: `${activeFarmSched.instensitas_cahaya ?? activeFarmSched.intensitas_cahaya ?? 80}%`,
+            };
+          }
+        }
+      } catch {
+        // Fallback default
+      }
+
+      // 5. Ambil data riil telemetri dan log energi jika sensor terpasang
+      let telemetriList: ReadSensor[] = [];
+      let energyData: EnergyLogResponse = { total_kwh: 0, riwayat: [] };
+      const sensorId = activeNode?.id_sensor || blok.node_sensor?.id_sensor;
+
+      if (sensorId && sensorId.trim() && sensorId !== 'Belum Terpasang') {
+        try {
+          const [resTelemetri, resEnergy] = await Promise.all([
+            fetchTelemetri(sensorId, 100).catch(() => []),
+            fetchLogEnergy(sensorId, 100).catch(() => ({ total_kwh: 0, riwayat: [] })),
+          ]);
+          telemetriList = resTelemetri;
+          energyData = resEnergy;
+        } catch {
+          // ignore
+        }
+      }
+
+      // Petakan log sensor dari pembacaan telemetri riil
+      const sensorLogs: SensorLogItem[] = telemetriList.map((t, idx) => {
+        const dt = t.dicatat_pada ? new Date(t.dicatat_pada) : null;
+        const timeStr = dt && !isNaN(dt.getTime())
+          ? dt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+          : (t.dicatat_pada || 'Baru saja');
+        return {
+          id: t.id || `${sensorId}-${idx}`,
+          timestamp: timeStr,
+          lux: `${t.nilai_lux ?? t.lux ?? 0} lx`,
+          temperature: `${t.suhu ?? t.temperature ?? 0}°C`,
+          humidity: `${t.kelembapan ?? t.humidity ?? '--'}%`,
+          battery: `${t.baterai ?? t.battery ?? 100}%`,
+          signalQuality: t.kualitas_sinyal || '-65 dBm',
+          gatewayStatus: 'Online / Synced',
+        };
+      });
+
+      const latestTelemetry = telemetriList.length > 0 ? telemetriList[telemetriList.length - 1] : null;
+      const displayLux = latestTelemetry
+        ? `${latestTelemetry.nilai_lux ?? latestTelemetry.lux ?? 0} lx`
+        : (isOnline ? '0 lx' : '-- lx');
+      const displayTemp = latestTelemetry
+        ? `${latestTelemetry.suhu ?? latestTelemetry.temperature ?? 0}°C`
+        : (isOnline ? '-- °C' : '-- °C');
+      const displayLastSeen = latestTelemetry?.dicatat_pada
+        ? new Date(latestTelemetry.dicatat_pada).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        : lastSeen;
 
       return {
         id: blok.id_blok || getEntityId(blok) || cleanBlockId,
@@ -334,18 +431,15 @@ export const blockService = {
         area: blok.luas_area ? `${blok.luas_area} m²` : '',
         bannerUrl: photoUrl,
         deviceId,
-        nodeSensorId: activeNode?.id_sensor || blok.node_sensor?.id_sensor,
-        deviceStatus: isOnline ? 'Online' : 'Offline',
-        currentLux: isOnline ? '480 lx' : '0 lx',
-        temperature: isOnline ? '28°C' : '-- °C',
+        nodeSensorId: sensorId,
+        deviceStatus: (isOnline ? 'Terhubung' : 'Offline') as 'Online' | 'Offline',
+        currentLux: displayLux,
+        temperature: displayTemp,
         gateway,
-        lastSeen,
-        lightingSchedule: {
-          activeCycle: activeCycle ? 'Sedang Berjalan' : 'Belum Ada Jadwal',
-          intensity: isOnline ? '100%' : '0%',
-        },
+        lastSeen: displayLastSeen,
+        lightingSchedule,
         energyConsumption: {
-          kwh: 0,
+          kwh: energyData.total_kwh,
           period: 'Bulan Ini',
         },
         harvestCycle: {
@@ -355,7 +449,7 @@ export const blockService = {
           harvestEstimate,
         },
         cycleHistory,
-        sensorLogs: [],
+        sensorLogs,
       };
     } catch {
       // Tidak ada fallback ke mock
@@ -386,14 +480,6 @@ export const blockService = {
     const res = await apiClient.post<ApiResponse<BlokBackend>>('/petani/blok', formData);
     const newBlockId = res.data.id_blok;
 
-    // Sinkronkan relasi node jika node dipilih
-    if (payload.nodeSensor && payload.nodeSensor.trim() && newBlockId) {
-      try {
-        await nodeService.update(payload.nodeSensor.trim(), { blok_id: newBlockId });
-      } catch {
-        // Abaikan jika backend sudah mengaitkan secara internal
-      }
-    }
 
     return { success: true, id: newBlockId };
   },
@@ -421,14 +507,6 @@ export const blockService = {
 
     await apiClient.post<ApiResponse<BlokBackend>>(`/petani/blok/${blockId}`, formData);
 
-    // Sinkronkan relasi node jika node dipilih
-    if (payload.nodeSensor && payload.nodeSensor.trim()) {
-      try {
-        await nodeService.update(payload.nodeSensor.trim(), { blok_id: blockId });
-      } catch {
-        // Abaikan jika backend sudah mengaitkan secara internal
-      }
-    }
 
     return { success: true };
   },
@@ -436,6 +514,20 @@ export const blockService = {
   delete: async (blockId: string): Promise<{ success: boolean }> => {
     await apiClient.delete<ApiResponse<null>>(`/petani/blok/${blockId}`);
     return { success: true };
+  },
+
+  /**
+   * Mengambil status lampu per blok (jumlah lampu, online, offline, batas waktu, detail node)
+   * Endpoint: GET /api/petani/blok/{id}/status-lampu
+   */
+  getStatusLampu: async (blockId: string): Promise<BlokStatusLampuResponse | null> => {
+    if (!blockId || blockId === 'blk-1') return null;
+    try {
+      const res = await apiClient.get<ApiResponse<BlokStatusLampuResponse>>(`/petani/blok/${blockId.trim()}/status-lampu`);
+      return res.data;
+    } catch {
+      return null;
+    }
   },
 
   getSensorLogs: async (

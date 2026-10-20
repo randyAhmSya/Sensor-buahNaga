@@ -45,7 +45,10 @@ export const ScanQRModal: React.FC<ScanQRModalProps> = ({ isOpen, onClose }) => 
     setHasSearched(true);
 
     try {
-      const data = await qrCodeService.lookupOrScan(cleanCode);
+      const data = await qrCodeService.scan({
+        teks_kode_qr: cleanCode,
+        platform: 'web',
+      });
       if (!data) {
         setErrorMessage(`Kode QR "${cleanCode}" tidak ditemukan atau belum terhubung dengan perangkat sensor.`);
       } else {
@@ -249,7 +252,7 @@ export const ScanQRModal: React.FC<ScanQRModalProps> = ({ isOpen, onClose }) => 
                   type="button"
                   onClick={() => {
                     handleClose();
-                    navigate('/admin/sensors');
+                    navigate('/kebun/sensors');
                   }}
                   className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5 cursor-pointer hover:underline"
                 >

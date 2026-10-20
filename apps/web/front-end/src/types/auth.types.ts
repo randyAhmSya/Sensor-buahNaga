@@ -2,7 +2,16 @@
  * Definisi Tipe Autentikasi dan Pengguna Backend Laravel AgroLight
  */
 
-export type BackendRole = 'superAdmin' | 'petani_biasa';
+export type BackendRole =
+  | 'superAdmin'
+  | 'super_admin'
+  | 'superadmin'
+  | 'SUPER_ADMIN'
+  | 'petani_biasa'
+  | 'user'
+  | 'petani'
+  | 'admin_kebun'
+  | (string & {});
 
 export interface BackendUser {
   id: string;

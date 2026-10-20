@@ -16,6 +16,7 @@ export interface SensorNodeItem {
   temperature: number
   lastSeen: string
   sparklineData: number[]
+  qrCode?: string
 }
 
 export interface SensorSummaryMetrics {

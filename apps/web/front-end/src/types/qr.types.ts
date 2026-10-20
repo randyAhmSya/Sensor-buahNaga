@@ -60,5 +60,38 @@ export interface QRCodeItem {
   status: 'Aktif' | 'Nonaktif';
   pairingStatus: 'Sudah Terhubung' | 'Belum Terhubung';
   createdAt: string;
+  nodeSensorName?: string;
+  isAssignedToNode?: boolean;
+}
+
+export interface ScanQrPayload {
+  teks_kode_qr: string;
+  platform?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface QrScanLogItem {
+  id_log?: string;
+  id?: string;
+  user_id?: string;
+  qr_id?: string;
+  dicatat_pada: string;
+  created_at?: string;
+  platform?: string | null;
+  status_scan?: string | boolean;
+  kode_qr?: {
+    id_qr: string;
+    teks_kode_qr: string;
+    status_qr: boolean;
+    node_sensor?: {
+      id_sensor: string;
+      kode_perangkat: string;
+      blok?: {
+        id_blok: string;
+        nama_blok: string;
+      };
+    } | null;
+  } | null;
 }
 

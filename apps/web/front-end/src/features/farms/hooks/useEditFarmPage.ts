@@ -126,16 +126,12 @@ export function useEditFarmPage() {
       await farmService.update(effectiveId, {
         name: formData.name,
         location: formData.location,
-        description: formData.description,
         status: formData.status,
-        imageUrl: formData.imageUrl || undefined,
-        gpsCoordinates: formData.gpsCoordinates || undefined,
-        additionalNotes: formData.additionalNotes || undefined,
         foto: selectedFile || undefined,
       })
 
       // Navigasi kembali dengan flash state toast untuk notifikasi sukses
-      navigate('/admin/farms', {
+      navigate('/kebun/farms', {
         state: {
           toast: {
             type: 'success',
