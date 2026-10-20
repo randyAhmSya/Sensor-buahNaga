@@ -33,3 +33,4 @@ export interface DashboardMetricItem {
 
 // Backward compatibility alias
 export type TelemetryActivityItem = TelemetryNodeRow
+export type DashboardCardMetricItem = DashboardMetricItem

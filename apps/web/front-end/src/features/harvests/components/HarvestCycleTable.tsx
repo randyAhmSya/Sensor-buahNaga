@@ -1,5 +1,7 @@
 import React from 'react';
 import { Flower2, CheckCircle2, Trash2, Calendar } from 'lucide-react';
+import { formatDate } from '@/utils/formatters';
+import { ResponsiveDataTable, type ColumnDef } from '@/components/ui/ResponsiveDataTable';
 import type { HarvestCycle } from '../types/harvest.types';
 
 interface HarvestCycleTableProps {
@@ -17,158 +19,267 @@ export const HarvestCycleTable: React.FC<HarvestCycleTableProps> = ({
   onDeleteCycle,
   isLoading = false,
 }) => {
-  return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[760px]">
-          <thead>
-            <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              <th className="py-4 px-6">Nama Blok & Kebun</th>
-              <th className="py-4 px-5">Tgl Penyinaran</th>
-              <th className="py-4 px-5">Target & Bunga Aktual</th>
-              <th className="py-4 px-5">Estimasi Panen</th>
-              <th className="py-4 px-5">Panen Nyata</th>
-              <th className="py-4 px-5">Status Siklus</th>
-              <th className="py-4 px-6 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="text-sm divide-y divide-slate-100">
-            {isLoading ? (
-              <tr>
-                <td colSpan={7} className="text-center py-16 text-sm text-slate-500 font-medium">
-                  <div className="w-7 h-7 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-2.5" />
-                  <span>Memuat data siklus panen riil...</span>
-                </td>
-              </tr>
-            ) : cycles.length > 0 ? (
-              cycles.map((item) => {
-                const isRunning = item.status_siklus === 'BERJALAN';
-                const hasFlowerDate = Boolean(item.tanggal_berbunga_aktual);
-                const hasHarvestDate = Boolean(item.tanggal_panen);
-
-                return (
-                  <tr key={item.id_siklus_panen} className="hover:bg-slate-50/60 transition-colors">
-                    {/* Blok & Kebun */}
-                    <td className="py-4 px-6">
-                      <div className="font-bold text-slate-900">{item.blockName || 'Blok Lahan'}</div>
-                      <div className="text-xs text-slate-500">{item.farmName || 'Kebun Buah Naga'}</div>
-                    </td>
-
-                    {/* Tanggal Penyinaran */}
-                    <td className="py-4 px-5 font-medium text-slate-600 whitespace-nowrap">
-                      {item.tanggal_penyinaran || '—'}
-                    </td>
-
-                    {/* Target & Bunga Aktual */}
-                    <td className="py-4 px-5 whitespace-nowrap">
-                      <div className="font-semibold text-slate-800">
-                        {item.target_hari_berbunga} Hari Target
-                      </div>
-                      <div className="text-xs mt-0.5">
-                        {hasFlowerDate ? (
-                          <span className="inline-flex items-center gap-1 text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80">
-                            <Flower2 className="w-3 h-3" />
-                            {item.tanggal_berbunga_aktual}
-                          </span>
-                        ) : (
-                          <span className="text-slate-400">Belum mekar (—)</span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Estimasi Panen */}
-                    <td className="py-4 px-5 font-bold text-slate-900 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>{item.estimasi_tanggal_panen || '—'}</span>
-                      </div>
-                    </td>
-
-                    {/* Panen Nyata */}
-                    <td className="py-4 px-5 whitespace-nowrap">
-                      {hasHarvestDate ? (
-                        <span className="inline-flex items-center gap-1 text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          {item.tanggal_panen}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 font-medium">—</span>
-                      )}
-                    </td>
-
-                    {/* Status Siklus */}
-                    <td className="py-4 px-5 whitespace-nowrap">
-                      {isRunning ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-amber-400 bg-amber-50 text-amber-800 shadow-2xs">
-                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
-                          BERJALAN
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-emerald-500 bg-emerald-50 text-emerald-800 shadow-2xs">
-                          <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
-                          SELESAI
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Aksi */}
-                    <td className="py-4 px-6 text-center whitespace-nowrap">
-                      <div className="flex items-center justify-center gap-1.5">
-                        {/* Tombol Catat Bunga (Hanya jika status BERJALAN dan belum ada bunga aktual) */}
-                        {isRunning && !hasFlowerDate && (
-                          <button
-                            type="button"
-                            onClick={() => onRecordFlower(item)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors cursor-pointer"
-                            title="Catat Kemunculan Bunga Aktual"
-                          >
-                            <Flower2 className="w-3.5 h-3.5" />
-                            <span>Catat Bunga</span>
-                          </button>
-                        )}
-
-                        {/* Tombol Catat Panen (Hanya jika status BERJALAN) */}
-                        {isRunning && (
-                          <button
-                            type="button"
-                            onClick={() => onRecordHarvest(item)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
-                            title="Catat Hasil Panen & Selesaikan Siklus"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Catat Panen</span>
-                          </button>
-                        )}
-
-                        {/* Tombol Hapus */}
-                        <button
-                          type="button"
-                          onClick={() => onDeleteCycle(item)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                          title="Hapus Siklus Panen"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan={7} className="text-center py-12 text-sm text-slate-500 font-medium">
-                  <div className="space-y-1">
-                    <p className="text-slate-700 font-bold">Belum Ada Siklus Panen Terdaftar</p>
-                    <p className="text-xs text-slate-400">
-                      Klik tombol &ldquo;Mulai Siklus Baru&rdquo; untuk memulai pencatatan induksi lampu.
-                    </p>
-                  </div>
-                </td>
-              </tr>
+  // Definisi Kolom Desktop
+  const columns: ColumnDef<HarvestCycle>[] = [
+    {
+      header: 'Nama Blok & Kebun',
+      cell: (item) => (
+        <div>
+          <div className="font-bold text-slate-900">{item.blockName || 'Blok Lahan'}</div>
+          <div className="text-xs text-slate-500">{item.farmName || 'Kebun Buah Naga'}</div>
+        </div>
+      ),
+    },
+    {
+      header: 'Tgl Penyinaran',
+      cell: (item) => (
+        <span className="font-medium text-slate-700 whitespace-nowrap">
+          {item.tanggal_penyinaran ? formatDate(item.tanggal_penyinaran) : '-'}
+        </span>
+      ),
+    },
+    {
+      header: 'Target & Bunga Aktual',
+      cell: (item) => {
+        const hasFlowerDate = Boolean(item.tanggal_berbunga_aktual);
+        return (
+          <div className="whitespace-nowrap">
+            <div className="font-semibold text-slate-800">
+              {item.target_hari_berbunga} Hari Target
+            </div>
+            <div className="text-xs mt-1">
+              {hasFlowerDate ? (
+                <span className="inline-flex items-center gap-1 text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/90 shadow-2xs">
+                  <Flower2 className="w-3 h-3 text-emerald-700 shrink-0" />
+                  {formatDate(item.tanggal_berbunga_aktual!)}
+                </span>
+              ) : (
+                <span className="text-slate-400">Belum mekar (-)</span>
+              )}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      header: 'Estimasi Panen',
+      cell: (item) => (
+        <div className="flex items-center gap-1.5 font-bold text-slate-900 whitespace-nowrap">
+          <Calendar className="w-4 h-4 text-emerald-700 shrink-0" />
+          <span>{item.estimasi_tanggal_panen ? formatDate(item.estimasi_tanggal_panen) : '-'}</span>
+        </div>
+      ),
+    },
+    {
+      header: 'Panen Nyata',
+      cell: (item) => (
+        <div className="whitespace-nowrap">
+          {item.tanggal_panen ? (
+            <span className="inline-flex items-center gap-1 text-emerald-800 font-bold bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 shadow-2xs">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+              {formatDate(item.tanggal_panen)}
+            </span>
+          ) : (
+            <span className="text-slate-400 font-medium">-</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: 'Status Siklus',
+      cell: (item) => {
+        const isRunning = item.status_siklus === 'BERJALAN';
+        return isRunning ? (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-slate-300 bg-slate-100 text-slate-800 shadow-2xs whitespace-nowrap">
+            <span className="w-2 h-2 rounded-full bg-slate-500 animate-pulse shrink-0" />
+            BERJALAN
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-900 shadow-2xs whitespace-nowrap">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
+            SELESAI
+          </span>
+        );
+      },
+    },
+    {
+      header: 'Aksi',
+      className: 'text-center',
+      cell: (item) => {
+        const isRunning = item.status_siklus === 'BERJALAN';
+        const hasFlowerDate = Boolean(item.tanggal_berbunga_aktual);
+        return (
+          <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
+            {isRunning && !hasFlowerDate && (
+              <button
+                type="button"
+                onClick={() => onRecordFlower(item)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[38px] rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-colors cursor-pointer active:scale-95 shadow-2xs"
+                title="Catat Kemunculan Bunga Aktual"
+              >
+                <Flower2 className="w-3.5 h-3.5 text-slate-600" />
+                <span>Catat Bunga</span>
+              </button>
             )}
-          </tbody>
-        </table>
+
+            {isRunning && (
+              <button
+                type="button"
+                onClick={() => onRecordHarvest(item)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[38px] rounded-lg text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 transition-colors cursor-pointer active:scale-95 shadow-2xs"
+                title="Catat Hasil Panen & Selesaikan Siklus"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Catat Panen</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => onDeleteCycle(item)}
+              className="p-2 min-h-[38px] min-w-[38px] flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer active:scale-95"
+              title="Hapus Siklus Panen"
+              aria-label="Hapus siklus panen"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        );
+      },
+    },
+  ];
+
+  // Render Kartu Khusus untuk Layar Ponsel (< 768px)
+  const renderMobileCard = (item: HarvestCycle) => {
+    const isRunning = item.status_siklus === 'BERJALAN';
+    const hasFlowerDate = Boolean(item.tanggal_berbunga_aktual);
+    const hasHarvestDate = Boolean(item.tanggal_panen);
+
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs space-y-4">
+        {/* Header Kartu: Blok, Kebun, dan Status */}
+        <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+          <div className="min-w-0 flex-1">
+            <h4 className="text-base font-bold text-slate-900 truncate">
+              {item.blockName || 'Blok Lahan'}
+            </h4>
+            <p className="text-xs text-slate-500 mt-0.5 truncate">
+              {item.farmName || 'Kebun Buah Naga'}
+            </p>
+          </div>
+
+          <div className="shrink-0">
+            {isRunning ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border border-slate-300 bg-slate-100 text-slate-800 shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-pulse shrink-0" />
+                BERJALAN
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border border-emerald-300 bg-emerald-50 text-emerald-900 shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0" />
+                SELESAI
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Grid Data Siklus */}
+        <div className="grid grid-cols-2 gap-3 text-xs">
+          <div className="bg-slate-50/70 p-2.5 rounded-xl border border-slate-100">
+            <span className="text-slate-500 block text-[11px]">Tgl Penyinaran</span>
+            <span className="font-semibold text-slate-800 mt-0.5 block">
+              {item.tanggal_penyinaran ? formatDate(item.tanggal_penyinaran) : '-'}
+            </span>
+          </div>
+
+          <div className="bg-slate-50/70 p-2.5 rounded-xl border border-slate-100">
+            <span className="text-slate-500 block text-[11px]">Target Bunga</span>
+            <span className="font-semibold text-slate-800 mt-0.5 block">
+              {item.target_hari_berbunga} Hari
+            </span>
+          </div>
+
+          <div className="bg-slate-50/70 p-2.5 rounded-xl border border-slate-100">
+            <span className="text-slate-500 block text-[11px]">Bunga Aktual</span>
+            <span className="font-semibold text-slate-800 mt-0.5 block">
+              {hasFlowerDate ? (
+                <span className="text-emerald-800 font-bold inline-flex items-center gap-1">
+                  <Flower2 className="w-3 h-3 text-emerald-700" />
+                  {formatDate(item.tanggal_berbunga_aktual!)}
+                </span>
+              ) : (
+                <span className="text-slate-400">Belum mekar (-)</span>
+              )}
+            </span>
+          </div>
+
+          <div className="bg-slate-50/70 p-2.5 rounded-xl border border-slate-100">
+            <span className="text-slate-500 block text-[11px]">Estimasi Panen</span>
+            <span className="font-bold text-slate-900 mt-0.5 flex items-center gap-1">
+              <Calendar className="w-3 h-3 text-emerald-700 shrink-0" />
+              {item.estimasi_tanggal_panen ? formatDate(item.estimasi_tanggal_panen) : '-'}
+            </span>
+          </div>
+
+          {hasHarvestDate && (
+            <div className="col-span-2 bg-emerald-50/60 p-2.5 rounded-xl border border-emerald-200/80">
+              <span className="text-emerald-700 block text-[11px] font-semibold">Panen Nyata Berhasil</span>
+              <span className="font-bold text-emerald-900 mt-0.5 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                {formatDate(item.tanggal_panen!)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Action Buttons Footer (Touch Target >= 44px) */}
+        <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+          {isRunning && !hasFlowerDate && (
+            <button
+              type="button"
+              onClick={() => onRecordFlower(item)}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 min-h-[44px] rounded-xl text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-300 shadow-2xs transition-colors active:scale-98 cursor-pointer"
+            >
+              <Flower2 className="w-4 h-4 text-slate-600" />
+              <span>Catat Bunga</span>
+            </button>
+          )}
+
+          {isRunning && (
+            <button
+              type="button"
+              onClick={() => onRecordHarvest(item)}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 min-h-[44px] rounded-xl text-xs font-bold text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 shadow-2xs transition-colors active:scale-98 cursor-pointer"
+            >
+              <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+              <span>Catat Panen</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => onDeleteCycle(item)}
+            className="w-11 h-11 flex items-center justify-center rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 transition-colors cursor-pointer active:scale-95 shrink-0"
+            aria-label="Hapus siklus panen"
+            title="Hapus Siklus"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <ResponsiveDataTable<HarvestCycle>
+      columns={columns}
+      data={cycles}
+      keyExtractor={(item) => item.id_siklus_panen}
+      isLoading={isLoading}
+      emptyMessage="Belum Ada Siklus Panen Terdaftar"
+      emptySubMessage="Mulai catat induksi pencahayaan lampu untuk memantau siklus pertumbuhan dan proyeksi panen buah naga."
+      renderMobileCard={renderMobileCard}
+      tableMinWidth="min-w-[850px]"
+    />
   );
 };

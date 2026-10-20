@@ -7,6 +7,8 @@ export interface QRCodeItem {
   status: 'Aktif' | 'Nonaktif';
   pairingStatus: 'Sudah Terhubung' | 'Belum Terhubung';
   createdAt: string;
+  nodeSensorName?: string;
+  isAssignedToNode?: boolean;
 }
 
 export interface QRCodeFilterOptions {

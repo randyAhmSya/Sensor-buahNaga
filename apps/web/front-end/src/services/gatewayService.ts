@@ -3,53 +3,93 @@ import type { ApiResponse } from '@/types/api.types';
 import type { GatewayBackend, CreateGatewayPayload, UpdateGatewayPayload } from '@/types/gateway.types';
 
 export interface GatewayFilterParams {
-  blok_id?: string;
   kebun_id?: string;
+  blok_id?: string;
 }
 
 export const gatewayService = {
+  /**
+   * Mengambil daftar seluruh gateway dalam suatu kebun / blok
+   * Endpoint: GET /api/petani/gateway
+   */
   getAll: async (params?: GatewayFilterParams | string): Promise<GatewayBackend[]> => {
-    const queryParams: Record<string, string> = {};
+    let kebunId: string | undefined;
+    let blokId: string | undefined;
+
     if (typeof params === 'string') {
-      if (params.trim()) queryParams.blok_id = params.trim();
+      const trimmed = params.trim();
+      if (trimmed && trimmed !== 'Semua Kebun' && trimmed !== 'undefined' && trimmed !== 'null') {
+        kebunId = trimmed;
+      }
     } else if (params) {
-      if (params.blok_id?.trim()) queryParams.blok_id = params.blok_id.trim();
-      if (params.kebun_id?.trim()) queryParams.kebun_id = params.kebun_id.trim();
+      if (params.kebun_id?.trim() && params.kebun_id !== 'Semua Kebun' && params.kebun_id !== 'undefined' && params.kebun_id !== 'null') {
+        kebunId = params.kebun_id.trim();
+      }
+      if (params.blok_id?.trim() && params.blok_id !== 'undefined' && params.blok_id !== 'null') {
+        blokId = params.blok_id.trim();
+      }
+    }
+
+    // Backend endpoint GET /api/petani/gateway mewajibkan query parameter ?kebun_id={uuid}.
+    // Jika kebun_id belum terisi, jangan tembak HTTP untuk mencegah 400 Bad Request.
+    if (!kebunId) {
+      return [];
     }
 
     try {
-      const res = await apiClient.get<unknown>('/petani/gateway', {
-        params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+      const res = await apiClient.get<ApiResponse<GatewayBackend[]> | GatewayBackend[]>('/petani/gateway', {
+        params: { kebun_id: kebunId },
       });
-      if (!res) return [];
-      if (Array.isArray(res)) return res as GatewayBackend[];
-      const obj = res as Record<string, unknown>;
-      if (Array.isArray(obj.data)) return obj.data as GatewayBackend[];
-      if (obj.data && typeof obj.data === 'object') {
-        const nested = (obj.data as Record<string, unknown>).data;
-        if (Array.isArray(nested)) return nested as GatewayBackend[];
+
+      let items: GatewayBackend[] = [];
+      if (!res) {
+        items = [];
+      } else if (Array.isArray(res)) {
+        items = res as GatewayBackend[];
+      } else {
+        const obj = res as unknown as Record<string, unknown>;
+        if (Array.isArray(obj.data)) {
+          items = obj.data as GatewayBackend[];
+        } else if (obj.data && typeof obj.data === 'object') {
+          const nested = (obj.data as Record<string, unknown>).data;
+          if (Array.isArray(nested)) items = nested as GatewayBackend[];
+        }
       }
-      return [];
+
+      // Filter di sisi frontend jika blok_id ditentukan
+      if (blokId) {
+        items = items.filter((gw) => {
+          const gwBlokId =
+            gw.blok_id ??
+            (gw as unknown as { blockId?: string }).blockId ??
+            (gw as unknown as { blok?: { id_blok?: string; id?: string } }).blok?.id_blok ??
+            (gw as unknown as { blok?: { id_blok?: string; id?: string } }).blok?.id;
+          return String(gwBlokId) === String(blokId);
+        });
+      }
+
+      return items;
     } catch {
       return [];
     }
   },
 
-  getByBlockId: async (blokId: string): Promise<GatewayBackend[]> => {
-    if (!blokId || !blokId.trim()) return [];
-    return gatewayService.getAll({ blok_id: blokId.trim() });
+  getAllByKebun: async (kebunId: string): Promise<GatewayBackend[]> => {
+    if (!kebunId || !kebunId.trim() || kebunId === 'undefined' || kebunId === 'null') return [];
+    return gatewayService.getAll({ kebun_id: kebunId.trim() });
   },
 
-  getAllByKebun: async (kebunId: string): Promise<GatewayBackend[]> => {
-    if (!kebunId || !kebunId.trim()) return [];
-    return gatewayService.getAll({ kebun_id: kebunId.trim() });
+  getByBlockId: async (blokId: string, kebunId?: string): Promise<GatewayBackend[]> => {
+    if (!blokId || !blokId.trim() || blokId === 'undefined' || blokId === 'null') return [];
+    if (!kebunId || !kebunId.trim() || kebunId === 'undefined' || kebunId === 'null') return [];
+    return gatewayService.getAll({ blok_id: blokId.trim(), kebun_id: kebunId.trim() });
   },
 
   getById: async (id: string): Promise<GatewayBackend | null> => {
     if (!id || !id.trim()) return null;
     try {
       const res = await apiClient.get<ApiResponse<GatewayBackend>>(`/petani/gateway/${id}`);
-      return res.data;
+      return res?.data || null;
     } catch {
       return null;
     }

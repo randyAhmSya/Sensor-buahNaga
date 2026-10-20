@@ -81,9 +81,19 @@ export function useLoginForm() {
         })
 
         if (res && res.data && res.data.user && res.data.token) {
-          const profile = mapBackendUserToUserProfile(res.data.user)
+          const rawRole = res.data.role || res.data.user.role
+          const profile = mapBackendUserToUserProfile({
+            ...res.data.user,
+            role: rawRole || res.data.user.role,
+          })
           login(profile, res.data.token)
-          navigate('/admin/dashboard')
+
+          const role = (res.data.role || res.data.user?.role || profile.role || '').toLowerCase()
+          if (role === 'super_admin' || role === 'superadmin' || role.replace(/[-_\s]/g, '') === 'superadmin') {
+            navigate('/admin')
+          } else {
+            navigate('/kebun/farms')
+          }
         }
       } catch (err: unknown) {
         if (err instanceof ApiError) {

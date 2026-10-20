@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { PetaniSidebar } from './PetaniSidebar'
+import { NotificationPopover } from '@/components/common/NotificationPopover'
 
 export function PetaniLayout() {
   return (
@@ -10,8 +11,11 @@ export function PetaniLayout() {
           <div className="text-xs text-slate-600 font-medium">
             AgroLight &bull; Panel Petani Lapangan
           </div>
-          <div className="text-xs text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 font-semibold">
-            Status Kebun: Kondusif
+          <div className="flex items-center gap-3">
+            <div className="text-xs text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 font-semibold">
+              Status Kebun: Kondusif
+            </div>
+            <NotificationPopover role="petani" />
           </div>
         </header>
 

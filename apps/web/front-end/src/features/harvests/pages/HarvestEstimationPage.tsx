@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Toast, type ToastType } from '@/components/feedback/Toast';
+import { formatDate } from '@/utils/formatters';
 import { farmService } from '@/services/farmService';
 import { harvestService } from '@/services/harvestService';
 import type { HarvestCycle, HarvestMetrics } from '../types/harvest.types';
@@ -172,10 +173,13 @@ export const HarvestEstimationPage: React.FC = () => {
     setCycles((prev) =>
       prev.map((c) => (c.id_siklus_panen === updatedCycle.id_siklus_panen ? updatedCycle : c))
     );
+    const flowerDateFormatted = updatedCycle.tanggal_berbunga_aktual
+      ? formatDate(updatedCycle.tanggal_berbunga_aktual)
+      : '-';
     setToast({
       type: 'success',
       title: 'Bunga Aktual Dicatat',
-      message: `Kemunculan bunga untuk ${updatedCycle.blockName} tercatat pada ${updatedCycle.tanggal_berbunga_aktual}.`,
+      message: `Kemunculan bunga untuk ${updatedCycle.blockName} tercatat pada ${flowerDateFormatted}.`,
     });
   };
 
@@ -183,10 +187,13 @@ export const HarvestEstimationPage: React.FC = () => {
     setCycles((prev) =>
       prev.map((c) => (c.id_siklus_panen === updatedCycle.id_siklus_panen ? updatedCycle : c))
     );
+    const harvestDateFormatted = updatedCycle.tanggal_panen
+      ? formatDate(updatedCycle.tanggal_panen)
+      : '-';
     setToast({
       type: 'success',
       title: 'Siklus Panen Selesai',
-      message: `Panen buah untuk ${updatedCycle.blockName} berhasil dicatat pada ${updatedCycle.tanggal_panen}.`,
+      message: `Panen buah untuk ${updatedCycle.blockName} berhasil dicatat pada ${harvestDateFormatted}.`,
     });
   };
 
@@ -222,14 +229,14 @@ export const HarvestEstimationPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <Button
             type="button"
             variant="outline"
             size="md"
             onClick={handleRefresh}
             disabled={isRefreshing || isLoading}
-            className="flex flex-row items-center justify-center gap-2 border-slate-300 text-slate-700 hover:bg-white font-semibold shadow-2xs"
+            className="flex-1 sm:flex-none flex flex-row items-center justify-center gap-2 min-h-[44px] px-4 border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold shadow-2xs active:scale-98"
           >
             <RefreshCw className={`w-4 h-4 shrink-0 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>Segarkan</span>
@@ -240,7 +247,7 @@ export const HarvestEstimationPage: React.FC = () => {
             variant="primary"
             size="md"
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex flex-row items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold shadow-xs whitespace-nowrap"
+            className="flex-1 sm:flex-none flex flex-row items-center justify-center gap-2 min-h-[44px] px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold shadow-xs whitespace-nowrap active:scale-98"
           >
             <Plus className="w-4 h-4 shrink-0" />
             <span>Mulai Siklus Baru</span>
@@ -251,8 +258,8 @@ export const HarvestEstimationPage: React.FC = () => {
       {/* Kartu Ringkasan Riil */}
       <HarvestSummaryCards metrics={metrics} />
 
-      {/* Kontainer Tabel & Filter */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+      {/* Kontrol Filter & Pencarian */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
         <HarvestFilterBar
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -262,15 +269,16 @@ export const HarvestEstimationPage: React.FC = () => {
           onBlockChange={handleBlockChange}
           blocks={blocks}
         />
-
-        <HarvestCycleTable
-          cycles={filteredCycles}
-          isLoading={isLoading}
-          onRecordFlower={(cycle) => setCycleForFlower(cycle)}
-          onRecordHarvest={(cycle) => setCycleForHarvest(cycle)}
-          onDeleteCycle={(cycle) => setCycleForDelete(cycle)}
-        />
       </div>
+
+      {/* Tabel & Kartu Responsif Siklus Panen */}
+      <HarvestCycleTable
+        cycles={filteredCycles}
+        isLoading={isLoading}
+        onRecordFlower={(cycle) => setCycleForFlower(cycle)}
+        onRecordHarvest={(cycle) => setCycleForHarvest(cycle)}
+        onDeleteCycle={(cycle) => setCycleForDelete(cycle)}
+      />
 
       {/* Modal Mulai Siklus Panen Baru */}
       <CreateHarvestCycleModal

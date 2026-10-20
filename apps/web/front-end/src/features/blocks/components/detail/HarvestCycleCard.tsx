@@ -66,7 +66,7 @@ export const HarvestCycleCard: React.FC<HarvestCycleCardProps> = ({ harvest }) =
           type="button"
           variant={isRunning ? 'primary' : 'outline'}
           size="md"
-          onClick={() => navigate('/admin/harvests')}
+          onClick={() => navigate('/kebun/harvests')}
           leftIcon={isRunning ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <Plus className="w-4 h-4 shrink-0" />}
           className={`w-full flex flex-row items-center justify-center gap-2 font-semibold py-2.5 rounded-xl shadow-xs cursor-pointer ${
             isRunning

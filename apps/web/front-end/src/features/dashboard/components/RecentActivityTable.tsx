@@ -1,6 +1,5 @@
 import { memo } from 'react'
 import type { TelemetryNodeRow } from '@/types/telemetry'
-import { getTelemetryNodes } from '@/data/mockTelemetry'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 
 export type ActivityItem = TelemetryNodeRow
@@ -44,7 +43,7 @@ interface RecentActivityTableProps {
 }
 
 export const RecentActivityTable = memo<RecentActivityTableProps>(({
-  activities = getTelemetryNodes(),
+  activities = [],
   onViewAll,
 }) => {
   return (

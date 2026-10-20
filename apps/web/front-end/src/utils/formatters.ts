@@ -14,7 +14,8 @@ export function formatPercentage(value: number): string {
   return `${value.toFixed(1)}%`
 }
 
-export function formatDate(dateString: string): string {
+export function formatDate(dateString?: string | null): string {
+  if (!dateString) return '-'
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return dateString
   return new Intl.DateTimeFormat('id-ID', {
@@ -24,7 +25,8 @@ export function formatDate(dateString: string): string {
   }).format(date)
 }
 
-export function formatDateTime(dateString: string): string {
+export function formatDateTime(dateString?: string | null): string {
+  if (!dateString) return '-'
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return dateString
   return new Intl.DateTimeFormat('id-ID', {
@@ -42,4 +44,13 @@ export function formatTemperature(celcius: number): string {
 
 export function formatVoltage(volt: number): string {
   return `${volt.toFixed(2)} V`
+}
+
+export function formatRupiah(amount: number): string {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount)
 }

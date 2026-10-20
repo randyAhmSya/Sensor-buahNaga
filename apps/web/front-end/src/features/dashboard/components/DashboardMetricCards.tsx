@@ -1,6 +1,6 @@
 import React from 'react';
 import { DashboardMetricCard } from './DashboardMetricCard';
-import type { DashboardCardMetricItem } from '@/data/mockTelemetry';
+import type { DashboardCardMetricItem } from '@/types/telemetry';
 
 interface DashboardMetricCardsProps {
   cards?: DashboardCardMetricItem[];

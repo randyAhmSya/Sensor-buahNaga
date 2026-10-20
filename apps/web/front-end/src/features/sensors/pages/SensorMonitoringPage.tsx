@@ -89,7 +89,7 @@ export const SensorMonitoringPage: React.FC = () => {
           size="md"
           leftIcon={<Plus className="w-4 h-4 shrink-0" />}
           onClick={() => setIsAddModalOpen(true)}
-          className="self-start sm:self-auto bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-2.5 px-4 rounded-xl shadow-xs cursor-pointer flex items-center gap-2"
+          className="w-full sm:w-auto min-h-[44px] bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-2.5 px-4 rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-2 active:scale-98"
         >
           <span>Tambah Node</span>
         </Button>
@@ -99,7 +99,7 @@ export const SensorMonitoringPage: React.FC = () => {
       <SensorSummaryCards metrics={summaryMetrics} />
 
       {/* Filter & Grid Sensor */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-2xs space-y-6">
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-6 lg:p-7 shadow-2xs space-y-6">
         <SensorFilterBar
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}

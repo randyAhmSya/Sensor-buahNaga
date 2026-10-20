@@ -3,14 +3,29 @@ import type { UserProfile, AuthState } from '../types';
 import { USER_ROLES, type UserRole } from '../config/constants';
 import type { BackendUser } from '../types/auth.types';
 
-export const mapRoleToUserRole = (backendRole: string): UserRole => {
-  if (backendRole === 'superAdmin' || backendRole === 'SUPER_ADMIN') {
+export const mapRoleToUserRole = (backendRole?: string | null): UserRole => {
+  if (!backendRole) return USER_ROLES.ADMIN_KEBUN;
+  const normalized = backendRole.toLowerCase().replace(/[-_\s]/g, '');
+  if (normalized === 'superadmin') {
     return USER_ROLES.SUPER_ADMIN;
   }
-  if (backendRole === 'petani_biasa' || backendRole === 'PETANI') {
-    return USER_ROLES.ADMIN_KEBUN;
+  if (normalized === 'petani') {
+    return USER_ROLES.PETANI;
+  }
+  if (normalized === 'agronom') {
+    return USER_ROLES.AGRONOM;
   }
   return USER_ROLES.ADMIN_KEBUN;
+};
+
+export const getRoleLabel = (role?: string | null): string => {
+  if (!role) return 'Pengguna';
+  const normalized = role.toLowerCase().replace(/[-_\s]/g, '');
+  if (normalized === 'superadmin') return 'Super Admin';
+  if (normalized === 'adminkebun') return 'Admin Kebun';
+  if (normalized === 'petani') return 'Petani';
+  if (normalized === 'agronom') return 'Agronom';
+  return role;
 };
 
 export const mapBackendUserToUserProfile = (user: BackendUser): UserProfile => {
@@ -20,7 +35,7 @@ export const mapBackendUserToUserProfile = (user: BackendUser): UserProfile => {
     email: user.email,
     role: mapRoleToUserRole(user.role),
     tenantId: user.tenant_id,
-    avatarUrl: user.url_foto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    avatarUrl: user.url_foto || undefined,
   };
 };
 

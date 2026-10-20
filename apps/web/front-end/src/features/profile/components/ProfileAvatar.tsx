@@ -1,19 +1,24 @@
 import type { FC } from 'react'
 import { Camera } from 'lucide-react'
+import { UserAvatar } from '@/components/common/UserAvatar'
 
 interface ProfileAvatarProps {
-  avatarUrl: string
+  avatarUrl?: string | null
+  name?: string | null
   onUploadClick?: () => void
 }
 
-export const ProfileAvatar: FC<ProfileAvatarProps> = ({ avatarUrl, onUploadClick }) => {
+export const ProfileAvatar: FC<ProfileAvatarProps> = ({ avatarUrl, name, onUploadClick }) => {
   return (
     <div className="flex flex-col items-center gap-3 min-w-[120px] self-center md:self-start">
       <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-slate-200 relative group cursor-pointer shadow-2xs">
-        <img
+        <UserAvatar
           src={avatarUrl}
-          alt="Profile"
-          className="w-full h-full object-cover"
+          name={name}
+          className="w-full h-full border-0 rounded-full"
+          textClassName="text-2xl font-bold text-slate-700"
+          iconClassName="w-10 h-10 text-slate-400"
+          theme="light"
         />
         <div 
           onClick={onUploadClick}

@@ -44,6 +44,7 @@ export interface UpdateBlokPayload {
 
 export interface BlockItem {
   id: string
+  id_blok?: string
   name: string
   phase?: string
   description: string
@@ -104,4 +105,19 @@ export interface BlockDetailFull {
   }
   cycleHistory: CycleHistoryItem[]
   sensorLogs: SensorLogItem[]
+}
+
+export interface BlokStatusLampuNode {
+  id_sensor: string
+  kode_perangkat: string
+  status_online: boolean
+  terakhir_terlihat: string | null
+}
+
+export interface BlokStatusLampuResponse {
+  jumlah_lampu: number
+  jumlah_online: number
+  jumlah_offline: number
+  batas_offline_detik: number
+  nodes: BlokStatusLampuNode[]
 }

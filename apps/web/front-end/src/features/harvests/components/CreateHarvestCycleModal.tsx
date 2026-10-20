@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Calendar, Sparkles, ChevronDown, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { formatDate } from '@/utils/formatters';
 import { harvestService } from '@/services/harvestService';
 import type { HarvestCycle } from '../types/harvest.types';
 
@@ -47,12 +48,12 @@ export const CreateHarvestCycleModal: React.FC<CreateHarvestCycleModalProps> = (
     }
   }, [isOpen, defaultBlockId, blocks, todayStr]);
 
-  // Kalkulasi proyeksi tanggal panen: tanggal_penyinaran + target_hari_berbunga + 30 hari pematangan
+  // Kalkulasi proyeksi tanggal panen: tanggal_penyinaran + target_hari_berbunga + 50 hari pematangan
   const projectedHarvestDate = useMemo(() => {
     if (!lightingDate) return '';
     const date = new Date(lightingDate);
     if (isNaN(date.getTime())) return '';
-    const totalDays = Number(bloomingTargetDays || 20) + 30;
+    const totalDays = Number(bloomingTargetDays || 20) + 50;
     date.setDate(date.getDate() + totalDays);
     return date.toISOString().split('T')[0];
   }, [lightingDate, bloomingTargetDays]);
@@ -150,7 +151,7 @@ export const CreateHarvestCycleModal: React.FC<CreateHarvestCycleModalProps> = (
                 ) : (
                   blocks.map((b) => (
                     <option key={b.id} value={b.id}>
-                      {b.farmName ? `${b.farmName} — ${b.name}` : b.name}
+                      {b.farmName ? `${b.farmName} - ${b.name}` : b.name}
                     </option>
                   ))
                 )}
@@ -204,11 +205,13 @@ export const CreateHarvestCycleModal: React.FC<CreateHarvestCycleModalProps> = (
                 <Calendar className="w-3.5 h-3.5 text-emerald-700" />
                 Kalkulasi Estimasi Tanggal Panen:
               </span>
-              <span className="font-bold text-emerald-800 text-sm">{projectedHarvestDate || '—'}</span>
+              <span className="font-bold text-emerald-800 text-sm">
+                {projectedHarvestDate ? formatDate(projectedHarvestDate) : '-'}
+              </span>
             </div>
             <p className="text-[11px] text-emerald-700 leading-relaxed flex items-center gap-1">
               <Clock className="w-3 h-3 shrink-0 text-emerald-600" />
-              Dihitung otomatis: penyinaran + target mekar ({bloomingTargetDays} hari) + 30 hari pematangan buah.
+              Dihitung otomatis: penyinaran + target mekar ({bloomingTargetDays} hari) + 50 hari pematangan buah.
             </p>
           </div>
 

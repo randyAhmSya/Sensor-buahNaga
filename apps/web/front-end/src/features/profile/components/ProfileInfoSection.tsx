@@ -93,7 +93,7 @@ export const ProfileInfoSection: FC = () => {
 
       <div className="flex flex-col md:flex-row gap-8 items-start">
         {/* Avatar & Ganti Foto */}
-        <ProfileAvatar avatarUrl={formData.avatarUrl} />
+        <ProfileAvatar avatarUrl={formData.avatarUrl} name={formData.fullName} />
 
         {/* Form Biodata */}
         <form onSubmit={handleSubmit} className="flex-1 w-full space-y-4">

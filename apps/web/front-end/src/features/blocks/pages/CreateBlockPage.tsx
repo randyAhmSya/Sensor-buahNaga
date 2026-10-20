@@ -8,8 +8,8 @@ import { BlockMediaSection } from '../components/form/BlockMediaSection'
 import { farmService } from '@/services/farmService'
 
 export const CreateBlockPage: React.FC = () => {
-  const { farmId } = useParams<{ farmId: string }>()
-  const effectiveFarmId = farmId || ''
+  const params = useParams<{ farmId?: string; id?: string }>()
+  const effectiveFarmId = (params.farmId ?? params.id ?? '').trim()
   const [farmName, setFarmName] = useState<string>('Kebun')
 
   useEffect(() => {
@@ -33,11 +33,11 @@ export const CreateBlockPage: React.FC = () => {
 
   const breadcrumbs = (
     <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 overflow-x-auto whitespace-nowrap">
-      <Link to="/admin/farms" className="hover:text-emerald-700 transition-colors">
+      <Link to="/kebun/farms" className="hover:text-emerald-700 transition-colors">
         Kebun & Blok
       </Link>
       <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-      <Link to={`/admin/farms/${effectiveFarmId}`} className="hover:text-emerald-700 transition-colors">
+      <Link to={`/kebun/farms/${effectiveFarmId}`} className="hover:text-emerald-700 transition-colors">
         {farmName}
       </Link>
       <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -49,7 +49,7 @@ export const CreateBlockPage: React.FC = () => {
     <FormPageLayout
       breadcrumbs={breadcrumbs}
       title="Tambah Blok Baru"
-      backUrl={`/admin/farms/${effectiveFarmId}`}
+      backUrl={`/kebun/farms/${effectiveFarmId}`}
       backLabel="Kembali ke Detail Kebun"
       onSubmit={submit}
       submitLabel="Simpan Blok"

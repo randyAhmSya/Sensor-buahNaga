@@ -21,16 +21,15 @@ export const CreateFarmPage: React.FC<CreateFarmPageProps> = ({ onAddFarm }) => 
     setStatus,
     handleImageFile,
     handleSubmit,
-    setImagePreview,
   } = useCreateFarmPage({ onAddFarm })
 
   const breadcrumbs = (
     <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-      <Link to="/admin/dashboard" className="hover:text-emerald-700 transition-colors">
+      <Link to="/kebun/dashboard" className="hover:text-emerald-700 transition-colors">
         Beranda
       </Link>
       <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-      <Link to="/admin/farms" className="hover:text-emerald-700 transition-colors">
+      <Link to="/kebun/farms" className="hover:text-emerald-700 transition-colors">
         Kebun & Blok
       </Link>
       <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
@@ -42,7 +41,7 @@ export const CreateFarmPage: React.FC<CreateFarmPageProps> = ({ onAddFarm }) => 
     <FormPageLayout
       breadcrumbs={breadcrumbs}
       title="Tambah Kebun Baru"
-      backUrl="/admin/farms"
+      backUrl="/kebun/farms"
       backLabel="Kembali ke Daftar Kebun"
       onSubmit={handleSubmit}
       submitLabel="Simpan Kebun"
@@ -60,10 +59,6 @@ export const CreateFarmPage: React.FC<CreateFarmPageProps> = ({ onAddFarm }) => 
           errors={errors}
           imagePreview={imagePreview}
           onImageFileChange={handleImageFile}
-          onUrlChange={(url) => {
-            handleTextChange('imageUrl', url)
-            setImagePreview(url)
-          }}
           onStatusChange={setStatus}
         />
       }

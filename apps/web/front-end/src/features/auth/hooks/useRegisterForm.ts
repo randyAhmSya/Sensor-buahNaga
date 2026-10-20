@@ -103,7 +103,7 @@ export function useRegisterForm() {
         if (res && res.data && res.data.user && res.data.token) {
           const profile = mapBackendUserToUserProfile(res.data.user)
           login(profile, res.data.token)
-          navigate('/admin/dashboard')
+          navigate('/kebun/farms')
         } else {
           navigate('/login')
         }

@@ -73,17 +73,13 @@ export function useCreateFarmPage({ onAddFarm }: UseCreateFarmPageProps = {}) {
       const res = await farmService.create({
         name: formData.name,
         location: formData.location,
-        description: formData.description,
         status: formData.status,
-        imageUrl: formData.imageUrl || undefined,
-        gpsCoordinates: formData.gpsCoordinates || undefined,
-        additionalNotes: formData.additionalNotes || undefined,
         foto: selectedFile || undefined,
       })
       if (onAddFarm && res.farm) {
         onAddFarm(res.farm)
       }
-      navigate('/admin/farms')
+      navigate('/kebun/farms')
     } finally {
       setIsSubmitting(false)
     }

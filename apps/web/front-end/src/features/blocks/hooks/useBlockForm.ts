@@ -84,10 +84,10 @@ export const useBlockForm = (
 
       if (isEdit && blockId) {
         await blockService.update(farmId, blockId, payloadWithFile)
-        navigate(`/admin/farms/${farmId}/blocks/${blockId}`)
+        navigate(`/kebun/farms/${farmId}/blocks/${blockId}`)
       } else {
         await blockService.create(farmId, payloadWithFile)
-        navigate(`/admin/farms/${farmId}`)
+        navigate(`/kebun/farms/${farmId}`)
       }
     } finally {
       setIsSubmitting(false)

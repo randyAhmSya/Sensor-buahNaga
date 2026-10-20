@@ -45,19 +45,16 @@ export interface NodeSensorBackend {
 
 export interface CreateNodePayload {
   kode_perangkat: string;
-  blok_id?: string | null;
-  gateway_id?: string | null;
-  qr_id?: string | null;
-  kode_pairing?: string;
-  token_perangkat?: string;
-  tipe_sensor?: string;
+  blok_id: string;
+  gateway_id: string;
+  tipe_sensor: string;
   status_koneksi?: NodeSensorStatus;
 }
 
 export interface UpdateNodePayload {
   kode_perangkat?: string;
-  blok_id?: string | null;
   gateway_id?: string | null;
   tipe_sensor?: string;
   status_koneksi?: string;
 }
+

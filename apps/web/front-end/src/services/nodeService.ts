@@ -1,6 +1,7 @@
 import { apiClient } from './api';
 import type { ApiResponse } from '@/types/api.types';
 import type { NodeSensorBackend, CreateNodePayload, UpdateNodePayload } from '@/types/node.types';
+import { farmService } from './farmService';
 
 export const nodeService = {
   /**
@@ -8,20 +9,33 @@ export const nodeService = {
    * Endpoint: GET /api/petani/node?kebun_id=UUID
    */
   getAll: async (kebunId?: string): Promise<NodeSensorBackend[]> => {
-    // JANGAN menembak endpoint tanpa parameter kebun_id valid untuk mencegah HTTP 400 Bad Request
+    let targetKebunId = kebunId?.trim();
+
+    // Jika kebunId kosong atau 'Semua Kebun', ambil ID kebun aktif pertama dari farmService
     if (
-      !kebunId ||
-      typeof kebunId !== 'string' ||
-      !kebunId.trim() ||
-      kebunId === 'Semua Kebun' ||
-      kebunId === 'undefined' ||
-      kebunId === 'null'
+      !targetKebunId ||
+      targetKebunId === 'Semua Kebun' ||
+      targetKebunId === 'undefined' ||
+      targetKebunId === 'null'
     ) {
+      try {
+        const farms = await farmService.getAll();
+        if (farms.length > 0 && farms[0]?.id) {
+          targetKebunId = farms[0].id;
+        } else {
+          return [];
+        }
+      } catch {
+        return [];
+      }
+    }
+
+    if (!targetKebunId) {
       return [];
     }
 
     try {
-      const params = { kebun_id: kebunId.trim() };
+      const params = { kebun_id: targetKebunId.trim() };
       const res = await apiClient.get<ApiResponse<NodeSensorBackend[]> | NodeSensorBackend[]>('/petani/node', {
         params,
       });
@@ -66,11 +80,19 @@ export const nodeService = {
    * Endpoint: POST /api/petani/node
    */
   create: async (payload: CreateNodePayload): Promise<ApiResponse<NodeSensorBackend>> => {
-    const body: CreateNodePayload = {
-      ...payload,
-      tipe_sensor: payload.tipe_sensor || 'lux_suhu',
-      status_koneksi: payload.status_koneksi || 'aktif',
+    const body: Record<string, unknown> = {
+      kode_perangkat: payload.kode_perangkat.trim(),
+      blok_id: payload.blok_id.trim(),
+      gateway_id: payload.gateway_id.trim(),
+      tipe_sensor: payload.tipe_sensor ? payload.tipe_sensor.trim() : 'cahaya_lux',
+      status_koneksi: payload.status_koneksi || 'offline',
     };
+
+    // Hard-guard: Hapus key terlarang yang dapat memicu error validasi atau 500 di backend
+    delete body.qr_id;
+    delete body.kode_pairing;
+    delete body.token_perangkat;
+
     return await apiClient.post<ApiResponse<NodeSensorBackend>>('/petani/node', body);
   },
 
@@ -79,7 +101,33 @@ export const nodeService = {
    * Endpoint: PUT /api/petani/node/{id}
    */
   update: async (id: string, payload: UpdateNodePayload): Promise<ApiResponse<NodeSensorBackend>> => {
-    return await apiClient.put<ApiResponse<NodeSensorBackend>>(`/petani/node/${id}`, payload);
+    if (!id || !id.trim()) {
+      throw new Error('ID sensor (UUID) diperlukan untuk memperbarui node.');
+    }
+
+    const cleanId = id.trim();
+    const body: Record<string, unknown> = {};
+
+    if (payload.kode_perangkat !== undefined) {
+      body.kode_perangkat = payload.kode_perangkat.trim();
+    }
+    if (payload.gateway_id !== undefined) {
+      body.gateway_id = payload.gateway_id ? payload.gateway_id.trim() : null;
+    }
+    if (payload.tipe_sensor !== undefined) {
+      body.tipe_sensor = payload.tipe_sensor.trim();
+    }
+    if (payload.status_koneksi !== undefined) {
+      body.status_koneksi = payload.status_koneksi.trim();
+    }
+
+    // Hard-guard: Jangan pernah mengirim blok_id, qr_id, kode_pairing, token_perangkat pada PUT
+    delete body.blok_id;
+    delete body.qr_id;
+    delete body.kode_pairing;
+    delete body.token_perangkat;
+
+    return await apiClient.put<ApiResponse<NodeSensorBackend>>(`/petani/node/${cleanId}`, body);
   },
 
   /**
@@ -87,6 +135,20 @@ export const nodeService = {
    * Endpoint: DELETE /api/petani/node/{id}
    */
   delete: async (id: string): Promise<ApiResponse<null>> => {
-    return await apiClient.delete<ApiResponse<null>>(`/petani/node/${id}`);
+    if (!id || !id.trim()) {
+      throw new Error('ID sensor (UUID) diperlukan untuk menghapus node.');
+    }
+    return await apiClient.delete<ApiResponse<null>>(`/petani/node/${id.trim()}`);
+  },
+
+  /**
+   * Menghasilkan kode QR baru untuk node sensor
+   * Endpoint: POST /api/petani/node/{id}/generate-qr
+   */
+  generateNewQr: async (id: string): Promise<ApiResponse<NodeSensorBackend>> => {
+    if (!id || !id.trim()) {
+      throw new Error('ID sensor (UUID) diperlukan untuk membuat QR baru.');
+    }
+    return await apiClient.post<ApiResponse<NodeSensorBackend>>(`/petani/node/${id.trim()}/generate-qr`);
   },
 };

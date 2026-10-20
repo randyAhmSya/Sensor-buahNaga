@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, AlertCircle, Calendar, CheckCircle2 } from 'lucide-react';
+import { Download, AlertCircle, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DimmingBarChart } from '@/features/schedules/components/DimmingBarChart';
 import { UpcomingHarvestWidget } from '../components/UpcomingHarvestWidget';
@@ -51,20 +51,15 @@ export const FarmerDashboardPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Alert Status Operasional - Minimalist Outline */}
-      <div className="flex flex-wrap items-center gap-3">
-        {offlineNodes > 0 ? (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-rose-400 bg-white text-rose-700 text-xs font-semibold shadow-2xs">
+      {/* Alert Status Operasional saat ada node offline */}
+      {offlineNodes > 0 && (
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-rose-300 bg-rose-50 text-rose-700 text-xs font-semibold shadow-2xs">
             <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
             <span>Perlu Tindakan: {offlineNodes} Node Sensor Offline</span>
           </div>
-        ) : (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-emerald-600 bg-white text-emerald-800 text-xs font-semibold shadow-2xs">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-700" />
-            <span>Semua Sistem Sensor Berjalan Optimal</span>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* 4 Kartu Metrik Utama */}
       <DashboardMetricCards cards={metricCards} isLoading={isLoading} />
@@ -79,9 +74,6 @@ export const FarmerDashboardPage: React.FC = () => {
               </h3>
               <p className="text-xs text-slate-500">Rata-rata intensitas pencahayaan per jam malam tadi</p>
             </div>
-            <span className="text-xs font-bold text-emerald-700 bg-white border border-emerald-600 px-2.5 py-0.5 rounded-full">
-              Auto-Dimming
-            </span>
           </div>
           <div className="pt-2">
             <DimmingBarChart data={[]} />
@@ -102,7 +94,7 @@ export const FarmerDashboardPage: React.FC = () => {
         <div className="lg:col-span-7 h-full">
           <RecentActivityTable
             activities={recentActivities}
-            onViewAll={() => navigate('/admin/sensors')}
+            onViewAll={() => navigate('/kebun/sensors')}
           />
         </div>
       </div>

@@ -48,7 +48,7 @@ export const QRCodeDetailModal: React.FC<QRCodeDetailModalProps> = ({
 
           <div>
             <span className="font-mono text-base font-bold text-slate-900">{item.codeText}</span>
-            <p className="text-xs text-slate-500 mt-0.5">{item.farmName} — {item.blockName}</p>
+            <p className="text-xs text-slate-500 mt-0.5">{item.farmName} - {item.blockName}</p>
           </div>
 
           <div className="w-full bg-slate-50 rounded-xl p-3 border border-slate-200/80 text-xs text-slate-600 space-y-1 text-left">

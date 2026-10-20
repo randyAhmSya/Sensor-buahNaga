@@ -89,7 +89,7 @@ export const BlockTelemetryPreviewModal: React.FC<BlockTelemetryPreviewModalProp
             size="sm"
             onClick={() => {
               onClose()
-              navigate('/admin/sensors')
+              navigate('/kebun/sensors')
             }}
             className="gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs flex flex-row items-center whitespace-nowrap"
             rightIcon={<ArrowRight className="w-3.5 h-3.5" />}

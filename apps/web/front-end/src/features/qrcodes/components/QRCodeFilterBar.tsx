@@ -1,6 +1,6 @@
-import React from 'react';
-import { Search } from 'lucide-react';
+import type { FC } from 'react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import { DebouncedSearchInput } from '@/components/common/DebouncedSearchInput';
 
 interface QRCodeFilterBarProps {
   searchTerm: string;
@@ -14,7 +14,7 @@ interface QRCodeFilterBarProps {
   farmOptions?: { label: string; value: string }[];
 }
 
-export const QRCodeFilterBar: React.FC<QRCodeFilterBarProps> = ({
+export const QRCodeFilterBar: FC<QRCodeFilterBarProps> = ({
   searchTerm,
   onSearchChange,
   selectedFarm,
@@ -38,22 +38,22 @@ export const QRCodeFilterBar: React.FC<QRCodeFilterBarProps> = ({
   ];
 
   return (
-    <div className="bg-white rounded-2xl p-4 md:p-5 border border-slate-200 shadow-2xs">
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+    <div className="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/90 shadow-2xs">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 md:gap-4">
         {/* Search */}
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
+        <div className="flex-1">
+          <DebouncedSearchInput
             value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
+            onDebouncedChange={onSearchChange}
+            delay={1000}
             placeholder="Cari kode (AGL-BLOK...) atau nama blok..."
-            className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs md:text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 shadow-2xs"
+            ariaLabel="Cari kode QR blok atau nama blok"
+            className="w-full min-h-[44px] bg-white border-slate-200"
           />
         </div>
 
         {/* Filter Custom Selects */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5">
+        <div className="grid grid-cols-1 sm:flex sm:flex-wrap lg:flex-nowrap items-center gap-2.5">
           <CustomSelect
             value={selectedFarm}
             onChange={onFarmChange}
@@ -74,4 +74,3 @@ export const QRCodeFilterBar: React.FC<QRCodeFilterBarProps> = ({
     </div>
   );
 };
-

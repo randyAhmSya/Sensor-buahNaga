@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { 
   Mail, 
   Lock, 
@@ -11,9 +11,19 @@ import { Button } from '@/components/ui/Button'
 import { InputField } from '@/components/form/InputField'
 import { AuthSideBanner } from '../components/AuthSideBanner'
 import { useLoginForm } from '../hooks/useLoginForm'
+import { useAuthStore } from '@/store/useAuthStore'
+import { USER_ROLES } from '@/config/constants'
 
 export const LoginPage: FC = () => {
+  const { user, isAuthenticated } = useAuthStore()
   const { formData, errors, generalError, isSubmitting, handleChange, handleSubmit } = useLoginForm()
+
+  if (isAuthenticated && user) {
+    if (user.role === USER_ROLES.SUPER_ADMIN) {
+      return <Navigate to="/admin" replace />
+    }
+    return <Navigate to="/kebun/farms" replace />
+  }
 
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-slate-50 font-sans">

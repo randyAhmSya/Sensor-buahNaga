@@ -9,9 +9,9 @@ import { blockService } from '@/services/blockService'
 import type { BlockFormInput } from '../schemas/block.schema'
 
 export const EditBlockPage: React.FC = () => {
-  const { farmId, blockId } = useParams<{ farmId: string; blockId: string }>()
-  const effectiveFarmId = farmId || ''
-  const effectiveBlockId = blockId || ''
+  const params = useParams<{ farmId?: string; id?: string; blockId?: string }>()
+  const effectiveFarmId = (params.farmId ?? params.id ?? '').trim()
+  const effectiveBlockId = (params.blockId ?? params.id ?? '').trim()
 
   const [initialData, setInitialData] = useState<BlockFormInput | null>(null)
   const [farmName, setFarmName] = useState<string>('Kebun')
@@ -97,16 +97,16 @@ const EditBlockPageContent: React.FC<EditBlockPageContentProps> = ({
 
   const breadcrumbs = (
     <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 overflow-x-auto whitespace-nowrap">
-      <Link to="/admin/farms" className="hover:text-emerald-700 transition-colors">
+      <Link to="/kebun/farms" className="hover:text-emerald-700 transition-colors">
         Kebun & Blok
       </Link>
       <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-      <Link to={`/admin/farms/${farmId}`} className="hover:text-emerald-700 transition-colors">
+      <Link to={`/kebun/farms/${farmId}`} className="hover:text-emerald-700 transition-colors">
         {farmName}
       </Link>
       <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
       <Link
-        to={`/admin/farms/${farmId}/blocks/${blockId}`}
+        to={`/kebun/farms/${farmId}/blocks/${blockId}`}
         className="hover:text-emerald-700 transition-colors"
       >
         {formData.name}
@@ -120,7 +120,7 @@ const EditBlockPageContent: React.FC<EditBlockPageContentProps> = ({
     <FormPageLayout
       breadcrumbs={breadcrumbs}
       title={`Edit ${formData.name || 'Blok'}`}
-      backUrl={`/admin/farms/${farmId}/blocks/${blockId}`}
+      backUrl={`/kebun/farms/${farmId}/blocks/${blockId}`}
       backLabel="Kembali ke Detail Blok"
       onSubmit={submit}
       submitLabel="Simpan Perubahan"

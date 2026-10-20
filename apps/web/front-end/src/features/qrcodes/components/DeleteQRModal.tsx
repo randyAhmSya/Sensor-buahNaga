@@ -20,29 +20,48 @@ export const DeleteQRModal: React.FC<DeleteQRModalProps> = ({
 }) => {
   if (!isOpen || !item) return null;
 
+  const isAssigned = Boolean(
+    item.isAssignedToNode ||
+    (item.nodeSensorName && item.nodeSensorName.trim() !== '') ||
+    item.pairingStatus === 'Sudah Terhubung'
+  );
+
+  const nodeName = item.nodeSensorName || 'Node Sensor';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full overflow-hidden">
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="p-6 pb-4 flex items-start justify-between">
-          <div className="w-12 h-12 rounded-2xl border border-rose-200 bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-2xl border border-rose-200 bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 shadow-2xs">
             <AlertTriangle className="w-6 h-6" />
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+            disabled={isDeleting}
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer disabled:opacity-50 transition-colors"
+            aria-label="Tutup dialog"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="px-6 pb-6 space-y-3">
-          <h3 className="text-lg font-bold text-slate-900">Hapus QR Code Blok?</h3>
-          <p className="text-sm text-slate-500 leading-relaxed">
-            Apakah Anda yakin ingin menghapus kode{' '}
-            <span className="font-bold text-slate-800 font-mono">{item.codeText}</span> untuk{' '}
-            <span className="font-semibold text-slate-800">{item.blockName}</span>?
-            Perangkat sensor yang terhubung dengan kode ini perlu dipasangkan ulang (*re-pairing*).
+          <h3 className="text-lg font-bold text-slate-900">
+            {isAssigned ? 'Lepas & Hapus QR Code?' : 'Hapus QR Code?'}
+          </h3>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            {isAssigned ? (
+              <>
+                QR ini akan dilepas dari node sensor{' '}
+                <span className="font-bold text-slate-900 font-mono">[{nodeName}]</span>. Node sensor tidak akan terhapus, tapi tidak akan punya QR sampai dipasangkan QR baru. Lanjutkan?
+              </>
+            ) : (
+              <>
+                Apakah Anda yakin ingin menghapus kode{' '}
+                <span className="font-bold text-slate-900 font-mono">{item.codeText}</span>? Kode QR yang dihapus tidak dapat dipulihkan kembali.
+              </>
+            )}
           </p>
         </div>
 
@@ -53,7 +72,7 @@ export const DeleteQRModal: React.FC<DeleteQRModalProps> = ({
             size="md"
             onClick={onClose}
             disabled={isDeleting}
-            className="w-full sm:w-auto border-slate-300 text-slate-700 hover:bg-white font-semibold"
+            className="w-full sm:w-auto border-slate-300 text-slate-700 hover:bg-white font-semibold cursor-pointer"
           >
             Batal
           </Button>
@@ -63,7 +82,7 @@ export const DeleteQRModal: React.FC<DeleteQRModalProps> = ({
             size="md"
             disabled={isDeleting}
             onClick={() => onConfirm(item.id)}
-            className="w-full sm:w-auto flex flex-row items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-xs"
+            className="w-full sm:w-auto flex flex-row items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-xs cursor-pointer"
           >
             <Trash2 className="w-4 h-4 shrink-0" />
             <span>{isDeleting ? 'Menghapus...' : 'Ya, Hapus'}</span>

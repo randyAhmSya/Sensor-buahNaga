@@ -21,7 +21,6 @@ export const EditFarmPage: React.FC = () => {
     setStatus,
     handleImageFile,
     handleSubmit,
-    setImagePreview,
   } = useEditFarmPage()
 
   if (isLoading) {
@@ -35,17 +34,17 @@ export const EditFarmPage: React.FC = () => {
 
   const breadcrumbs = (
     <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 overflow-x-auto whitespace-nowrap">
-      <Link to="/admin/dashboard" className="hover:text-emerald-700 transition-colors">
+      <Link to="/kebun/dashboard" className="hover:text-emerald-700 transition-colors">
         Beranda
       </Link>
       <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-      <Link to="/admin/farms" className="hover:text-emerald-700 transition-colors">
+      <Link to="/kebun/farms" className="hover:text-emerald-700 transition-colors">
         Kebun & Blok
       </Link>
       {farmId && (
         <>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <Link to={`/admin/farms/${farmId}`} className="hover:text-emerald-700 transition-colors">
+          <Link to={`/kebun/farms/${farmId}`} className="hover:text-emerald-700 transition-colors">
             {formData.name || 'Detail Kebun'}
           </Link>
         </>
@@ -72,7 +71,7 @@ export const EditFarmPage: React.FC = () => {
       <FormPageLayout
         breadcrumbs={breadcrumbs}
         title={`Edit ${formData.name || 'Kebun'}`}
-        backUrl={farmId ? `/admin/farms/${farmId}` : '/admin/farms'}
+        backUrl={farmId ? `/kebun/farms/${farmId}` : '/kebun/farms'}
         backLabel="Kembali ke Detail Kebun"
         onSubmit={handleSubmit}
         submitLabel="Simpan Perubahan"
@@ -90,10 +89,6 @@ export const EditFarmPage: React.FC = () => {
             errors={errors}
             imagePreview={imagePreview}
             onImageFileChange={handleImageFile}
-            onUrlChange={(url) => {
-              handleTextChange('imageUrl', url)
-              setImagePreview(url)
-            }}
             onStatusChange={setStatus}
           />
         }
