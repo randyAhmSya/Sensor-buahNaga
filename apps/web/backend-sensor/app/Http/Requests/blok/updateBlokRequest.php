@@ -29,6 +29,8 @@ class updateBlokRequest extends FormRequest
             'keterangan' => 'nullable|string',
             'luas_area' => 'nullable|numeric',
             'url_foto' => 'nullable|string',
+            'status' => 'nullable|string',
+            'sensor_id' => 'nullable|string',
         ];
     }
 }

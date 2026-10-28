@@ -20,8 +20,12 @@ class KodeQrAksesTest extends TestCase
 
         Sanctum::actingAs($petani);
 
+        // Route PUT /api/petani/qr/{id} sekarang terdaftar (sebelumnya
+        // di-except() makanya 405). QR di sini belum nempel ke node mana
+        // pun, jadi lewat KodeQrController::bolehAksesQr() itu domain
+        // superAdmin -- petani biasa ditolak dengan 403, bukan lagi 405.
         $this->putJson("/api/petani/qr/{$qr->id_qr}", ['status_qr' => false])
-            ->assertStatus(405);
+            ->assertStatus(403);
     }
 
     public function test_petani_tidak_bisa_hapus_qr(): void

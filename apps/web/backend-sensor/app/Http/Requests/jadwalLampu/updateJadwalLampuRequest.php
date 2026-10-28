@@ -29,6 +29,7 @@ class updateJadwalLampuRequest extends FormRequest
             'instensitas_cahaya'  => 'sometimes|nullable|numeric|min:0|max:100',
             'target_lux'          => 'sometimes|nullable|numeric|min:0',
             'intensitas_minimum'  => 'sometimes|numeric|min:0|max:100',
+            'baseline_manual_persen' => 'sometimes|nullable|numeric|min:0|max:100',
             'status_aktif'        => 'sometimes|boolean',
             'keterangan'          => 'sometimes|nullable|string',
         ];

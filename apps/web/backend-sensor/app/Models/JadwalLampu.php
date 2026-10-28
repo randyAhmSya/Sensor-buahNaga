@@ -22,6 +22,7 @@ class JadwalLampu extends Model
         'jam_akhir_nyala',
         'mode',
         'instensitas_cahaya',
+        'baseline_manual_persen',
         'target_lux',
         'intensitas_minimum',
         'status_aktif',

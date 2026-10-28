@@ -12,6 +12,9 @@ Route::middleware('auth:sanctum')->post('/auth/logout', [AuthController::class, 
 
 Route::post('webhook/midtrans', [WebhookMidtransController::class, 'handle']);
 
-// Route::get('/user', function (Request $request) {
-//     return $request->user();
-// })->middleware('auth:sanctum');
+Route::middleware('auth:sanctum')->get('/auth/me', function (Request $request) {
+    return response()->json([
+        'status' => 'success',
+        'data' => $request->user()
+    ]);
+});

@@ -18,10 +18,16 @@ class BlokStatusService
             $online = $node->terakhir_terlihat !== null
                 && Carbon::parse($node->terakhir_terlihat)->greaterThanOrEqualTo($batasWaktu);
 
+            // 3 keadaan untuk FE: online | offline (pernah terlihat, lewat batas) | belum_pernah_terlihat
+            $status = $online
+                ? 'online'
+                : ($node->terakhir_terlihat === null ? 'belum_pernah_terlihat' : 'offline');
+
             return [
                 'id_sensor'         => $node->id_sensor,
                 'kode_perangkat'    => $node->kode_perangkat,
                 'status_online'     => $online,
+                'status'            => $status,
                 'terakhir_terlihat' => $node->terakhir_terlihat,
             ];
         });
