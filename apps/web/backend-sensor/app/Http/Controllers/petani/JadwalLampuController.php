@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\petani;
 
+use App\Exceptions\JadwalCooldownException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\jadwalLampu\addJadwalLampuRequest;
 use App\Http\Requests\jadwalLampu\updateJadwalLampuRequest;
@@ -9,6 +10,7 @@ use App\Services\management_kebun\JadwalLampuService;
 use App\Models\Kebun;
 use App\Models\NodeSensor;
 use App\Models\JadwalLampu;
+use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -140,7 +142,15 @@ class JadwalLampuController extends Controller
             return $this->errorResponse(self::PESAN_AKSES_DITOLAK, 403);
         }
 
-        $updatedJadwal = $this->jadwalService->updateJadwal($jadwal, $request->validated());
+        try {
+            $updatedJadwal = $this->jadwalService->updateJadwal($jadwal, $request->validated());
+        } catch (JadwalCooldownException $e) {
+            return $this->errorResponse($e->getMessage(), 429)
+                ->header('Retry-After', (string) $e->sisaDetik());
+        } catch (DomainException $e) {
+            return $this->errorResponse($e->getMessage(), 422);
+        }
+
         return $this->successResponse($updatedJadwal, 'Data jadwal lampu berhasil diperbarui.');
     }
 

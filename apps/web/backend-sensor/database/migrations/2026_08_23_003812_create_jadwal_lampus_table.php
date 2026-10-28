@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('mode')->default('manual')->after('jam_akhir_nyala');
             $table->float('target_lux')->nullable()->after('instensitas_cahaya');
             $table->float('intensitas_minimum')->default(10)->after('target_lux');
+            $table->float('baseline_manual_persen')->nullable()->after('intensitas_minimum');
             $table->boolean('status_aktif')->default(true)->after('intensitas_minimum');
             $table->text('keterangan')->nullable()->after('status_aktif');
             $table->float('instensitas_cahaya');
@@ -55,7 +56,7 @@ return new class extends Migration
         Schema::table('jadwal_lampus', function (Blueprint $table) {
             $table->dropForeign(['kebun_id']);
             $table->dropForeign(['sensor_id']);
-            $table->dropColumn(['kebun_id', 'sensor_id', 'jam_mulai_nyala', 'jam_akhir_nyala', 'mode', 'target_lux', 'intensitas_minimum', 'status_aktif', 'keterangan']);
+            $table->dropColumn(['kebun_id', 'sensor_id', 'jam_mulai_nyala', 'jam_akhir_nyala', 'mode', 'target_lux', 'intensitas_minimum', 'baseline_manual_persen', 'status_aktif', 'keterangan']);
         });
  
         Schema::table('jadwal_lampus', function (Blueprint $table) {

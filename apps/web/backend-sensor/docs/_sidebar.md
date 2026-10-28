@@ -1,0 +1,42 @@
+<!-- docs/_sidebar.md -->
+
+* **[🏠 Beranda](README.md)**
+
+* **📘 PANDUAN INTEGRASI FRONTEND**
+  * [Ringkasan Kontrak API](API_INTEGRATION_GUIDE.md)
+  * [1. Global Specifications](API_INTEGRATION_GUIDE.md#1-global-specifications)
+  * [2. Endpoints Catalog](API_INTEGRATION_GUIDE.md#2-api-endpoints-catalog)
+    * [Modul 1: Autentikasi (Auth)](API_INTEGRATION_GUIDE.md#modul-1-autentikasi-auth)
+    * [Modul 2: Langganan & Billing](API_INTEGRATION_GUIDE.md#modul-2-manajemen-langganan--pembayaran-petani)
+    * [Modul 3: Konsen Akses Tenant](API_INTEGRATION_GUIDE.md#modul-3-konsen-privasi--akses-tenant-petani-side)
+    * [Modul 4: Manajemen Kebun](API_INTEGRATION_GUIDE.md#modul-4-manajemen-kebun-farm-management)
+    * [Modul 5: Blok & Status Lampu](API_INTEGRATION_GUIDE.md#modul-5-manajemen-blok--status-lampu)
+    * [Modul 6: Node Sensor & Dimming](API_INTEGRATION_GUIDE.md#modul-6-node-sensor--auto-dimming)
+    * [Modul 7: Gateway & Pairing ESP32](API_INTEGRATION_GUIDE.md#modul-7-hardware-gateway--captive-portal-pairing)
+    * [Modul 8: Scanner QR Lapangan](API_INTEGRATION_GUIDE.md#modul-8-scanner-qr-code-lapangan)
+    * [Modul 9: Jadwal Lampu](API_INTEGRATION_GUIDE.md#modul-9-jadwal-penyinaran-lampu-lighting-schedule)
+    * [Modul 10: Siklus Panen](API_INTEGRATION_GUIDE.md#modul-10-siklus-panen-harvest-cycle)
+    * [Modul 11: Telemetri & Log Energi](API_INTEGRATION_GUIDE.md#modul-11-monitoring-telemetri--log-energi-listrik)
+    * [Modul 12: Notifikasi Petani](API_INTEGRATION_GUIDE.md#modul-12-notifikasi-sistem-petani)
+    * [Modul 13: Super Admin Module](API_INTEGRATION_GUIDE.md#modul-13-dashboard--manajemen-super-admin)
+  * [3. Webhook Midtrans](API_INTEGRATION_GUIDE.md#3-webhook--background-ingestion)
+  * [4. Query Keys Recommendation](API_INTEGRATION_GUIDE.md#4-frontend-query-keys-recommendation-tanstack-query--swr)
+
+* **🛠️ ARSITEKTUR BACKEND INTERNAL**
+  * [Arsitektur & Kode Internal](BACKEND_CODEBASE_GUIDE.md)
+  * [1. Architectural Overview](BACKEND_CODEBASE_GUIDE.md#1-architectural-overview)
+    * [Pola Arsitektur (Pattern)](BACKEND_CODEBASE_GUIDE.md#a-architectural-pattern)
+    * [Multi-Tenancy & Data Isolation](BACKEND_CODEBASE_GUIDE.md#b-multi-tenancy--data-isolation-model)
+    * [Pohon Direktori (Folder Tree)](BACKEND_CODEBASE_GUIDE.md#c-folder-structure-tree)
+    * [Environment Variables Checklist](BACKEND_CODEBASE_GUIDE.md#d-environment-variables-checklist)
+  * [2. File-by-File Breakdown](BACKEND_CODEBASE_GUIDE.md#2-file-by-file-breakdown)
+    * [Routing & Bootstrap](BACKEND_CODEBASE_GUIDE.md#kategori-1-bootstrap--routing)
+    * [Middleware & Policies](BACKEND_CODEBASE_GUIDE.md#kategori-2-middleware--policies)
+    * [Traits & Reusability](BACKEND_CODEBASE_GUIDE.md#kategori-3-traits--cross-cutting-concerns)
+    * [Authentication Module](BACKEND_CODEBASE_GUIDE.md#kategori-4-authentication-module)
+    * [Super Admin Module](BACKEND_CODEBASE_GUIDE.md#kategori-5-super-admin-module)
+    * [Subscription & Billing](BACKEND_CODEBASE_GUIDE.md#kategori-6-subscription--billing-module)
+    * [Farm & Hardware Sensor](BACKEND_CODEBASE_GUIDE.md#kategori-7-farm-sensor--hardware-module)
+    * [Lighting & IoT Telemetry](BACKEND_CODEBASE_GUIDE.md#kategori-8-lighting-automation--iot-telemetry)
+    * [Eloquent Models Catalog](BACKEND_CODEBASE_GUIDE.md#kategori-9-eloquent-models-catalog)
+  * [3. Critical Edge Cases & Warnings](BACKEND_CODEBASE_GUIDE.md#3-critical-edge-cases--developer-warnings)

@@ -3,9 +3,9 @@
 namespace App\Services\management_kebun;
 
 use App\Exceptions\JadwalCooldownException;
-use App\Models\blok;
+use App\Models\Blok;
 use App\Models\JadwalLampu;
-use App\Models\nodeSensor;
+use App\Models\NodeSensor;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -56,18 +56,15 @@ class JadwalLampuService
 
     public function updateJadwal(JadwalLampu $jadwal, array $data)
     {
-        if ($jadwal->mode === 'manual' && array_key_exists('instensitas_cahaya', $data)) {
-            $key = 'slider-jadwal:' . $jadwal->id_jadwal_lampu;
-            $cooldown = (int) config('lampu.cooldown_slider_detik', 7);
+        $cooldownBerlaku = $jadwal->mode === 'manual' && array_key_exists('instensitas_cahaya', $data);
+        $key = 'slider-jadwal:' . $jadwal->id_jadwal_lampu;
 
-            if (RateLimiter::tooManyAttempts($key, 1)) {
-                $sisaDetik = RateLimiter::availableIn($key);
-                throw new JadwalCooldownException(
-                    "Terlalu cepat mengubah intensitas, tunggu {$sisaDetik} detik lagi biar lampu nggak flicker."
-                );
-            }
-
-            RateLimiter::hit($key, $cooldown);
+        if ($cooldownBerlaku && RateLimiter::tooManyAttempts($key, 1)) {
+            $sisaDetik = RateLimiter::availableIn($key);
+            throw new JadwalCooldownException(
+                "Terlalu cepat mengubah intensitas, tunggu {$sisaDetik} detik lagi biar lampu nggak flicker.",
+                $sisaDetik
+            );
         }
 
         $jadwal->fill($data);
@@ -80,6 +77,12 @@ class JadwalLampuService
         }
         if ($jadwal->mode === 'auto' && $jadwal->baseline_manual_persen === null) {
             throw new DomainException('Mode auto butuh baseline_manual_persen, biar laporan hemat listrik bisa dihitung.');
+        }
+
+        // Cooldown baru dihitung setelah semua validasi lolos, supaya update yang ditolak
+        // tidak menghabiskan jatah 7 detik user.
+        if ($cooldownBerlaku) {
+            RateLimiter::hit($key, (int) config('lampu.cooldown_slider_detik', 7));
         }
 
         $jadwal->save();
@@ -106,7 +109,7 @@ class JadwalLampuService
             return $override;
         }
 
-        $sensor = nodeSensor::with('blok')->find($sensorId);
+        $sensor = NodeSensor::with('blok')->find($sensorId);
         if (!$sensor || !$sensor->blok) {
             return null;
         }
@@ -142,13 +145,13 @@ class JadwalLampuService
     protected function sensorTerdampak(JadwalLampu $jadwal)
     {
         if ($jadwal->sensor_id) {
-            $sensor = nodeSensor::find($jadwal->sensor_id);
+            $sensor = NodeSensor::find($jadwal->sensor_id);
             return $sensor ? collect([$sensor]) : collect();
         }
 
         if ($jadwal->kebun_id) {
-            $blokIds = blok::where('kebun_id', $jadwal->kebun_id)->pluck('id_blok');
-            return nodeSensor::whereIn('blok_id', $blokIds)->get();
+            $blokIds = Blok::where('kebun_id', $jadwal->kebun_id)->pluck('id_blok');
+            return NodeSensor::whereIn('blok_id', $blokIds)->get();
         }
 
         return collect();

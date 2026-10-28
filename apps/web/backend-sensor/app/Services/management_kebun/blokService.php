@@ -38,6 +38,20 @@ class BlokService
             $data['url_foto'] = $this->uploadFoto($fileFoto, 'foto_blok', $blok->url_foto);
         }
 
+        if (isset($data['status'])) {
+            $statusVal = strtolower((string) $data['status']);
+            $isOnline = in_array($statusVal, ['online', 'aktif', 'terhubung']);
+            \App\Models\NodeSensor::where('blok_id', $blok->id_blok)->update([
+                'terakhir_terlihat' => $isOnline ? now() : null,
+                'status_koneksi' => $isOnline ? 'Terhubung' : 'Terputus',
+            ]);
+            unset($data['status']);
+        }
+
+        if (isset($data['sensor_id'])) {
+            unset($data['sensor_id']);
+        }
+
         $blok->update($data);
         return $blok;
     }

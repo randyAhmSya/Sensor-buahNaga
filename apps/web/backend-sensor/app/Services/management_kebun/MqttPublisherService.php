@@ -20,7 +20,7 @@ class MqttPublisherService
      * dalam kasus itu nggak ada yang di-publish, biar nggak nimpa data lama
      * dengan sesuatu yang belum tentu benar.
      */
-    public function publishJadwal(nodeSensor $sensor, ?jadwal_lampu $jadwal): void
+    public function publishJadwal(nodeSensor $sensor, ?JadwalLampu $jadwal): void
     {
         $kodePerangkat = $this->kodePerangkatGatewayUntukSensor($sensor);
         if (!$kodePerangkat) {
