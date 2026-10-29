@@ -1,7 +1,6 @@
 import React from "react";
-import { ImageBackground, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import type { WeatherInfo } from "@/constant/dashboard";
 
 interface WeatherHeroContentProps {
@@ -11,10 +10,6 @@ interface WeatherHeroContentProps {
   children?: React.ReactNode;
 }
 
-const HERO_IMAGE = {
-  uri: "https://images.unsplash.com/photo-1620200423727-8127f75d7f53?w=800",
-};
-
 export function WeatherHeroContent({
   greetingName,
   today,
@@ -22,51 +17,31 @@ export function WeatherHeroContent({
   children,
 }: WeatherHeroContentProps) {
   return (
-    <ImageBackground
-      source={HERO_IMAGE}
-      resizeMode="cover"
-      className="overflow-hidden pb-14"
-    >
-      <View className="py-2 px-4">
-        {children}
+    <View className="bg-white border-b border-slate-200 px-4 pt-2 pb-5">
+      {children}
 
-        <Text className="pt-5 font-semibold text-lg text-[#151C25]">
-          Hello, {greetingName}
-        </Text>
+      <View className="mt-3 flex-row items-center justify-between">
+        <View className="flex-1 mr-3">
+          <Text className="text-xl font-bold tracking-tight text-slate-900">
+            Halo, {greetingName}
+          </Text>
+          <Text className="text-xs font-medium text-slate-600 mt-0.5">
+            {today}
+          </Text>
+        </View>
 
-        <Text className="text-sm text-[#404941]">{today}</Text>
-
-        <View className="flex-row items-center gap-3 py-5">
-          <Ionicons name="sunny" size={32} color="#FACC15" />
-
+        <View className="flex-row items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2">
+          <Ionicons name="sunny" size={22} color="#D97706" />
           <View>
-            <Text className="text-3xl font-bold text-[#151C25]">
+            <Text className="text-sm font-extrabold text-slate-900">
               {weather.temperatureC}°C
             </Text>
-
-            <Text className="text-xs font-semibold text-[#404941]">
+            <Text className="text-[11px] font-semibold text-slate-600">
               {weather.condition}
             </Text>
           </View>
         </View>
       </View>
-
-      <LinearGradient
-        colors={[
-          "rgba(255,255,255,0)",
-          "rgba(255,255,255,0.8)",
-          "rgba(255,255,255,1)",
-        ]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 100,
-        }}
-      />
-    </ImageBackground>
+    </View>
   );
 }

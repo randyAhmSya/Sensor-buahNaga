@@ -2,7 +2,6 @@ import React, { memo } from "react";
 import { Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ListRowCard } from "@/component/ui/ListRowCard";
-import { TAB_COLORS } from "@/constant/Tabs";
 import type { MonitoringNode } from "@/constant/monitoring";
 
 interface NodeCardProps {
@@ -14,55 +13,83 @@ export const NodeCard = memo(function NodeCard({
   node,
   onPress,
 }: NodeCardProps) {
-  const isProblem = node.status === "problem";
-  const statusColor = isProblem ? "#DC2626" : TAB_COLORS.active;
-  const statusBg = isProblem ? "#DC2626" : "#14532D";
+  const isOnline =
+    node.statusKoneksi === "online" ||
+    node.statusKoneksi === "terhubung" ||
+    node.status === "normal";
+
+  const statusLabel = isOnline ? "Aktif" : "Inactive";
+  const badgeTextColor = isOnline ? "#065F46" : "#9F1239";
+  const badgeBgColor = isOnline ? "#ECFDF5" : "#FFF1F2";
+  const badgeBorderColor = isOnline ? "#A7F3D0" : "#FECDD3";
+  const iconColor = isOnline ? "#059669" : "#E11D48";
+  const iconBgColor = isOnline ? "#ECFDF5" : "#FFF1F2";
 
   return (
     <ListRowCard
       onPress={onPress}
       leading={
         <View
-          className="h-10 w-10 items-center justify-center rounded-xl border-2"
-          style={{ borderColor: statusBg }}
+          className="h-10 w-10 items-center justify-center rounded-xl border border-slate-200"
+          style={{ backgroundColor: iconBgColor }}
         >
           <Ionicons
-            name={isProblem ? "warning" : "wifi"}
-            size={18}
-            color={statusColor}
+            name={isOnline ? "hardware-chip-outline" : "alert-circle-outline"}
+            size={20}
+            color={iconColor}
           />
         </View>
       }
     >
-      <View className="flex-row items-center gap-2">
-        <Text className="text-sm font-semibold text-gray-900">
-          Scan Node: {node.id}
-        </Text>
+      <View className="flex-row items-center justify-between gap-2">
+        <View className="flex-1 mr-2" style={{ flexShrink: 1 }}>
+          <Text
+            className="text-sm font-bold text-slate-900"
+            numberOfLines={1}
+          >
+            {node.code || node.id}
+          </Text>
+        </View>
         <View
-          className="rounded-2xl px-2 py-0.5"
-          style={{ borderColor: statusBg }}
+          className="rounded-full px-2.5 py-0.5 border"
+          style={{
+            backgroundColor: badgeBgColor,
+            borderColor: badgeBorderColor,
+          }}
         >
           <Text
-            className="text-[10px] font-semibold"
-            style={{ color: statusColor }}
+            className="text-[10px] font-bold"
+            style={{ color: badgeTextColor }}
           >
-            {isProblem ? "Bermasalah" : "Normal"}
+            {statusLabel}
           </Text>
         </View>
       </View>
 
-      <Text className="mt-0.5 text-xs text-gray-500">
-        {node.location} • Pukul {node.time} •{" "}
-        <Text
-          style={{
-            color: isProblem ? statusColor : "#6B7280",
-            fontWeight: isProblem ? "700" : "400",
-          }}
-        >
-          Suhu: {node.temperatureC}°C{isProblem ? " (High)" : ""}
-        </Text>
-        {node.lightLux != null && ` • Lux: ${node.lightLux}`}
+      <Text className="mt-0.5 text-xs text-slate-600" numberOfLines={1}>
+        {node.location || "Blok Kebun"}
       </Text>
+
+      <View className="mt-1.5 flex-row items-center gap-3">
+        <View className="flex-row items-center gap-1">
+          <Ionicons name="thermometer-outline" size={12} color="#475569" />
+          <Text className="text-xs font-semibold text-slate-700">
+            {node.temperatureC != null ? `${node.temperatureC}°C` : "-"}
+          </Text>
+        </View>
+
+        <View className="flex-row items-center gap-1">
+          <Ionicons name="sunny-outline" size={12} color="#475569" />
+          <Text className="text-xs font-semibold text-slate-700">
+            {node.lightLux != null ? `${node.lightLux} Lux` : "-"}
+          </Text>
+        </View>
+
+        <View className="flex-row items-center gap-1 ml-auto">
+          <Ionicons name="time-outline" size={11} color="#64748B" />
+          <Text className="text-[11px] font-medium text-slate-600">{node.time}</Text>
+        </View>
+      </View>
     </ListRowCard>
   );
 });

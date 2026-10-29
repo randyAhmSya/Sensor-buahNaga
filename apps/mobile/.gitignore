@@ -8,6 +8,7 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+*.AGENTS.md
 
 # Native
 .kotlin/
@@ -35,7 +36,11 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
-
+.env
+.antigravity
+.agents
+.ai-cache
+docs
 example
 
 # generated native folders

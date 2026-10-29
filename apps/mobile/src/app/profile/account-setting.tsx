@@ -1,22 +1,49 @@
-import React, { useState } from "react";
-
-import { ScrollView, Text, TextInput, View, Pressable } from "react-native";
-
+import React from "react";
+import { ScrollView, Text, TextInput, View, Pressable, ActivityIndicator, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
 import { AccountHeader } from "@/component/profile/AccountHeader";
+import { useAccountSettings } from "@/hooks/useAccountSetting";
+import { AsyncStateView } from "@/component/ui/AsyncStateView";
 
 export default function AccountSetting() {
-  const [name, setName] = useState("Randy");
-  const [phone, setPhone] = useState("+62 812-3456-7890");
-  const [email, setEmail] = useState("randy@student.poliwangi.ac.id");
+  const {
+    state,
+    fullName,
+    setFullName,
+    phone,
+    setPhone,
+    email,
+    setEmail,
+    currentPassword,
+    setCurrentPassword,
+    newPassword,
+    setNewPassword,
+    confirmPassword,
+    setConfirmPassword,
+    isSaving,
+    save,
+  } = useAccountSettings();
 
-  const [oldPassword, setOldPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  if (state.status === "loading") {
+    return <AsyncStateView status="loading" />;
+  }
+
+  const handleSave = async () => {
+    if (newPassword && newPassword !== confirmPassword) {
+      Alert.alert("Validasi", "Konfirmasi kata sandi baru tidak cocok.");
+      return;
+    }
+
+    try {
+      await save();
+      Alert.alert("Sukses", "Perubahan profil berhasil disimpan.");
+    } catch (err) {
+      Alert.alert("Gagal", err instanceof Error ? err.message : "Gagal menyimpan perubahan.");
+    }
+  };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-slate-50">
       <AccountHeader title="Account Settings" />
 
       <ScrollView
@@ -26,16 +53,16 @@ export default function AccountSetting() {
         }}
       >
         <View className="mx-4">
-          <Text className="mb-3 mt-3 font-semibold text-green-800">
+          <Text className="mb-2 mt-4 font-bold text-sm text-slate-900">
             Informasi Profil
           </Text>
 
-          <View className="rounded-2xl bg-white p-4">
+          <View className="rounded-2xl bg-white p-4 border border-slate-200">
             <InputField
               icon="person-outline"
               label="Nama Lengkap"
-              value={name}
-              onChangeText={setName}
+              value={fullName}
+              onChangeText={setFullName}
             />
 
             <InputField
@@ -53,16 +80,16 @@ export default function AccountSetting() {
             />
           </View>
 
-          <Text className="mb-3 mt-5 font-semibold text-green-800">
+          <Text className="mb-2 mt-6 font-bold text-sm text-slate-900">
             Keamanan Akun
           </Text>
 
-          <View className="rounded-2xl bg-white p-4">
+          <View className="rounded-2xl bg-white p-4 border border-slate-200">
             <InputField
               icon="lock-closed-outline"
               label="Kata Sandi Saat Ini"
-              value={oldPassword}
-              onChangeText={setOldPassword}
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
               secure
             />
 
@@ -84,18 +111,19 @@ export default function AccountSetting() {
           </View>
 
           <Pressable
-            className="mt-8 rounded-xl bg-green-800 py-4"
-            onPress={() => {
-              console.log({
-                name,
-                phone,
-                email,
-              });
-            }}
+            disabled={isSaving}
+            className={`mt-6 rounded-xl bg-emerald-700 py-3.5 active:bg-emerald-800 ${
+              isSaving ? "opacity-70" : ""
+            }`}
+            onPress={handleSave}
           >
-            <Text className="text-center font-bold text-white">
-              💾 Simpan Perubahan
-            </Text>
+            {isSaving ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text className="text-center font-bold text-white text-sm">
+                Simpan Perubahan
+              </Text>
+            )}
           </Pressable>
         </View>
       </ScrollView>
@@ -110,29 +138,26 @@ function InputField({
   onChangeText,
   secure = false,
 }: {
-  icon: any;
+  icon: keyof typeof Ionicons.glyphMap;
   label: string;
   value: string;
   onChangeText: (v: string) => void;
   secure?: boolean;
 }) {
   return (
-    <View className="mb-4">
-      <Text className="mb-2 text-sm text-gray-600">{label}</Text>
+    <View className="mb-3.5">
+      <Text className="mb-1.5 text-xs font-semibold text-slate-700">{label}</Text>
 
-      <View className="flex-row items-center rounded-xl border border-gray-200 px-3">
-        <Ionicons name={icon} size={20} color="#9CA3AF" />
+      <View className="flex-row items-center rounded-xl border border-slate-200 bg-slate-50 px-3">
+        <Ionicons name={icon} size={18} color="#64748B" />
 
         <TextInput
-          className="ml-3 flex-1 py-3 text-gray-800"
-
+          className="ml-2.5 flex-1 py-2.5 text-sm text-slate-900"
           value={value}
-
           onChangeText={onChangeText}
-
           secureTextEntry={secure}
-
           placeholder={label}
+          placeholderTextColor="#94A3B8"
         />
       </View>
     </View>

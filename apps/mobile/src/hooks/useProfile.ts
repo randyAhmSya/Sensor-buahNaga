@@ -1,35 +1,49 @@
-import { useCallback, useEffect, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { fetchProfileData, type ProfileData } from "@/service/profileService";
+import { QUERY_KEYS } from "@/constant/queryKeys";
 
-type ProfileState =
+export type ProfileState =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "success"; data: ProfileData };
 
-interface UseProfileReturn {
+export interface UseProfileReturn {
   state: ProfileState;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 }
 
 export function useProfile(): UseProfileReturn {
-  const [state, setState] = useState<ProfileState>({ status: "loading" });
+  const {
+    data,
+    isPending,
+    isError,
+    error,
+    refetch: queryRefetch,
+  } = useQuery<ProfileData, Error>({
+    queryKey: QUERY_KEYS.profile.all,
+    queryFn: fetchProfileData,
+  });
 
-  const load = useCallback(async () => {
-    setState({ status: "loading" });
-    try {
-      const data = await fetchProfileData();
-      setState({ status: "success", data });
-    } catch (err) {
-      setState({
-        status: "error",
-        message: err instanceof Error ? err.message : "Gagal memuat profil",
-      });
+  const state: ProfileState = useMemo(() => {
+    if (isPending) {
+      return { status: "loading" };
     }
-  }, []);
+    if (isError) {
+      return {
+        status: "error",
+        message: error?.message || "Gagal memuat profil",
+      };
+    }
+    if (data) {
+      return { status: "success", data };
+    }
+    return { status: "loading" };
+  }, [isPending, isError, error, data]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const refetch = async (): Promise<void> => {
+    await queryRefetch();
+  };
 
-  return { state, refetch: load };
+  return { state, refetch };
 }

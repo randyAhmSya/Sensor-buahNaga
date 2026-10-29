@@ -1,42 +1,23 @@
+import React from "react";
 import { Stack, useLocalSearchParams } from "expo-router";
-
 import { NodeDetailScreen } from "@/component/detail/monitoring/NodeDetailScreen";
-import { useNodeDetail } from "@/hooks/useNodeDetails";
 
 export default function NodeDetailRoute() {
-  const { id } = useLocalSearchParams<{
-    id: string;
-  }>();
+  const { id } = useLocalSearchParams<{ id?: string }>();
 
-  console.log("PARAM ID:", id);
-
-  const { node } = useNodeDetail(id);
-
-  console.log("NODE DETAIL:", node);
-
-  if (!node) {
-    return (
-      <>
-        <Stack.Screen
-          options={{
-            headerShown: false,
-          }}
-        />
-
-        <NodeDetailScreen nodeId={id} />
-      </>
-    );
-  }
+  // Sanitasi ID agar tidak menerima literal string "undefined", "null", atau whitespace
+  const sanitizedId =
+    typeof id === "string" &&
+    id !== "undefined" &&
+    id !== "null" &&
+    id.trim() !== ""
+      ? id.trim()
+      : undefined;
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerShown: false,
-        }}
-      />
-
-      <NodeDetailScreen nodeId={id} />
+      <Stack.Screen options={{ headerShown: false }} />
+      <NodeDetailScreen nodeId={sanitizedId} />
     </>
   );
 }

@@ -1,28 +1,54 @@
+import apiClient from "./apiClient";
+import { authStorage } from "./authStorage";
 import {
-  MOCK_PROFILE,
   PROFILE_MENU,
   type ProfileMenuItem,
   type UserProfile,
 } from "@/constant/profile";
+import type { BackendKebunDTO, BackendSensorDTO } from "@/types/api";
+import { mapToProfileData } from "./mappers/profileMapper";
 
 export interface ProfileData {
   user: UserProfile;
   menu: ProfileMenuItem[];
 }
 
-const MOCK_DELAY_MS = 500;
-
 /**
- * TODO BACKEND: ganti isi function ini ke HTTP call asli, sama pola kayak
- * fetchDashboardData() di service/dashboardService.ts. Signature & return
- * type JANGAN diubah -- hooks/useProfile.ts dan komponen di component/profile/*
- * gak perlu disentuh selama shape ProfileData tetep sama.
+ * Mengonsumsi data profil user dan ringkasan kebun/node dari API Backend Laravel (AgroLight) via DTO & Mapper.
  */
 export async function fetchProfileData(): Promise<ProfileData> {
-  await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY_MS));
+  const currentUser = authStorage.getUser();
 
-  return {
-    user: MOCK_PROFILE,
-    menu: PROFILE_MENU,
-  };
+  let kebuns: BackendKebunDTO[] = [];
+  let allNodes: BackendSensorDTO[] = [];
+
+  try {
+    const kebunRes = await apiClient.get<{
+      status: string;
+      data: BackendKebunDTO[];
+    }>("/petani/kebun");
+    kebuns = kebunRes.data?.data || [];
+
+    if (kebuns.length > 0) {
+      const nodePromises = kebuns.map((k) =>
+        apiClient
+          .get<{ status: string; data: BackendSensorDTO[] }>("/petani/node", {
+            params: { kebun_id: k.id_kebun },
+          })
+          .then((r) => r.data?.data || [])
+          .catch(() => [] as BackendSensorDTO[]),
+      );
+
+      const nodeResults = await Promise.all(nodePromises);
+      allNodes = nodeResults.flat();
+    }
+  } catch {
+    // Jika belum login atau token belum terpasang, biarkan array kosong
+  }
+
+  return mapToProfileData({
+    currentUser,
+    kebuns,
+    nodes: allNodes,
+  });
 }

@@ -1,23 +1,53 @@
-import React, { useState } from "react";
-import { ScrollView, View } from "react-native";
-import { useDashboard } from "@/hooks/useDashboard";
-import { AsyncStateView } from "@/component/ui/AsyncStateView";
-import { WeatherHero } from "@/component/dashboard/WeatherHero";
-import { StatsCards } from "@/component/dashboard/StatsCards";
-import { QuickActions } from "@/component/dashboard/QuickActions";
-import { ActivityList } from "@/component/dashboard/ActivityList";
-import { ActivityHeaders } from "@/component/dashboard/ActivityHeaders";
-import { ActionNeededList } from "@/component/dashboard/ActionNededList";
-import { HarvestEstimateList } from "@/component/dashboard/HarvestEstimateList";
-import { router } from "expo-router";
+import React, { useState, useCallback } from 'react';
+import { ScrollView, View, RefreshControl } from 'react-native';
+import { router } from 'expo-router';
+import { useDashboard } from '@/hooks/useDashboard';
+import { useUnreadNotificationCount } from '@/hooks/useNotifications';
+import { AsyncStateView } from '@/component/ui/AsyncStateView';
+import { WeatherHero } from '@/component/dashboard/WeatherHero';
+import { StatsCards } from '@/component/dashboard/StatsCards';
+import { BlokLampSummaryCard } from '@/component/dashboard/BlokLampSummaryCard';
+import { QuickActions } from '@/component/dashboard/QuickActions';
+import { ActivityList } from '@/component/dashboard/ActivityList';
+import { ActionNeededList } from '@/component/dashboard/ActionNeededList';
+import { HarvestEstimateList } from '@/component/dashboard/HarvestEstimateList';
 
 export default function DashboardScreen() {
-  const { greetingName, today, state, refetch } = useDashboard();
+  const { userName, greetingName, today, state, refetch } = useDashboard();
+  const { data: unreadCount, refetch: refetchUnreadCount } = useUnreadNotificationCount();
 
-  const [activeSection, setActiveSection] = useState("activity");
+  const [activeSection, setActiveSection] = useState('activity');
+  const [refreshing, setRefreshing] = useState(false);
 
-  if (state.status === "loading") return <AsyncStateView status="loading" />;
-  if (state.status === "error") {
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.allSettled([refetch(), refetchUnreadCount()]);
+    setRefreshing(false);
+  }, [refetch, refetchUnreadCount]);
+
+  const handleActionPress = useCallback((key: string) => {
+    setActiveSection(key);
+  }, []);
+
+  const handleIssuePress = useCallback((id: string) => {
+    console.log('issue:', id);
+  }, []);
+
+  const handleSeeAllHarvest = useCallback(() => {
+    router.push('/harvest/create' as never);
+  }, []);
+
+  const handleHarvestPress = useCallback((id: string) => {
+    router.push({
+      pathname: '/harvest/[id]',
+      params: {
+        id,
+      },
+    });
+  }, []);
+
+  if (state.status === 'loading') return <AsyncStateView status="loading" />;
+  if (state.status === 'error') {
     return (
       <AsyncStateView
         status="error"
@@ -31,70 +61,72 @@ export default function DashboardScreen() {
     weather,
     stats,
     quickActions,
-    activities,
     harvestEstimates,
     actionIssueGroups,
+    blokLampuSummaries,
   } = state.data;
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-slate-50">
       <WeatherHero
-        appName="Randy Ahmad Santoso"
+        appName={userName}
         greetingName={greetingName}
         today={today}
         weather={weather}
+        unreadNotificationCount={unreadCount}
+        onNotificationPress={() => router.push('/notification' as never)}
       />
 
-      <StatsCards stats={stats} />
-
-      <View className="pb-3 px-4">
-        <QuickActions
-          actions={quickActions}
-          activeKey={activeSection}
-          onActionPress={(key) => setActiveSection(key)}
-        />
-      </View>
-
       <ScrollView
-        className="flex-1 px-4"
+        className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingBottom: 100,
-          paddingTop: 10,
+          paddingTop: 8,
         }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
-        {activeSection === "action-needed" && (
-          <ActionNeededList
-            groups={actionIssueGroups}
-            onIssuePress={(id) => console.log("issue:", id)}
-          />
+        {/* Ringkasan status lampu per blok (BlokStatusController) */}
+        {blokLampuSummaries && blokLampuSummaries.length > 0 && (
+          <View className="px-4">
+            <BlokLampSummaryCard summaries={blokLampuSummaries} />
+          </View>
         )}
 
-        {activeSection === "harvest-estimate" && (
-          <HarvestEstimateList
-            items={harvestEstimates}
-            onSeeAllPress={() => console.log("lihat semua panen")}
-            onItemPress={(id) => {
-              console.log("harvest:", id);
+        <StatsCards stats={stats} />
 
-              router.push({
-                pathname: "/harvest/[id]",
-                params: {
-                  id,
-                },
-              });
-            }}
+        <View className="pb-3 px-4 pt-1">
+          <QuickActions
+            actions={quickActions}
+            activeKey={activeSection}
+            onActionPress={handleActionPress}
           />
-        )}
+        </View>
 
-        {activeSection === "activity" && (
-          <>
-            <ActivityList
-              activities={activities}
-              onItemPress={(id) => console.log("activity:", id)}
+        <View className="px-4">
+          {activeSection === 'action-needed' && (
+            <ActionNeededList
+              groups={actionIssueGroups}
+              onIssuePress={handleIssuePress}
             />
-          </>
-        )}
+          )}
+
+          {activeSection === 'harvest-estimate' && (
+            <HarvestEstimateList
+              items={harvestEstimates}
+              onSeeAllPress={handleSeeAllHarvest}
+              onItemPress={handleHarvestPress}
+            />
+          )}
+
+          {activeSection === 'activity' && (
+            <ActivityList
+              onSeeAllPress={() => router.push('/activity')}
+            />
+          )}
+        </View>
       </ScrollView>
     </View>
   );
