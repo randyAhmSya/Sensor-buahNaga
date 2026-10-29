@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   fetchAccountProfile,
   updateAccountProfile,
-} from "@/service/AccountSettingService";
+} from "@/service/accountSettingService";
 
 type AccountSettingsState =
   | { status: "loading" }

@@ -1,12 +1,15 @@
 export type NodeStatus = "normal" | "problem";
 
 export type MonitoringNode = {
-  id: string; // "G1-N3-B2"
-  location: string; // "Garden North"
+  id: string; // id_sensor (UUID) atau identifier rute
+  code: string; // kode_perangkat (misal: "NODE-01" atau "QR-NODE-2BLOEF")
+  name?: string;
+  location: string; // "Kebun Banyuwangi - Blok A"
   time: string; // "10:30 WIB"
-  temperatureC: number;
-  lightLux?: number; // node bermasalah kadang gak ada data lux, makanya opsional
+  temperatureC?: number;
+  lightLux?: number;
   status: NodeStatus;
+  statusKoneksi: string; // "online" | "offline" | "terhubung" | "terputus"
 };
 
 export type MonitoringGroup = {
@@ -21,42 +24,7 @@ export type FilterOption = {
 
 export const FILTER_OPTIONS: FilterOption[] = [
   { key: "all", label: "Semua" },
-  { key: "today", label: "Hari Ini" },
-  { key: "by-date", label: "Berdasarkan Tanggal" },
+  { key: "active", label: "Aktif" },
+  { key: "inactive", label: "Inactive" },
 ];
 
-export const MOCK_MONITORING_GROUPS: MonitoringGroup[] = [
-  {
-    dateLabel: "Hari Ini, 28 Juli 2026",
-    nodes: [
-      {
-        id: "G1-N3-B2",
-        location: "Garden North",
-        time: "10:30 WIB",
-        temperatureC: 28,
-        lightLux: 450,
-        status: "normal",
-      },
-      {
-        id: "G2-N1-B5",
-        location: "Garden South",
-        time: "08:15 WIB",
-        temperatureC: 36,
-        status: "problem",
-      },
-    ],
-  },
-  {
-    dateLabel: "Kemarin, 27 Juli 2026",
-    nodes: [
-      {
-        id: "G1-N2-B1",
-        location: "Garden North",
-        time: "16:45 WIB",
-        temperatureC: 29,
-        lightLux: 420,
-        status: "normal",
-      },
-    ],
-  },
-];

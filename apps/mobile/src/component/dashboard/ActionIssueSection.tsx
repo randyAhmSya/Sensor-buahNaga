@@ -1,7 +1,7 @@
-import React from "react";
+import React, { memo, useCallback } from "react";
 import { View } from "react-native";
 import { GroupedSection } from "@/component/ui/GroupedSection";
-import type { ActionIssueGroup } from "@/constant/dashboard";
+import type { ActionIssue, ActionIssueGroup } from "@/constant/dashboard";
 import { ActionIssueCard } from "./ActionIssueCard";
 
 interface ActionIssueSectionProps {
@@ -9,7 +9,7 @@ interface ActionIssueSectionProps {
   onIssuePress?: (id: string) => void;
 }
 
-export function ActionIssueSection({
+export const ActionIssueSection = memo(function ActionIssueSection({
   group,
   onIssuePress,
 }: ActionIssueSectionProps) {
@@ -17,13 +17,29 @@ export function ActionIssueSection({
     <View className="mt-4">
       <GroupedSection label={group.category} uppercase>
         {group.issues.map((issue) => (
-          <ActionIssueCard
+          <ActionIssueSectionItem
             key={issue.id}
             issue={issue}
-            onPress={() => onIssuePress?.(issue.id)}
+            onIssuePress={onIssuePress}
           />
         ))}
       </GroupedSection>
     </View>
   );
+});
+
+interface ActionIssueSectionItemProps {
+  issue: ActionIssue;
+  onIssuePress?: (id: string) => void;
 }
+
+const ActionIssueSectionItem = memo(function ActionIssueSectionItem({
+  issue,
+  onIssuePress,
+}: ActionIssueSectionItemProps) {
+  const handlePress = useCallback(() => {
+    onIssuePress?.(issue.id);
+  }, [issue.id, onIssuePress]);
+
+  return <ActionIssueCard issue={issue} onPress={handlePress} />;
+});

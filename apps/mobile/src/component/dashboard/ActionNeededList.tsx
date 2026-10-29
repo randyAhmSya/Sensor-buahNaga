@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { View } from "react-native";
 import type { ActionIssueGroup } from "@/constant/dashboard";
 import { ActionIssueSection } from "./ActionIssueSection";
@@ -11,7 +11,7 @@ interface ActionNeededListProps {
 // Beda dari HarvestEstimateList/ActivityList: sengaja gak ada "Lihat Semua"
 // di sini, karena semua kategori masalah emang selalu ditampilin sekaligus
 // (bukan daftar panjang yang perlu di-preview-cut kayak 2 section lainnya).
-export function ActionNeededList({
+export const ActionNeededList = memo(function ActionNeededList({
   groups,
   onIssuePress,
 }: ActionNeededListProps) {
@@ -26,4 +26,4 @@ export function ActionNeededList({
       ))}
     </View>
   );
-}
+});

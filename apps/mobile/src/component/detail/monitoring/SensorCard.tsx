@@ -1,7 +1,6 @@
 import React from "react";
 import { Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
 import { Card } from "@/component/ui/Card";
 
 interface Props {
@@ -11,15 +10,17 @@ interface Props {
   iconColor?: string;
 }
 
-export function SensorCard({ icon, label, value, iconColor }: Props) {
+export function SensorCard({ icon, label, value, iconColor = "#059669" }: Props) {
   return (
-    <Card className="flex-1 p-4">
-      <View className=" items-center flex-row gap-2">
-        <Ionicons name={icon} size={28} color={iconColor} />
-        <Text className=" text-xs text-gray-500">{label}</Text>
+    <Card className="flex-1 p-4 border border-slate-200">
+      <View className="items-center flex-row gap-2">
+        <View className="h-8 w-8 items-center justify-center rounded-lg bg-slate-50 border border-slate-200">
+          <Ionicons name={icon} size={18} color={iconColor} />
+        </View>
+        <Text className="text-xs font-semibold text-slate-600">{label}</Text>
       </View>
 
-      <Text className="mt-1 text-xl font-bold text-gray-900">{value}</Text>
+      <Text className="mt-2 text-xl font-extrabold text-slate-900">{value}</Text>
     </Card>
   );
 }

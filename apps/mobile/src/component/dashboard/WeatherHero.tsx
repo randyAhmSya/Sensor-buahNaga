@@ -1,7 +1,7 @@
-import React from "react";
-import { DashboardHeader } from "./DashboardHeader";
-import { WeatherHeroContent } from "./WeatherHeroContent";
-import type { WeatherInfo } from "@/constant/dashboard";
+import React from 'react';
+import { DashboardHeader } from './DashboardHeader';
+import { WeatherHeroContent } from './WeatherHeroContent';
+import type { WeatherInfo } from '@/constant/dashboard';
 
 interface WeatherHeroProps {
   appName: string;
@@ -9,6 +9,7 @@ interface WeatherHeroProps {
   today: string;
   weather: WeatherInfo;
   onNotificationPress?: () => void;
+  unreadNotificationCount?: number;
 }
 
 export function WeatherHero({
@@ -17,6 +18,7 @@ export function WeatherHero({
   today,
   weather,
   onNotificationPress,
+  unreadNotificationCount = 0,
 }: WeatherHeroProps) {
   return (
     <WeatherHeroContent
@@ -26,8 +28,9 @@ export function WeatherHero({
     >
       <DashboardHeader
         appName={appName}
-        tone="light"
         onNotificationPress={onNotificationPress}
+        unreadCount={unreadNotificationCount}
+        tone="light"
       />
     </WeatherHeroContent>
   );
