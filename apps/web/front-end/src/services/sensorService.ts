@@ -28,7 +28,7 @@ export const mapNodeToSensorItem = (node: NodeSensorBackend, fallbackFarmName?: 
     temperature: 28.5,
     lastSeen: node.terakhir_terlihat
       ? new Date(node.terakhir_terlihat).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-      : 'Baru saja',
+      : 'Belum ada data',
     sparklineData: isOnline ? [85, 90, 110, 115, 120, 118, 120] : [0, 0, 0, 0, 0, 0, 0],
     qrCode: node.qr?.teks_kode_qr || (node as unknown as { kode_qr?: { kode_qr?: string } })?.kode_qr?.kode_qr || '',
   };

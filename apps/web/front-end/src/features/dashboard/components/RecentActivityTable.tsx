@@ -10,9 +10,10 @@ interface RecentActivityTableRowProps {
 
 const RecentActivityTableRow = memo<RecentActivityTableRowProps>(({ item }) => {
   const getVariant = () => {
-    if (item.status === 'Optimal') return 'optimal'
+    if (item.status === 'Optimal' || item.status === 'Online') return 'optimal'
     if (item.status === 'Low Light') return 'warning'
-    return 'danger'
+    if (item.status === 'Offline') return 'danger'
+    return 'standby'
   }
 
   return (

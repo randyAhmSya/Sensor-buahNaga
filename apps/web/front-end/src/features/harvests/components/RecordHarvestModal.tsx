@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { X, CheckCircle2, Info } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatDate } from '@/utils/formatters';
 import { harvestService } from '@/services/harvestService';
+import { harvestKeys, blockKeys } from '@/services/queryKeys';
 import type { HarvestCycle } from '../types/harvest.types';
 
 interface RecordHarvestModalProps {
@@ -18,6 +20,7 @@ export const RecordHarvestModal: React.FC<RecordHarvestModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const queryClient = useQueryClient();
   const [harvestDate, setHarvestDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -50,6 +53,12 @@ export const RecordHarvestModal: React.FC<RecordHarvestModalProps> = ({
       const updated = await harvestService.recordHarvest(cycle.id_siklus_panen, {
         tanggal_panen: harvestDate,
       });
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: harvestKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: blockKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+      ]);
 
       const enriched: HarvestCycle = {
         ...updated,

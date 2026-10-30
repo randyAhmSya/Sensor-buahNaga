@@ -4,6 +4,7 @@ import type {
   AdminDashboardSummary,
   AdminTenantItem,
   AdminTransactionItem,
+  TransactionStatus,
   AdminAuditLogItem,
   PaginatedListResult,
   AdminUserItem,
@@ -131,15 +132,61 @@ export const adminService = {
     status = 'menunggu_verifikasi',
     page = 1
   ): Promise<PaginatedListResult<AdminTransactionItem>> {
-    const res = await apiClient.get<AdminApiResponse<AdminTransactionItem[]>>('/admin/langganan/transaksi', {
-      params: { status, page },
+    const apiStatus = status === 'diverifikasi' ? 'berhasil' : status;
+    const res = await apiClient.get<AdminApiResponse<unknown[]>>('/admin/langganan/transaksi', {
+      params: { status: apiStatus, page },
     });
+
+    const rawList = Array.isArray(res.data) ? res.data : [];
+    const data: AdminTransactionItem[] = rawList.map((item) => {
+      const raw = item as Record<string, unknown>;
+      const rawTenant = (raw.tenant && typeof raw.tenant === 'object'
+        ? raw.tenant
+        : {}) as Record<string, unknown>;
+
+      const id = String(raw.id_transaksi ?? raw.id_transaksi_langganan ?? raw.id ?? '');
+      const namaTenant = String(
+        rawTenant.nama_tenant ??
+        rawTenant.nama ??
+        raw.nama_tenant ??
+        'Tanpa Nama Tenant'
+      );
+      const statusPembayaran = (
+        raw.status_pembayaran ??
+        raw.status ??
+        'menunggu_verifikasi'
+      ) as TransactionStatus;
+      const tanggalPengajuan = String(raw.created_at ?? raw.tanggal_pengajuan ?? '');
+
+      return {
+        id,
+        id_transaksi: id,
+        nama_tenant: namaTenant,
+        nama_paket: String(raw.nama_paket ?? raw.nama_paket_snapshot ?? raw.paket_langganan ?? '-'),
+        tambahan_hari: Number(raw.tambahan_hari ?? 0),
+        harga: Number(raw.harga ?? 0),
+        metode_pembayaran: String(raw.metode_pembayaran ?? 'Transfer Bank'),
+        tanggal_pengajuan: tanggalPengajuan,
+        created_at: String(raw.created_at ?? tanggalPengajuan),
+        status: statusPembayaran,
+        status_pembayaran: statusPembayaran,
+        alasan_penolakan: raw.alasan_penolakan ? String(raw.alasan_penolakan) : null,
+        bukti_transfer_url: raw.bukti_transfer_url ? String(raw.bukti_transfer_url) : undefined,
+        tenant: {
+          tenant_id: rawTenant.tenant_id as string | number | undefined,
+          nama_tenant: namaTenant,
+          nama: rawTenant.nama as string | undefined,
+          email: rawTenant.email as string | undefined,
+        },
+      };
+    });
+
     return {
-      data: res.data || [],
+      data,
       meta: res.meta || {
         current_page: page,
         per_page: 15,
-        total: (res.data || []).length,
+        total: data.length,
         last_page: 1,
       },
     };
@@ -168,6 +215,10 @@ export const adminService = {
    * Mengunduh blob bukti transfer dengan Bearer token dan mengonversi ke Object URL
    */
   async getTransactionProofBlobUrl(id: string | number): Promise<string> {
+    if (!id || id === 'undefined' || id === 'null') {
+      throw new Error('ID transaksi tidak valid untuk memuat bukti transfer.');
+    }
+
     const baseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
       ? import.meta.env.VITE_API_BASE_URL
       : 'http://localhost:8000/api';

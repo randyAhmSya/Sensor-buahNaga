@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/Button'
 import { InputField } from '@/components/form/InputField'
 import { gatewayService } from '@/services/gatewayService'
 import { nodeService } from '@/services/nodeService'
-import { farmService } from '@/services/farmService'
 import type { GatewayBackend } from '@/types/gateway.types'
 import type { SensorNodeItem, SensorStatus } from '@/types/sensor.types'
 import { containsMaliciousScript, XSS_ERROR_MESSAGE } from '@/utils/sanitize'
@@ -93,28 +92,6 @@ const EditSensorFormContent: FC<EditSensorFormContentProps> = ({
                 break
               }
             }
-          }
-        }
-
-        if (!resolvedFarmId) {
-          try {
-            const allFarms = await farmService.getAll()
-            for (const f of allFarms || []) {
-              const farmId = (f as unknown as { id_kebun?: string }).id_kebun ?? f.id
-              const matched = (f.blocks || []).find((b) => {
-                const bId = (b as unknown as { id_blok?: string }).id_blok ?? b.id
-                return String(bId) === String(targetBlockId)
-              })
-              if (matched) {
-                resolvedFarmId =
-                  (matched as unknown as { kebun_id?: string; farmId?: string }).kebun_id ??
-                  (matched as unknown as { kebun_id?: string; farmId?: string }).farmId ??
-                  farmId
-                break
-              }
-            }
-          } catch {
-            // fallback ignore error
           }
         }
 

@@ -73,12 +73,18 @@ export const BlockTelemetryPreviewModal: React.FC<BlockTelemetryPreviewModalProp
             className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border ${
               block.status === 'Online'
                 ? 'bg-white border-emerald-500 text-emerald-700'
+                : block.status === 'Offline'
+                ? 'bg-white border-rose-300 text-rose-700'
                 : 'bg-white border-slate-300 text-slate-600'
             }`}
           >
             <span
               className={`w-2 h-2 rounded-full ${
-                block.status === 'Online' ? 'bg-emerald-500' : 'bg-slate-400'
+                block.status === 'Online'
+                  ? 'bg-emerald-500'
+                  : block.status === 'Offline'
+                  ? 'bg-rose-500'
+                  : 'bg-slate-400'
               }`}
             />
             Status: {block.status}

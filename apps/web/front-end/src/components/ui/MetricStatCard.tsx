@@ -25,39 +25,39 @@ export interface MetricStatCardProps {
 
 const COLOR_VARIANTS: Record<string, { border: string; bg: string; iconBg: string; iconColor: string }> = {
   default: {
-    border: 'border-slate-200/90',
+    border: 'border-slate-200',
     bg: 'bg-white',
     iconBg: 'bg-slate-100',
-    iconColor: 'text-slate-700',
+    iconColor: 'text-slate-600',
   },
   emerald: {
-    border: 'border-emerald-200/90',
-    bg: 'bg-emerald-50/30',
-    iconBg: 'bg-emerald-100/80',
+    border: 'border-slate-200',
+    bg: 'bg-white',
+    iconBg: 'bg-slate-100',
     iconColor: 'text-emerald-700',
   },
   amber: {
-    border: 'border-amber-200/90',
-    bg: 'bg-amber-50/30',
-    iconBg: 'bg-amber-100/80',
-    iconColor: 'text-amber-700',
+    border: 'border-slate-200',
+    bg: 'bg-white',
+    iconBg: 'bg-slate-100',
+    iconColor: 'text-slate-600',
   },
   rose: {
-    border: 'border-rose-200/90',
-    bg: 'bg-rose-50/30',
-    iconBg: 'bg-rose-100/80',
-    iconColor: 'text-rose-700',
+    border: 'border-slate-200',
+    bg: 'bg-white',
+    iconBg: 'bg-slate-100',
+    iconColor: 'text-slate-600',
   },
   blue: {
-    border: 'border-sky-200/90',
-    bg: 'bg-sky-50/30',
-    iconBg: 'bg-sky-100/80',
-    iconColor: 'text-sky-700',
+    border: 'border-slate-200',
+    bg: 'bg-white',
+    iconBg: 'bg-slate-100',
+    iconColor: 'text-slate-600',
   },
 }
 
 const BADGE_VARIANTS: Record<string, string> = {
-  emerald: 'bg-emerald-50 text-emerald-800 border-emerald-300',
+  emerald: 'bg-white text-emerald-800 border-2 border-emerald-600 font-bold',
   amber: 'bg-amber-50 text-amber-800 border-amber-300',
   rose: 'bg-rose-50 text-rose-800 border-rose-300',
   slate: 'bg-slate-100 text-slate-700 border-slate-300',
@@ -86,9 +86,8 @@ export const MetricStatCard: FC<MetricStatCardProps> = ({
       tabIndex={isClickable ? 0 : undefined}
       onKeyDown={isClickable ? (e) => (e.key === 'Enter' || e.key === ' ') && onClick?.() : undefined}
       className={`
-        relative rounded-2xl border p-4 sm:p-5 shadow-2xs transition-all duration-150
-        ${variant.bg} ${variant.border}
-        ${isClickable ? 'cursor-pointer hover:shadow-md hover:border-slate-300 active:scale-[0.99]' : ''}
+        relative rounded-xl border p-5 shadow-2xs transition-all duration-150 ${variant.bg} ${variant.border}
+        ${isClickable ? 'cursor-pointer hover:shadow-xs hover:border-slate-300 active:scale-[0.99]' : ''}
         ${className}
       `}
     >

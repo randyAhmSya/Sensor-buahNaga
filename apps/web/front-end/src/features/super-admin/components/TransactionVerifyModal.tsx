@@ -1,5 +1,5 @@
-import { type FC } from 'react'
-import { CheckCircle2, Loader2 } from 'lucide-react'
+import { useState, type FC } from 'react'
+import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useVerifyTransaction } from '@/hooks/useAdmin'
@@ -21,28 +21,58 @@ export const TransactionVerifyModal: FC<TransactionVerifyModalProps> = ({
   packageName,
   onSuccess,
 }) => {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const { mutate, isPending } = useVerifyTransaction()
 
   const handleConfirm = () => {
+    setErrorMessage(null)
     mutate(
       { id: transactionId },
       {
         onSuccess: () => {
+          setErrorMessage(null)
           onSuccess(`Transaksi #${transactionId} untuk paket ${packageName} (${tenantName}) berhasil diverifikasi.`)
           onClose()
+        },
+        onError: (err: unknown) => {
+          const apiError = err as {
+            response?: { status?: number; data?: { pesan?: string } }
+            message?: string
+          }
+          if (apiError.response?.status === 409) {
+            setErrorMessage(apiError.response.data?.pesan || 'Konflik status: Transaksi ini telah diproses sebelumnya.')
+          } else {
+            setErrorMessage(apiError.response?.data?.pesan || apiError.message || 'Gagal memverifikasi transaksi langganan.')
+          }
         },
       }
     )
   }
 
+  const handleClose = () => {
+    if (isPending) return
+    setErrorMessage(null)
+    onClose()
+  }
+
   return (
     <Modal
       isOpen={isOpen}
-      onClose={() => !isPending && onClose()}
+      onClose={handleClose}
       title="Verifikasi Transaksi Pembayaran"
       maxWidth="md"
     >
       <div className="space-y-4">
+        {errorMessage && (
+          <div className="p-3.5 rounded-xl border bg-rose-50 border-rose-200 text-rose-950 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            <div className="text-xs leading-relaxed">
+              <p className="font-semibold text-rose-900">Gagal Memverifikasi Transaksi</p>
+              <p className="text-rose-700 mt-0.5">{errorMessage}</p>
+            </div>
+          </div>
+        )}
+
         <div className="p-3.5 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-950 flex items-start gap-3">
           <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
           <div className="text-xs leading-relaxed space-y-1">
@@ -61,7 +91,7 @@ export const TransactionVerifyModal: FC<TransactionVerifyModalProps> = ({
             type="button"
             variant="outline"
             size="sm"
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isPending}
           >
             Batal

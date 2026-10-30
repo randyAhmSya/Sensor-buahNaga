@@ -14,9 +14,9 @@ import {
 } from 'lucide-react'
 import { useAdminTransactions } from '@/hooks/useAdmin'
 import type { TransactionStatus } from '@/types/admin.types'
-import { formatRupiah, formatDate } from '@/utils/formatters'
+import { formatRupiah, formatIndoDate } from '@/utils/formatters'
 import { Button } from '@/components/ui/Button'
-import { Toast, type ToastType } from '@/components/feedback/Toast'
+import { useNotify } from '@/context/NotificationContext'
 import { DebouncedSearchInput } from '@/components/common/DebouncedSearchInput'
 import { TransactionProofModal } from '../components/TransactionProofModal'
 import { TransactionVerifyModal } from '../components/TransactionVerifyModal'
@@ -29,22 +29,10 @@ const STATUS_TABS: { key: TransactionStatus; label: string }[] = [
 ]
 
 export const SubscriptionsPage: FC = () => {
+  const notify = useNotify()
   const [selectedStatus, setSelectedStatus] = useState<TransactionStatus>('menunggu_verifikasi')
   const [currentPage, setCurrentPage] = useState(1)
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
-
-  // Toast State
-  const [toastState, setToastState] = useState<{
-    isVisible: boolean
-    type: ToastType
-    title: string
-    message: string
-  }>({
-    isVisible: false,
-    type: 'success',
-    title: '',
-    message: '',
-  })
 
   // Modal States
   const [proofModal, setProofModal] = useState<{
@@ -84,13 +72,8 @@ export const SubscriptionsPage: FC = () => {
     currentPage
   )
 
-  const showToast = (title: string, message: string, type: ToastType = 'success') => {
-    setToastState({
-      isVisible: true,
-      type,
-      title,
-      message,
-    })
+  const showToast = (title: string, message: string, type: 'success' | 'warning' | 'error' | 'info' = 'success') => {
+    notify[type](title, message)
   }
 
   const meta = data?.meta || {
@@ -119,19 +102,6 @@ export const SubscriptionsPage: FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Toast Notification */}
-      {toastState.isVisible && (
-        <div className="fixed top-5 right-5 z-50">
-          <Toast
-            type={toastState.type}
-            title={toastState.title}
-            message={toastState.message}
-            isVisible={toastState.isVisible}
-            onClose={() => setToastState((prev) => ({ ...prev, isVisible: false }))}
-          />
-        </div>
-      )}
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -268,6 +238,9 @@ export const SubscriptionsPage: FC = () => {
                 ) : (
                   filteredTransactions.map((tx) => {
                     const isPendingAction = tx.status === 'menunggu_verifikasi'
+                    const isSuccess = tx.status === 'berhasil' || tx.status === 'diverifikasi'
+                    const isRejected = tx.status === 'ditolak'
+                    const isWaitingPayment = tx.status === 'menunggu_pembayaran'
 
                     return (
                       <tr key={tx.id} className="hover:bg-slate-50/70 transition-colors">
@@ -310,7 +283,7 @@ export const SubscriptionsPage: FC = () => {
                         <td className="py-3.5 px-4 whitespace-nowrap text-slate-500 text-[11px]">
                           <span className="inline-flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                            {formatDate(tx.tanggal_pengajuan)}
+                            {formatIndoDate(tx.created_at || tx.tanggal_pengajuan)}
                           </span>
                         </td>
 
@@ -373,15 +346,33 @@ export const SubscriptionsPage: FC = () => {
                                 <span>Tolak</span>
                               </Button>
                             </div>
-                          ) : tx.status === 'berhasil' ? (
+                          ) : isSuccess ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               Diverifikasi
                             </span>
+                          ) : isRejected ? (
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                <XCircle className="w-3.5 h-3.5" />
+                                Ditolak
+                              </span>
+                              {tx.alasan_penolakan && (
+                                <span
+                                  className="text-[11px] text-slate-500 italic max-w-[200px] truncate text-right"
+                                  title={tx.alasan_penolakan}
+                                >
+                                  Alasan: {tx.alasan_penolakan}
+                                </span>
+                              )}
+                            </div>
+                          ) : isWaitingPayment ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                              Menunggu Pembayaran
+                            </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                              <XCircle className="w-3.5 h-3.5" />
-                              Ditolak
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                              {tx.status}
                             </span>
                           )}
                         </td>

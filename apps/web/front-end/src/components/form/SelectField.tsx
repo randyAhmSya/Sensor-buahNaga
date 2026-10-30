@@ -46,10 +46,10 @@ export function SelectField({
       {label && (
         <label
           htmlFor={selectId}
-          className="block text-sm font-semibold text-slate-800 dark:text-slate-200"
+          className="block text-sm font-semibold text-slate-800 mb-1.5"
         >
           {label}
-          {rest.required && <span className="ml-1 text-rose-600 font-bold">*</span>}
+          {rest.required && <span className="ml-1 text-red-500 font-bold">*</span>}
         </label>
       )}
 

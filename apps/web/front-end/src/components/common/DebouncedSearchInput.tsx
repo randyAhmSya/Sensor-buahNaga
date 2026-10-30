@@ -4,7 +4,7 @@ import { Search, X } from 'lucide-react'
 export interface DebouncedSearchInputProps {
   value?: string
   onDebouncedChange: (debouncedValue: string) => void
-  delay?: number // default: 1000 (1 detik)
+  delay?: number // default: 350ms
   placeholder?: string
   className?: string
   ariaLabel?: string
@@ -14,7 +14,7 @@ export interface DebouncedSearchInputProps {
 export const DebouncedSearchInput: FC<DebouncedSearchInputProps> = ({
   value,
   onDebouncedChange,
-  delay = 1000,
+  delay = 350,
   placeholder = 'Cari...',
   className = '',
   ariaLabel,

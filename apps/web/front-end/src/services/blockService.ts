@@ -1,6 +1,13 @@
 import { apiClient } from './api';
 import type { ApiResponse } from '@/types/api.types';
-import type { BlokBackend, BlockItem, BlockDetailFull, SensorLogItem, BlokStatusLampuResponse } from '@/types/block.types';
+import type {
+  BlokBackend,
+  BlockItem,
+  BlockDetailFull,
+  SensorLogItem,
+  BlokStatusLampuResponse,
+  BlockStatus,
+} from '@/types/block.types';
 import { nodeService } from './nodeService';
 import { harvestService } from './harvestService';
 import { gatewayService } from './gatewayService';
@@ -9,12 +16,14 @@ import { fetchTelemetri, type ReadSensor } from './telemetryService';
 import { fetchLogEnergy, type EnergyLogResponse } from './energyService';
 import type { NodeSensorBackend } from '@/types/node.types';
 
+export type { BlokStatusLampuResponse, BlokStatusLampuNode } from '@/types/block.types';
+
 export interface CreateBlockPayload {
   name: string;
   nodeSensor?: string;
   description: string;
   imageUrl?: string;
-  status: 'Online' | 'Offline';
+  status: BlockStatus;
   area?: string;
   harvestEstimate?: string;
   foto?: File;
@@ -33,11 +42,9 @@ const resolveImageUrl = (url: string | null | undefined): string => {
   return `${apiBase}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
-import { getEntityId } from '@/utils/normalize';
-
 export const mapBlokToBlockItem = (blok: BlokBackend): BlockItem => {
   const photoUrl = resolveImageUrl(blok.url_foto);
-  const blokId = getEntityId(blok);
+  const blokId = String(blok.id_blok || blok.id || '').trim();
   const rawEstimate = blok.estimasi_panen || blok.harvest_date || '';
   const cleanEstimate =
     typeof rawEstimate === 'string' &&
@@ -47,9 +54,16 @@ export const mapBlokToBlockItem = (blok: BlokBackend): BlockItem => {
       ? rawEstimate.trim()
       : '';
 
+  const hasNode = Boolean(blok.node_sensor);
+  const statusKoneksi = (blok.node_sensor?.status_koneksi || '').toLowerCase();
   const isOnline =
-    blok.node_sensor?.status_koneksi?.toLowerCase() === 'aktif' ||
-    blok.node_sensor?.status_koneksi?.toLowerCase() === 'online';
+    hasNode &&
+    (statusKoneksi === 'aktif' || statusKoneksi === 'online' || statusKoneksi === 'terhubung');
+
+  let status: BlockStatus = 'Belum Terpasang';
+  if (hasNode) {
+    status = isOnline ? 'Online' : 'Offline';
+  }
 
   return {
     id: blokId,
@@ -57,7 +71,7 @@ export const mapBlokToBlockItem = (blok: BlokBackend): BlockItem => {
     description: blok.keterangan || 'Blok produktif tanaman buah naga',
     area: blok.luas_area ? `${blok.luas_area} m²` : '500 m²',
     nodeSensor: blok.node_sensor ? blok.node_sensor.kode_perangkat : 'Belum Terpasang',
-    status: isOnline ? 'Online' : 'Offline',
+    status,
     imageUrl: photoUrl,
     harvestEstimate: cleanEstimate || 'Belum Dijadwalkan',
   };
@@ -161,12 +175,58 @@ export const blockService = {
       return [];
     }
     try {
-      const rawBlocks = await blockService.getAll(farmId.trim());
-      if (rawBlocks.length > 0) {
-        const filtered = rawBlocks.filter((b) => isBlokBelongsToFarm(b, farmId.trim()));
-        const matched = filtered.length > 0 ? filtered : rawBlocks;
-        return matched.map(mapBlokToBlockItem);
+      const cleanFarmId = farmId.trim();
+      const rawBlocks = await blockService.getAll(cleanFarmId);
+
+      if (!rawBlocks || rawBlocks.length === 0) {
+        return [];
       }
+
+      const filtered = rawBlocks.filter((b) => isBlokBelongsToFarm(b, cleanFarmId));
+      const matched = filtered.length > 0 ? filtered : rawBlocks;
+
+      let nodes: NodeSensorBackend[] = [];
+      try {
+        const resNodes = await nodeService.getAll(cleanFarmId);
+        if (Array.isArray(resNodes)) {
+          nodes = resNodes;
+        }
+      } catch {
+        nodes = [];
+      }
+
+      const blocksWithSensors: BlokBackend[] = matched.map((blok) => {
+        const targetBlokId = String(blok.id_blok || blok.id || '').trim();
+        const matchedNode = nodes.find((n) => {
+          if (!n) return false;
+          const nodeBlokId = String(n.blok_id || n.blok?.id_blok || n.blok?.id || '').trim();
+          return targetBlokId !== '' && nodeBlokId === targetBlokId;
+        });
+
+        if (matchedNode) {
+          const rawNode = matchedNode as unknown as Record<string, unknown>;
+          const sensorId = String(
+            rawNode.id_sensor ||
+            rawNode.id ||
+            rawNode.id_node ||
+            ''
+          ).trim();
+
+          return {
+            ...blok,
+            node_sensor: {
+              id_sensor: sensorId,
+              id: sensorId || undefined,
+              kode_perangkat: matchedNode.kode_perangkat,
+              status_koneksi: matchedNode.status_koneksi,
+              terakhir_terlihat: matchedNode.terakhir_terlihat ?? undefined,
+            },
+          };
+        }
+        return blok;
+      });
+
+      return blocksWithSensors.map(mapBlokToBlockItem);
     } catch {
       // Tidak ada fallback mock data
     }
@@ -239,7 +299,14 @@ export const blockService = {
       // 1. Ambil daftar node sensor dari kebun terkait via GET /api/petani/node?kebun_id=${kebunId}
       let nodes: NodeSensorBackend[] = [];
       if (targetFarmId) {
-        nodes = await nodeService.getAll(targetFarmId).catch(() => []);
+        try {
+          const resNodes = await nodeService.getAll(targetFarmId);
+          if (Array.isArray(resNodes)) {
+            nodes = resNodes;
+          }
+        } catch {
+          nodes = [];
+        }
       }
       // Fallback periksa semua kebun jika node belum ditemukan
       if (nodes.length === 0) {
@@ -254,27 +321,35 @@ export const blockService = {
           for (const k of kebunList) {
             const kId = String(k.id_kebun || k.id || '');
             if (kId && kId !== targetFarmId) {
-              const farmNodes = await nodeService.getAll(kId).catch(() => []);
-              nodes.push(...farmNodes);
+              try {
+                const farmNodes = await nodeService.getAll(kId);
+                if (Array.isArray(farmNodes)) {
+                  nodes.push(...farmNodes);
+                }
+              } catch {
+                // abaikan error kebun lain
+              }
             }
           }
         } catch {
-          // ignore
+          // abaikan error
         }
       }
 
       // 2. Cari apakah ada node yang terpasang pada blok ini:
-      const activeNode = nodes.find((n) => {
-        const raw = n as unknown as Record<string, unknown>;
-        const bId = cleanBlockId;
-        return (
-          (n.blok_id && String(n.blok_id).trim() === bId) ||
-          (raw.id_blok && String(raw.id_blok).trim() === bId) ||
-          (raw.block_id && String(raw.block_id).trim() === bId) ||
-          (n.blok?.id_blok && String(n.blok.id_blok).trim() === bId) ||
-          (n.blok?.id && String(n.blok.id).trim() === bId)
-        );
-      });
+      const activeNode = Array.isArray(nodes)
+        ? nodes.find((n) => {
+            const raw = n as unknown as Record<string, unknown>;
+            const bId = cleanBlockId;
+            return (
+              (n.blok_id && String(n.blok_id).trim() === bId) ||
+              (raw.id_blok && String(raw.id_blok).trim() === bId) ||
+              (raw.block_id && String(raw.block_id).trim() === bId) ||
+              (n.blok?.id_blok && String(n.blok.id_blok).trim() === bId) ||
+              (n.blok?.id && String(n.blok.id).trim() === bId)
+            );
+          })
+        : undefined;
 
       const deviceId =
         activeNode?.kode_perangkat ||
@@ -328,17 +403,17 @@ export const blockService = {
         : cycles.length > 0
         ? 'Selesai'
         : 'Belum Dimulai';
-      const lightingStart = activeCycle?.tanggal_penyinaran || '--';
+      const lightingStart = activeCycle?.tanggal_penyinaran || '-';
       const floweringTarget = activeCycle
         ? `${activeCycle.target_hari_berbunga} Hari`
-        : '--';
+        : '-';
       const harvestEstimate = activeCycle
         ? (activeCycle.estimasi_tanggal_panen || cleanEstimate || 'Belum Dijadwalkan')
         : (cleanEstimate || 'Belum Dijadwalkan');
 
       const cycleHistory = cycles.map((c) => ({
         id: c.id_siklus_panen ? c.id_siklus_panen.substring(0, 8) : 'Siklus',
-        startDate: c.tanggal_penyinaran || '--',
+        startDate: c.tanggal_penyinaran || '-',
         actualHarvestDate: c.tanggal_panen || c.estimasi_tanggal_panen || '-',
         durationDays: (c.target_hari_berbunga || 20) + (c.target_hari_panen_setelah_bunga || 30),
         status: (String(c.status_siklus).toUpperCase() === 'SELESAI' ? 'Selesai' : 'Berjalan') as 'Selesai' | 'Berjalan',
@@ -355,8 +430,10 @@ export const blockService = {
         if (sensorId) {
           const activeSched = await scheduleService.getActive(sensorId);
           if (activeSched && (activeSched.status_aktif === true || activeSched.status_aktif === 1)) {
+            const startStr = activeSched.jam_mulai || activeSched.jam_mulai_nyala || '18:00';
+            const endStr = activeSched.jam_selesai || activeSched.jam_akhir_nyala || '06:00';
             lightingSchedule = {
-              activeCycle: activeSched.nama_jadwal || `${activeSched.jam_mulai.substring(0, 5)} - ${activeSched.jam_selesai.substring(0, 5)}`,
+              activeCycle: activeSched.nama_jadwal || `${startStr.substring(0, 5)} - ${endStr.substring(0, 5)}`,
               intensity: `${activeSched.instensitas_cahaya ?? activeSched.intensitas_cahaya ?? 80}%`,
             };
           }
@@ -365,8 +442,10 @@ export const blockService = {
           const farmScheds = await scheduleService.getAll({ kebun_id: targetFarmId });
           const activeFarmSched = farmScheds.find((s) => s.status_aktif === true || s.status_aktif === 1);
           if (activeFarmSched) {
+            const startStr = activeFarmSched.jam_mulai || activeFarmSched.jam_mulai_nyala || '18:00';
+            const endStr = activeFarmSched.jam_selesai || activeFarmSched.jam_akhir_nyala || '06:00';
             lightingSchedule = {
-              activeCycle: activeFarmSched.nama_jadwal || `${activeFarmSched.jam_mulai.substring(0, 5)} - ${activeFarmSched.jam_selesai.substring(0, 5)}`,
+              activeCycle: activeFarmSched.nama_jadwal || `${startStr.substring(0, 5)} - ${endStr.substring(0, 5)}`,
               intensity: `${activeFarmSched.instensitas_cahaya ?? activeFarmSched.intensitas_cahaya ?? 80}%`,
             };
           }
@@ -414,16 +493,21 @@ export const blockService = {
       const latestTelemetry = telemetriList.length > 0 ? telemetriList[telemetriList.length - 1] : null;
       const displayLux = latestTelemetry
         ? `${latestTelemetry.nilai_lux ?? latestTelemetry.lux ?? 0} lx`
-        : (isOnline ? '0 lx' : '-- lx');
-      const displayTemp = latestTelemetry
-        ? `${latestTelemetry.suhu ?? latestTelemetry.temperature ?? 0}°C`
-        : (isOnline ? '-- °C' : '-- °C');
+        : (isOnline ? '0 lx' : '0 lx');
+      const hasActualTemp = Boolean(
+        latestTelemetry &&
+        ((latestTelemetry.suhu !== undefined && latestTelemetry.suhu !== null) ||
+         (latestTelemetry.temperature !== undefined && latestTelemetry.temperature !== null))
+      );
+      const displayTemp = hasActualTemp
+        ? `${latestTelemetry?.suhu ?? latestTelemetry?.temperature}°C`
+        : '';
       const displayLastSeen = latestTelemetry?.dicatat_pada
         ? new Date(latestTelemetry.dicatat_pada).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
         : lastSeen;
 
       return {
-        id: blok.id_blok || getEntityId(blok) || cleanBlockId,
+        id: String(blok.id_blok || blok.id || cleanBlockId || '').trim(),
         farmId: targetFarmId,
         farmName,
         name: blok.nama_blok,
@@ -476,6 +560,9 @@ export const blockService = {
       formData.append('sensor_id', payload.nodeSensor);
       formData.append('node_id', payload.nodeSensor);
     }
+    if (payload.status !== undefined) {
+      formData.append('status', payload.status);
+    }
 
     const res = await apiClient.post<ApiResponse<BlokBackend>>('/petani/blok', formData);
     const newBlockId = res.data.id_blok;
@@ -502,6 +589,9 @@ export const blockService = {
     if (payload.nodeSensor !== undefined) {
       formData.append('sensor_id', payload.nodeSensor || '');
       formData.append('node_id', payload.nodeSensor || '');
+    }
+    if (payload.status !== undefined) {
+      formData.append('status', payload.status);
     }
     formData.append('_method', 'PUT');
 

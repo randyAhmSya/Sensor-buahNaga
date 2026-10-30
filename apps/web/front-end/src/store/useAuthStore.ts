@@ -39,14 +39,19 @@ export const mapBackendUserToUserProfile = (user: BackendUser): UserProfile => {
   };
 };
 
+export const AUTH_STORAGE_KEYS = {
+  TOKEN: 'agro_auth_token',
+  USER: 'agro_auth_user',
+} as const;
+
 const getInitialAuthState = (): { user: UserProfile | null; token: string | null; isAuthenticated: boolean } => {
   if (typeof window === 'undefined') {
     return { user: null, token: null, isAuthenticated: false };
   }
 
   try {
-    const savedToken = localStorage.getItem('agro_auth_token');
-    const savedUserStr = localStorage.getItem('agro_auth_user');
+    const savedToken = localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN);
+    const savedUserStr = localStorage.getItem(AUTH_STORAGE_KEYS.USER);
 
     if (savedToken && savedUserStr) {
       const parsedUser = JSON.parse(savedUserStr) as UserProfile;
@@ -69,32 +74,70 @@ const getInitialAuthState = (): { user: UserProfile | null; token: string | null
 
 const initialState = getInitialAuthState();
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: initialState.user,
   token: initialState.token,
   isAuthenticated: initialState.isAuthenticated,
+  isCheckingSession: false,
 
   login: (user: UserProfile, token: string) => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('agro_auth_token', token);
-      localStorage.setItem('agro_auth_user', JSON.stringify(user));
+      localStorage.setItem(AUTH_STORAGE_KEYS.TOKEN, token);
+      localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(user));
     }
     set({
       user,
       token,
       isAuthenticated: true,
+      isCheckingSession: false,
     });
   },
 
   logout: () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('agro_auth_token');
-      localStorage.removeItem('agro_auth_user');
+      localStorage.removeItem(AUTH_STORAGE_KEYS.TOKEN);
+      localStorage.removeItem(AUTH_STORAGE_KEYS.USER);
+      sessionStorage.removeItem(AUTH_STORAGE_KEYS.TOKEN);
+      sessionStorage.removeItem(AUTH_STORAGE_KEYS.USER);
     }
     set({
       user: null,
       token: null,
       isAuthenticated: false,
+      isCheckingSession: false,
     });
+  },
+
+  validateSession: async (): Promise<boolean> => {
+    const currentToken = get().token || (typeof window !== 'undefined' ? localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN) : null);
+    if (!currentToken) {
+      get().logout();
+      return false;
+    }
+
+    set({ isCheckingSession: true });
+    try {
+      const { apiClient } = await import('@/services/api');
+      const response = await apiClient.get<{ status: string; data: BackendUser }>('/auth/me');
+      if (response && response.data) {
+        const profile = mapBackendUserToUserProfile(response.data);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(profile));
+        }
+        set({
+          user: profile,
+          token: currentToken,
+          isAuthenticated: true,
+          isCheckingSession: false,
+        });
+        return true;
+      }
+      return false;
+    } catch {
+      // Jika 401, interceptor di api.ts sudah memanggil handleUnauthorizedSession()
+      // Jika error offline / server down, biarkan data lokal tanpa logout paksa
+      set({ isCheckingSession: false });
+      return false;
+    }
   },
 }));

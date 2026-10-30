@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Sliders, Zap, Clock, CheckCircle2, AlertCircle, ChevronDown, Lightbulb, SunMedium } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Sliders, Zap, Clock, ChevronDown, Lightbulb, SunMedium } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { scheduleService } from '@/services/scheduleService';
+import { scheduleKeys } from '@/services/queryKeys';
+import { useNotify } from '@/context/NotificationContext';
+import { ApiError } from '@/services/api';
 
 interface NodeOption {
   id: string;
@@ -11,12 +15,13 @@ interface NodeOption {
 }
 
 export const QuickManualControlCard: React.FC = () => {
+  const queryClient = useQueryClient();
+  const notify = useNotify();
   const [nodes, setNodes] = useState<NodeOption[]>([]);
   const [selectedNodeCode, setSelectedNodeCode] = useState<string>('');
   const [intensity, setIntensity] = useState<number>(80);
   const [cooldown, setCooldown] = useState<number>(0);
   const [isSending, setIsSending] = useState<boolean>(false);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -46,11 +51,19 @@ export const QuickManualControlCard: React.FC = () => {
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  const handleApply = async () => {
-    if (cooldown > 0 || isSending) return;
+  const handleApply = async (overrideIntensity?: number) => {
+    if (cooldown > 0) {
+      notify.warning(
+        'Cooldown Slider Aktif',
+        `Harap tunggu ${cooldown} detik sebelum mengubah intensitas lagi.`,
+        { id: 'schedule-cooldown' }
+      );
+      return;
+    }
+    if (isSending) return;
 
+    const targetValue = overrideIntensity !== undefined ? overrideIntensity : intensity;
     setIsSending(true);
-    setFeedback(null);
 
     try {
       const targetNode = nodes.find((n) => n.code === selectedNodeCode);
@@ -62,23 +75,38 @@ export const QuickManualControlCard: React.FC = () => {
       const activeSchedule = await scheduleService.getActive(targetNode.id);
       if (activeSchedule?.id_jadwal) {
         await scheduleService.update(activeSchedule.id_jadwal, {
-          instensitas_cahaya: intensity,
+          instensitas_cahaya: targetValue,
         });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: scheduleKeys.all, refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+        ]);
       }
 
-      setFeedback({
-        type: 'success',
-        message: `Intensitas lampu ${selectedNodeCode} berhasil diatur ke ${intensity}%.`,
-      });
+      notify.success(
+        'Intensitas Diperbarui',
+        `Lampu ${selectedNodeCode} berhasil diatur ke ${targetValue}%.`
+      );
 
       // Aktifkan cooldown visual 7 detik untuk mencegah JadwalCooldownException
       setCooldown(7);
     } catch (err: unknown) {
-      const errMsg = (err as Error)?.message || 'Gagal menerapkan intensitas manual';
-      setFeedback({
-        type: 'error',
-        message: errMsg,
-      });
+      const is429 =
+        (err instanceof ApiError && err.status === 429) ||
+        (err as Error)?.message?.toLowerCase().includes('cooldown') ||
+        (err as Error)?.message?.toLowerCase().includes('terlalu cepat');
+
+      if (is429) {
+        notify.warning(
+          'Cooldown Slider Aktif',
+          'Perintah intensitas dikirim terlalu cepat. Harap tunggu beberapa detik.',
+          { id: 'schedule-cooldown' }
+        );
+      } else {
+        const errMsg = (err as Error)?.message || 'Gagal menerapkan intensitas manual.';
+        notify.error('Gagal Mengatur Intensitas', errMsg);
+      }
+
       // Berikan cooldown protektif jika terjadi error laju transmisi
       setCooldown(7);
     } finally {
@@ -115,23 +143,6 @@ export const QuickManualControlCard: React.FC = () => {
           </div>
         )}
       </div>
-
-      {feedback && (
-        <div
-          className={`p-3.5 rounded-xl border text-xs font-medium flex items-center gap-2.5 ${
-            feedback.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              : 'bg-rose-50 border-rose-200 text-rose-700'
-          }`}
-        >
-          {feedback.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-700" />
-          ) : (
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-          )}
-          <span>{feedback.message}</span>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
         {/* Pilihan Node */}
@@ -172,7 +183,15 @@ export const QuickManualControlCard: React.FC = () => {
               step="5"
               value={intensity}
               onChange={(e) => setIntensity(Number(e.target.value))}
+              onPointerUp={() => void handleApply(intensity)}
+              onTouchEnd={() => void handleApply(intensity)}
+              onKeyUp={(e) => {
+                if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter', ' '].includes(e.key)) {
+                  void handleApply(intensity);
+                }
+              }}
               disabled={isLocked}
+              aria-label="Tingkat pencahayaan lampu"
               className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <SunMedium className="w-4 h-4 text-slate-500 shrink-0" />
@@ -185,7 +204,7 @@ export const QuickManualControlCard: React.FC = () => {
             type="button"
             variant="primary"
             size="md"
-            onClick={handleApply}
+            onClick={() => void handleApply(intensity)}
             disabled={isLocked}
             className="w-full min-h-[42px] flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 disabled:bg-slate-200 disabled:text-slate-500 text-white font-semibold rounded-xl shadow-xs transition-all"
           >

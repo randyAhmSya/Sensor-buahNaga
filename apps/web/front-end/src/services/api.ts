@@ -1,4 +1,5 @@
 import type { QueryParams } from '@/types/api.types';
+import { useAuthStore, AUTH_STORAGE_KEYS } from '@/store/useAuthStore';
 
 /**
  * Base API Client with Interceptors, Token Auth & Robust Error Handling
@@ -52,6 +53,28 @@ export const isApiSuccess = (res: unknown): boolean => {
 
 type RequestInterceptor = (config: ApiRequestOptions) => ApiRequestOptions | Promise<ApiRequestOptions>;
 type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
+
+let isRedirectingToLogin = false;
+
+/**
+ * Penanganan sesi 401 Unauthorized terpusat:
+ * 1. Mereset state auth Zustand (user, token, isAuthenticated)
+ * 2. Membersihkan seluruh storage autentikasi
+ * 3. Mengarahkan ke halaman login tanpa redirect loop
+ */
+export const handleUnauthorizedSession = (): void => {
+  useAuthStore.getState().logout();
+
+  if (typeof window === 'undefined') return;
+
+  const currentPath = window.location.pathname;
+  const isAuthPage = currentPath.includes('/login') || currentPath.includes('/register');
+
+  if (!isAuthPage && !isRedirectingToLogin) {
+    isRedirectingToLogin = true;
+    window.location.replace('/login');
+  }
+};
 
 export class ApiClient {
   private baseUrl: string;
@@ -107,7 +130,7 @@ export class ApiClient {
       headers['Content-Type'] = 'application/json';
     }
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('agro_auth_token') : null;
+    const token = typeof window !== 'undefined' ? localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN) : null;
     if (token && !headers['Authorization']) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -136,16 +159,13 @@ export class ApiClient {
           errorData = await response.text();
         }
 
-        if (response.status === 401 && typeof window !== 'undefined') {
-          // Token expired or invalid
-          localStorage.removeItem('agro_auth_token');
-          localStorage.removeItem('agro_auth_user');
-          if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
-            window.location.href = '/login';
-          }
+        if (response.status === 401) {
+          handleUnauthorizedSession();
         }
 
-        const fallbackMsg = `Permintaan gagal dengan status ${response.status}`;
+        const fallbackMsg = response.status === 403
+          ? 'Anda tidak memiliki hak akses untuk tindakan ini.'
+          : `Permintaan gagal dengan status ${response.status}`;
         throw new ApiError(fallbackMsg, response.status, errorData);
       }
 
@@ -156,6 +176,9 @@ export class ApiClient {
       if (error instanceof ApiError) throw error;
       if (error instanceof DOMException && error.name === 'AbortError') {
         throw new ApiError('Koneksi timeout, server tidak merespons tepat waktu', 408);
+      }
+      if (error instanceof TypeError && error.message.toLowerCase().includes('fetch')) {
+        throw new ApiError('Server backend tidak dapat dihubungi. Pastikan server backend sedang aktif.', 503);
       }
       throw new ApiError((error as Error)?.message || 'Koneksi ke server gagal', 500);
     }

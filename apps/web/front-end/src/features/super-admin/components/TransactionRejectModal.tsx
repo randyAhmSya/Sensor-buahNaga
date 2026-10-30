@@ -24,11 +24,13 @@ export const TransactionRejectModal: FC<TransactionRejectModalProps> = ({
 
   const { mutate, isPending } = useRejectTransaction()
 
+  const isAlasanValid = alasan.trim().length >= 5
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     const trimmed = alasan.trim()
-    if (!trimmed) {
-      setValidationError('Alasan penolakan transaksi wajib diisi.')
+    if (trimmed.length < 5) {
+      setValidationError('Alasan penolakan transaksi wajib diisi minimal 5 karakter.')
       return
     }
 
@@ -41,8 +43,17 @@ export const TransactionRejectModal: FC<TransactionRejectModalProps> = ({
           onSuccess(`Transaksi #${transactionId} dari "${tenantName}" telah ditolak.`)
           onClose()
         },
-        onError: (err) => {
-          setValidationError(err.message || 'Gagal menolak transaksi langganan.')
+        onError: (err: unknown) => {
+          const apiError = err as {
+            response?: { data?: { pesan?: string; errors?: Record<string, string[]> } }
+            message?: string
+          }
+          const serverMsg =
+            apiError.response?.data?.errors?.alasan?.[0] ||
+            apiError.response?.data?.pesan ||
+            apiError.message ||
+            'Gagal menolak transaksi langganan.'
+          setValidationError(serverMsg)
         },
       }
     )
@@ -87,6 +98,11 @@ export const TransactionRejectModal: FC<TransactionRejectModalProps> = ({
             disabled={isPending}
             className="w-full text-xs text-slate-900 rounded-xl border border-slate-300 p-3 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all placeholder:text-slate-400 disabled:bg-slate-100 disabled:cursor-not-allowed"
           />
+          <div className="flex items-center justify-between mt-1 text-[11px]">
+            <span className={isAlasanValid ? 'text-slate-500' : 'text-amber-600 font-medium'}>
+              Minimal 5 karakter ({alasan.trim().length}/5)
+            </span>
+          </div>
           {validationError && (
             <p className="mt-1.5 text-xs text-rose-600 flex items-center gap-1 font-medium">
               <AlertCircle className="w-3.5 h-3.5 shrink-0" />
@@ -109,7 +125,7 @@ export const TransactionRejectModal: FC<TransactionRejectModalProps> = ({
             type="submit"
             variant="danger"
             size="sm"
-            disabled={isPending}
+            disabled={isPending || !isAlasanValid}
             className="bg-rose-600 hover:bg-rose-700 text-white font-semibold flex items-center gap-2"
           >
             {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}

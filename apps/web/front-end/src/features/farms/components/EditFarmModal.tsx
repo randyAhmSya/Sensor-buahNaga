@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { X, Save, Image as ImageIcon, MapPin, Sprout } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { InputField } from '@/components/form/InputField'
 import type { FarmItem } from '@/types/farm.types'
 import { farmService } from '@/services/farmService'
+import { farmKeys } from '@/services/queryKeys'
 
 interface EditFarmModalProps {
   isOpen: boolean
@@ -18,6 +20,7 @@ export const EditFarmModal: React.FC<EditFarmModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const queryClient = useQueryClient()
   const [name, setName] = useState('')
   const [location, setLocation] = useState('')
   const [description, setDescription] = useState('')
@@ -70,6 +73,18 @@ export const EditFarmModal: React.FC<EditFarmModalProps> = ({
         imageUrl: imageUrl.trim(),
         status: status,
       }
+
+      queryClient.setQueryData<FarmItem[]>(['kebun'], (old = []) =>
+        old.map((f) => (f.id === farm.id ? updatedFarm : f))
+      )
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['kebun'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: farmKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: farmKeys.withBlocks(), refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: farmKeys.detail(farm.id), refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+      ])
 
       onSuccess(updatedFarm)
       onClose()

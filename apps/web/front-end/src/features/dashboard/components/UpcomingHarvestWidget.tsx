@@ -1,44 +1,19 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Trees, ArrowRight, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { harvestService } from '@/services/harvestService';
+import { formatIndoDate } from '@/utils/formatters';
 import type { HarvestCycle } from '@/features/harvests/types/harvest.types';
 
-interface UpcomingHarvestWidgetProps {
+export interface UpcomingHarvestWidgetProps {
   initialCycles?: HarvestCycle[];
+  isLoading?: boolean;
 }
 
-export const UpcomingHarvestWidget: React.FC<UpcomingHarvestWidgetProps> = ({ initialCycles }) => {
-  const [cycles, setCycles] = useState<HarvestCycle[]>(initialCycles || []);
-  const [isLoading, setIsLoading] = useState<boolean>(!initialCycles);
-
-  useEffect(() => {
-    if (initialCycles && initialCycles.length > 0) {
-      setCycles(initialCycles);
-      setIsLoading(false);
-      return;
-    }
-
-    let isMounted = true;
-    harvestService
-      .getAllCycles()
-      .then((data) => {
-        if (isMounted) {
-          setCycles(data);
-          setIsLoading(false);
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setCycles([]);
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [initialCycles]);
+export const UpcomingHarvestWidget: React.FC<UpcomingHarvestWidgetProps> = ({
+  initialCycles = [],
+  isLoading = false,
+}) => {
+  const cycles = initialCycles;
 
   // Cari siklus aktif (BERJALAN) dengan estimasi panen terdekat
   const activeCycle = useMemo(() => {
@@ -134,7 +109,7 @@ export const UpcomingHarvestWidget: React.FC<UpcomingHarvestWidgetProps> = ({ in
                 <Calendar className="w-3.5 h-3.5 text-emerald-600" />
                 Estimasi Tanggal Panen:
               </span>
-              <span className="text-emerald-700 font-bold">{activeCycle.estimasi_tanggal_panen}</span>
+              <span className="text-emerald-700 font-bold">{formatIndoDate(activeCycle.estimasi_tanggal_panen)}</span>
             </div>
             <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
               <div
@@ -147,7 +122,7 @@ export const UpcomingHarvestWidget: React.FC<UpcomingHarvestWidgetProps> = ({ in
           <div className="grid grid-cols-2 gap-3 pt-1">
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-2xs">
               <span className="text-[11px] font-semibold text-slate-400 block mb-0.5">Mulai Penyinaran</span>
-              <span className="text-xs font-bold text-slate-900">{activeCycle.tanggal_penyinaran}</span>
+              <span className="text-xs font-bold text-slate-900">{formatIndoDate(activeCycle.tanggal_penyinaran)}</span>
             </div>
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-2xs">
               <span className="text-[11px] font-semibold text-slate-400 block mb-0.5">Target Bunga</span>

@@ -1,11 +1,15 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { SensorNodeItem, SensorSummaryMetrics } from '@/types/sensor.types'
-import type { FarmItem } from '@/types/farm.types'
 import type { CreateNodePayload } from '@/types/node.types'
-import { sensorService, mapNodeToSensorItem } from '@/services/sensorService'
-import { farmService } from '@/services/farmService'
+import { sensorService } from '@/services/sensorService'
+import { blockService } from '@/services/blockService'
+import { useFarmsWithBlocksQuery } from '@/hooks/queries/useFarmsQuery'
+import { sensorKeys, blockKeys, farmKeys } from '@/services/queryKeys'
+import type { BlokStatusLampuResponse } from '@/types/block.types'
 import type { EditSensorFormData } from '../components/EditSensorModal'
+import { useNotify } from '@/context/NotificationContext'
 
 export interface SensorToast {
   type: 'success' | 'error'
@@ -15,102 +19,189 @@ export interface SensorToast {
 export const useSensorMonitoring = () => {
   const params = useParams<{ sensorId?: string; id?: string }>()
   const routeSensorId = params.sensorId ?? params.id
-  const [sensors, setSensors] = useState<SensorNodeItem[]>([])
-  const [farms, setFarms] = useState<FarmItem[]>([])
-  const [farmOptions, setFarmOptions] = useState<string[]>([])
+  const queryClient = useQueryClient()
+  const notify = useNotify()
+
   const [searchTerm, setSearchTerm] = useState(routeSensorId || '')
   const [selectedFarm, setSelectedFarm] = useState('Semua Kebun')
   const [selectedStatus, setSelectedStatus] = useState('Semua Status')
-  const [isLoading, setIsLoading] = useState(true)
   const [isActionLoading, setIsActionLoading] = useState(false)
   const [toast, setToast] = useState<SensorToast | null>(null)
-  const hasLoadedRef = useRef(false)
 
   const clearToast = useCallback(() => setToast(null), [])
 
-  const loadData = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const [nodes, farmsData] = await Promise.all([
-        sensorService.getAll(),
-        farmService.getAll(),
-      ])
-      setSensors(nodes)
-      setFarms(farmsData || [])
-      const names = (farmsData || []).map((f) => f.name).filter(Boolean)
-      setFarmOptions(names)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+  // 1. Shared Query Farms With Blocks (Daftar kebun beserta blok riil untuk dropdown modal)
+  const { data: farms = [] } = useFarmsWithBlocksQuery()
+  const activeFarmId = farms[0]?.id
 
-  useEffect(() => {
-    if (hasLoadedRef.current) return
-    hasLoadedRef.current = true
-    loadData()
-  }, [loadData])
+  // 2. Query Utama Monitoring Sensor (Single Screen-Level Polling 30s saat tab aktif)
+  const {
+    data: sensors = [],
+    isLoading: isSensorsLoading,
+    refetch,
+  } = useQuery<SensorNodeItem[]>({
+    queryKey: sensorKeys.list(activeFarmId),
+    queryFn: async (): Promise<SensorNodeItem[]> => {
+      const nodes = await sensorService.getAll(activeFarmId)
 
-  // Hitung ringkasan metrik statistik secara dinamis berdasarkan data sensor aktif
+      // Ambil blockId unik untuk sinkronisasi status-lampu secara paralel
+      const uniqueBlockIds = Array.from(
+        new Set(nodes.map((n) => n.blockId).filter(Boolean))
+      )
+
+      const statusMap = new Map<string, BlokStatusLampuResponse>()
+
+      const fetchPromises = uniqueBlockIds.map(async (bId) => {
+        try {
+          const res = await blockService.getStatusLampu(bId)
+          if (res) {
+            statusMap.set(bId, res)
+          }
+        } catch {
+          // Abaikan jika blok belum memiliki konfigurasi status lampu
+        }
+      })
+
+      await Promise.allSettled(fetchPromises)
+
+      // Bangun lookup map untuk status node
+      const nodeStatusLookup = new Map<
+        string,
+        { status: 'online' | 'offline' | 'belum_pernah_terlihat'; terakhir_terlihat: string | null }
+      >()
+
+      for (const statusRes of statusMap.values()) {
+        for (const n of statusRes.nodes || []) {
+          const nodeStatus: 'online' | 'offline' | 'belum_pernah_terlihat' =
+            n.status || (n.status_online ? 'online' : 'offline')
+          if (n.id_sensor) {
+            nodeStatusLookup.set(n.id_sensor, {
+              status: nodeStatus,
+              terakhir_terlihat: n.terakhir_terlihat,
+            })
+          }
+          if (n.kode_perangkat) {
+            nodeStatusLookup.set(n.kode_perangkat, {
+              status: nodeStatus,
+              terakhir_terlihat: n.terakhir_terlihat,
+            })
+          }
+        }
+      }
+
+      // Sinkronisasikan status riil dari status-lampu ke tiap node sensor
+      return nodes.map((node) => {
+        const lookup =
+          nodeStatusLookup.get(node.id) || nodeStatusLookup.get(node.nodeCode)
+
+        const status =
+          lookup?.status ||
+          (node.status?.toLowerCase() === 'aktif' || node.status?.toLowerCase() === 'online'
+            ? 'online'
+            : 'offline')
+
+        const lastSeen = lookup?.terakhir_terlihat || node.lastSeen || 'Belum ada data'
+
+        return {
+          ...node,
+          status,
+          lastSeen,
+        }
+      })
+    },
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+  })
+
+  // Dropdown Opsi Kebun
+  const farmOptions = useMemo(() => {
+    const list = farms.map((f) => f.name).filter(Boolean)
+    return ['Semua Kebun', ...list]
+  }, [farms])
+
+  // Ringkasan Metrik
   const summaryMetrics = useMemo<SensorSummaryMetrics>(() => {
     const totalNodes = sensors.length
     const onlineNodes = sensors.filter(
-      (s) => s.status?.toLowerCase() === 'aktif' || s.status?.toLowerCase() === 'online'
+      (s) => s.status?.toLowerCase() === 'online'
     ).length
-    const offlineNodes = totalNodes - onlineNodes
-    return { totalNodes, onlineNodes, offlineNodes }
+    const offlineNodes = sensors.filter(
+      (s) => s.status?.toLowerCase() === 'offline'
+    ).length
+    const neverSeenNodes = sensors.filter(
+      (s) => s.status === 'belum_pernah_terlihat'
+    ).length
+
+    return {
+      totalNodes,
+      onlineNodes,
+      offlineNodes,
+      neverSeenNodes,
+    }
   }, [sensors])
 
-  // Filter pencarian dan dropdown
+  // Filter Sensors
   const filteredSensors = useMemo(() => {
-    return sensors.filter((node) => {
-      const matchSearch =
-        node.nodeCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        node.blockName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        node.farmName.toLowerCase().includes(searchTerm.toLowerCase())
+    return sensors.filter((sensor) => {
+      const farmName = sensor.farmName || ''
+      const blockName = sensor.blockName || ''
+      const tipeSensor = sensor.tipeSensor || ''
 
-      const matchFarm = selectedFarm === 'Semua Kebun' || node.farmName === selectedFarm
-      const isNodeActive =
-        node.status?.toLowerCase() === 'aktif' || node.status?.toLowerCase() === 'online'
+      const matchSearch =
+        searchTerm === '' ||
+        sensor.nodeCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        farmName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        blockName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tipeSensor.toLowerCase().includes(searchTerm.toLowerCase())
+
+      const matchFarm =
+        selectedFarm === 'Semua Kebun' ||
+        farmName.toLowerCase().includes(selectedFarm.toLowerCase())
+
+      const nodeStatus = sensor.status?.toLowerCase()
       const matchStatus =
         selectedStatus === 'Semua Status' ||
-        (selectedStatus === 'Aktif' || selectedStatus === 'Online' ? isNodeActive : !isNodeActive)
+        (selectedStatus === 'Online' && nodeStatus === 'online') ||
+        (selectedStatus === 'Offline' && nodeStatus === 'offline') ||
+        (selectedStatus === 'Belum Pernah Terhubung' && nodeStatus === 'belum_pernah_terlihat') ||
+        (selectedStatus === 'belum_pernah_terlihat' && nodeStatus === 'belum_pernah_terlihat') ||
+        (selectedStatus === 'Aktif' && nodeStatus === 'online') ||
+        (selectedStatus === 'Nonaktif' && nodeStatus === 'offline')
+
       return matchSearch && matchFarm && matchStatus
     })
   }, [sensors, searchTerm, selectedFarm, selectedStatus])
 
-  // Aksi Tambah Sensor ke Backend
+  // Aksi Tambah Sensor
   const createSensor = useCallback(
     async (payload: CreateNodePayload) => {
       setIsActionLoading(true)
       try {
         const res = await sensorService.create(payload)
-        const newNodeData = res?.data
-        if (newNodeData) {
-          const mapped = mapNodeToSensorItem(newNodeData)
-          setSensors((prev) => [mapped, ...prev])
-        } else {
-          await loadData()
-        }
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: sensorKeys.all, refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: ['nodes'], refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: blockKeys.all, refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: ['kebun'], refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: farmKeys.all, refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: farmKeys.withBlocks(), refetchType: 'all' }),
+        ])
 
-        setToast({
-          type: 'success',
-          message: `Node sensor ${payload.kode_perangkat} berhasil didaftarkan.`,
-        })
+        notify.success('Node berhasil didaftarkan', `Perangkat ${payload.kode_perangkat} siap digunakan di blok lahan.`)
         return res
       } catch (err: unknown) {
-        setToast({
-          type: 'error',
-          message: (err as Error)?.message || 'Gagal mendaftarkan sensor baru di server.',
-        })
+        notify.error('Gagal mendaftarkan node', (err as Error)?.message || 'Terjadi kesalahan saat menyimpan perangkat di server.')
         throw err
       } finally {
         setIsActionLoading(false)
       }
     },
-    [loadData]
+    [queryClient, notify]
   )
 
-  // Aksi Edit Sensor ke Backend
+  // Aksi Edit Sensor
   const editSensor = useCallback(
     async (sensorId: string, data: EditSensorFormData) => {
       setIsActionLoading(true)
@@ -122,50 +213,53 @@ export const useSensorMonitoring = () => {
           tipe_sensor: data.tipeSensor,
         })
 
-        await loadData()
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: sensorKeys.all, refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: sensorKeys.detail(sensorId), refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: ['nodes'], refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: blockKeys.all, refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: ['kebun'], refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: farmKeys.all, refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: farmKeys.withBlocks(), refetchType: 'all' }),
+        ])
 
-        setToast({
-          type: 'success',
-          message: `Sensor ${data.nodeCode} berhasil diperbarui.`,
-        })
+        notify.success('Data node diperbarui', `Perubahan konfigurasi ${data.nodeCode} tersimpan.`)
       } catch (err: unknown) {
-        setToast({
-          type: 'error',
-          message: (err as Error)?.message || 'Gagal memperbarui data sensor di server.',
-        })
+        notify.error('Gagal memperbarui node', (err as Error)?.message || 'Gagal memperbarui data sensor di server.')
         throw err
       } finally {
         setIsActionLoading(false)
       }
     },
-    [loadData]
+    [queryClient, notify]
   )
 
-  // Aksi Hapus Sensor ke Backend
+  // Aksi Hapus Sensor
   const deleteSensor = useCallback(
     async (sensorId: string, nodeCode: string) => {
       setIsActionLoading(true)
       try {
         await sensorService.delete(sensorId)
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: sensorKeys.all, refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: ['nodes'], refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: blockKeys.all, refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: ['kebun'], refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: farmKeys.all, refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: farmKeys.withBlocks(), refetchType: 'all' }),
+        ])
 
-        // Hapus sensor dari state UI reaktif
-        setSensors((prev) => prev.filter((item) => item.id !== sensorId))
-
-        setToast({
-          type: 'success',
-          message: `Sensor ${nodeCode} berhasil dihapus dari sistem.`,
-        })
+        notify.success('Node berhasil dihapus', `Perangkat ${nodeCode} telah dilepas dari sistem.`)
       } catch (err: unknown) {
-        setToast({
-          type: 'error',
-          message: (err as Error)?.message || 'Gagal menghapus sensor di server.',
-        })
+        notify.error('Gagal menghapus node', (err as Error)?.message || 'Gagal menghapus sensor di server.')
         throw err
       } finally {
         setIsActionLoading(false)
       }
     },
-    []
+    [queryClient, notify]
   )
 
   return {
@@ -180,11 +274,11 @@ export const useSensorMonitoring = () => {
     setSelectedFarm,
     selectedStatus,
     setSelectedStatus,
-    isLoading,
+    isLoading: isSensorsLoading,
     isActionLoading,
     toast,
     clearToast,
-    refetch: loadData,
+    refetch,
     createSensor,
     editSensor,
     deleteSensor,

@@ -266,7 +266,7 @@ export const UserEditModal: FC<UserEditModalProps> = ({
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
               <div>
-                <label htmlFor="edit_user_password" className="block text-[11px] text-slate-500 mb-1">
+                <label htmlFor="edit_user_password" className="block text-xs font-semibold text-slate-700 mb-1">
                   Kata Sandi Baru
                 </label>
                 <div className="relative">
@@ -293,7 +293,7 @@ export const UserEditModal: FC<UserEditModalProps> = ({
               </div>
 
               <div>
-                <label htmlFor="edit_user_password_confirmation" className="block text-[11px] text-slate-500 mb-1">
+                <label htmlFor="edit_user_password_confirmation" className="block text-xs font-semibold text-slate-700 mb-1">
                   Konfirmasi Kata Sandi Baru
                 </label>
                 <div className="relative">

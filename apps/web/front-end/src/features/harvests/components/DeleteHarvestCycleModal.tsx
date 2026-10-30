@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatDate } from '@/utils/formatters';
 import { harvestService } from '@/services/harvestService';
+import { harvestKeys, blockKeys } from '@/services/queryKeys';
 import type { HarvestCycle } from '../types/harvest.types';
 
 interface DeleteHarvestCycleModalProps {
@@ -18,6 +20,7 @@ export const DeleteHarvestCycleModal: React.FC<DeleteHarvestCycleModalProps> = (
   onClose,
   onSuccess,
 }) => {
+  const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -28,6 +31,11 @@ export const DeleteHarvestCycleModal: React.FC<DeleteHarvestCycleModalProps> = (
     setErrorMsg(null);
     try {
       await harvestService.deleteHarvestCycle(cycle.id_siklus_panen);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: harvestKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: blockKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+      ]);
       onSuccess(cycle.id_siklus_panen);
       onClose();
     } catch (err: unknown) {

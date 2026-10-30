@@ -232,7 +232,7 @@ export const harvestService = {
 
     if (!blockList || blockList.length === 0) {
       try {
-        const farms = await farmService.getAll();
+        const farms = await farmService.getAllWithBlocks();
         blockList = farms.flatMap((farm) =>
           (farm.blocks || []).map((blk) => ({
             id: blk.id,

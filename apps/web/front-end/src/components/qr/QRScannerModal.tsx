@@ -250,12 +250,12 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="bg-white rounded-xl border border-slate-300 shadow-xl max-w-md w-full overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header Modal */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 shadow-2xs">
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-300 flex items-center justify-center text-emerald-800 shrink-0">
               <Camera className="w-5 h-5" />
             </div>
             <div>
@@ -266,7 +266,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
           <button
             type="button"
             onClick={handleClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors"
             aria-label="Tutup pemindai"
           >
             <X className="w-5 h-5" />
@@ -276,7 +276,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         {/* Viewfinder Body */}
         <div className="p-5 flex-1 flex flex-col items-center justify-center overflow-y-auto">
           {/* Container Kamera HTML5-QRCode */}
-          <div className="relative w-full max-w-[320px] aspect-square rounded-2xl overflow-hidden bg-slate-950 shadow-inner border border-slate-800 flex items-center justify-center">
+          <div className="relative w-full max-w-[320px] aspect-square rounded-xl overflow-hidden bg-slate-950 shadow-inner border border-slate-800 flex items-center justify-center">
             <div id={containerId} className="w-full h-full object-cover" />
 
             {/* Hidden container untuk file upload parsing */}

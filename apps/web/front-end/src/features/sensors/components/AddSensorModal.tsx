@@ -1,24 +1,36 @@
-import { useState, useEffect, useMemo, useRef, useCallback, type FC, type FormEvent } from 'react'
-import { Radio, Plus } from 'lucide-react'
+import { useState, useEffect, useMemo, useCallback, type FC, type FormEvent } from 'react'
+import {
+  Radio,
+  Plus,
+  Check,
+  Copy,
+  Printer,
+  Download,
+  QrCode,
+  Wifi,
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+} from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { farmService } from '@/services/farmService'
 import { gatewayService } from '@/services/gatewayService'
-import { sensorService } from '@/services/sensorService'
 import { nodeService } from '@/services/nodeService'
+import { sensorKeys, blockKeys, farmKeys } from '@/services/queryKeys'
 import type { FarmItem } from '@/types/farm.types'
 import type { GatewayBackend } from '@/types/gateway.types'
 import type { CreateNodePayload } from '@/types/node.types'
-import { QuickAddGatewayModal, type QuickBlockOption } from './QuickAddGatewayModal'
+import type { SensorNodeItem } from '@/types/sensor.types'
 import { containsMaliciousScript, XSS_ERROR_MESSAGE } from '@/utils/sanitize'
 import { nodeSensorSchema } from '@/schemas/nodeSensor.schema'
-import { NewNodeQrSuccessModal } from './NewNodeQrSuccessModal'
 
 interface AddSensorModalProps {
   isOpen: boolean
   isSubmitting: boolean
   farms?: FarmItem[]
+  sensors?: SensorNodeItem[]
   onClose: () => void
   onSubmit: (payload: CreateNodePayload) => Promise<unknown>
 }
@@ -27,6 +39,7 @@ export const AddSensorModal: FC<AddSensorModalProps> = ({
   isOpen,
   isSubmitting,
   farms: externalFarms,
+  sensors: externalSensors,
   onClose,
   onSubmit,
 }) => {
@@ -37,6 +50,7 @@ export const AddSensorModal: FC<AddSensorModalProps> = ({
       isOpen={isOpen}
       isSubmitting={isSubmitting}
       initialFarms={externalFarms}
+      initialSensors={externalSensors}
       onClose={onClose}
       onSubmit={onSubmit}
     />
@@ -47,131 +61,115 @@ interface AddSensorModalContentProps {
   isOpen: boolean
   isSubmitting: boolean
   initialFarms?: FarmItem[]
+  initialSensors?: SensorNodeItem[]
   onClose: () => void
   onSubmit: (payload: CreateNodePayload) => Promise<unknown>
 }
 
+interface SensorSuccessData {
+  nodeCode: string
+  blockName: string
+  farmName: string
+  gatewayCode: string
+  pairingCode: string
+  qrCodeText: string
+}
+
+const formatGatewayStatus = (status?: string | null): string => {
+  if (!status) return 'Belum Terhubung'
+  const lower = status.toLowerCase()
+  if (lower === 'aktif' || lower === 'online') return 'Terhubung'
+  if (lower === 'belum_terhubung') return 'Belum Terhubung'
+  if (lower === 'offline') return 'Offline'
+  return status.replace(/_/g, ' ')
+}
+
 const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
   isOpen,
-  isSubmitting,
+  isSubmitting: externalSubmitting,
   initialFarms,
+  initialSensors,
   onClose,
   onSubmit,
 }) => {
+  const queryClient = useQueryClient()
   const [farms, setFarms] = useState<FarmItem[]>(initialFarms || [])
   const [gateways, setGateways] = useState<GatewayBackend[]>([])
   const [isLoadingGateways, setIsLoadingGateways] = useState(false)
   const [selectedBlockId, setSelectedBlockId] = useState<string>('')
+  const [gatewayMode, setGatewayMode] = useState<'auto' | 'existing'>('auto')
   const [selectedGatewayId, setSelectedGatewayId] = useState<string>('')
+  const [cachedAutoGateway, setCachedAutoGateway] = useState<{
+    blockId: string
+    gateway: GatewayBackend
+  } | null>(null)
   const [kodePerangkat, setKodePerangkat] = useState<string>('')
   const [tipeSensor, setTipeSensor] = useState<string>('cahaya_lux')
-  const [newNodeQrSuccess, setNewNodeQrSuccess] = useState<{
-    nodeCode: string
-    qrCodeText: string
-    farmName?: string
-    blockName?: string
-  } | null>(null)
-  const [isQuickGatewayOpen, setIsQuickGatewayOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSubscriptionError, setIsSubscriptionError] = useState(false)
+  const [successData, setSuccessData] = useState<SensorSuccessData | null>(null)
+  const [copied, setCopied] = useState(false)
 
   // Mapping ID blok ke kode node perangkat yang sudah aktif (Validasi 1 Blok = 1 Sensor)
-  const [assignedBlockMap, setAssignedBlockMap] = useState<Record<string, string>>({})
+  const assignedBlockMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const s of initialSensors || []) {
+      if (s.blockId) {
+        const bId = String(s.blockId).trim()
+        map[bId] = s.nodeCode || 'Aktif'
+      }
+    }
+    return map
+  }, [initialSensors])
 
-  const hasFetchedFarmsRef = useRef(false)
-
-  // 1. Muat data kebun dan blok saat modal dibuka
+  // Sinkronisasi data kebun & blok saat modal dibuka
   useEffect(() => {
     if (initialFarms && initialFarms.length > 0) {
       setFarms(initialFarms)
-      return
-    }
-
-    if (!hasFetchedFarmsRef.current) {
-      hasFetchedFarmsRef.current = true
-      farmService
-        .getAll()
-        .then((data) => {
-          setFarms(data || [])
-        })
-        .catch(() => {
-          setFarms([])
-        })
     }
   }, [initialFarms])
 
-  // Muat data sensor yang sudah aktif untuk validasi 1 Blok = 1 Sensor
-  useEffect(() => {
-    let isMounted = true
-    sensorService
-      .getAll()
-      .then((sensorList) => {
-        if (!isMounted) return
-        const map: Record<string, string> = {}
-        for (const s of sensorList || []) {
-          if (s.blockId) {
-            const bId = String(s.blockId).trim()
-            map[bId] = s.nodeCode || 'Aktif'
-          }
-        }
-        setAssignedBlockMap(map)
-      })
-      .catch(() => {})
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  // 2. Fetch gateway dari backend berdasarkan blok terpilih (resolusi defensif kebun_id)
-  const loadGatewaysForBlock = useCallback(async (blockId: string) => {
-    const trimmedId = blockId.trim()
-    if (!trimmedId) {
-      setGateways([])
-      setIsLoadingGateways(false)
-      setSelectedGatewayId('')
-      return
-    }
-
-    setIsLoadingGateways(true)
-    try {
-      let currentFarms = farms
-      if (!currentFarms || currentFarms.length === 0) {
-        try {
-          const fetched = await farmService.getAll()
-          if (fetched && fetched.length > 0) {
-            currentFarms = fetched
-            setFarms(fetched)
-          }
-        } catch {
-          // ignore fallback fetch error
-        }
+  // Fetch gateway dari backend berdasarkan blok terpilih
+  const loadGatewaysForBlock = useCallback(
+    async (blockId: string) => {
+      const trimmedId = blockId.trim()
+      if (!trimmedId) {
+        setGateways([])
+        setIsLoadingGateways(false)
+        setSelectedGatewayId('')
+        return
       }
 
-      let resolvedFarmId: string | undefined
-      for (const f of currentFarms || []) {
-        const farmId = ((f as unknown as { id_kebun?: string }).id_kebun ?? f.id) as string | undefined
-        const matchedBlock = (f.blocks || []).find((b) => {
-          const bId = ((b as unknown as { id_blok?: string }).id_blok ?? b.id) as string | undefined
-          return String(bId) === String(trimmedId)
-        })
-        if (matchedBlock) {
-          resolvedFarmId =
-            (matchedBlock as unknown as { kebun_id?: string; farmId?: string }).kebun_id ??
-            (matchedBlock as unknown as { kebun_id?: string; farmId?: string }).farmId ??
-            farmId
-          break
+      setIsLoadingGateways(true)
+      try {
+        const currentFarms = farms
+        let resolvedFarmId: string | undefined
+        for (const f of currentFarms || []) {
+          const farmId = ((f as unknown as { id_kebun?: string }).id_kebun ?? f.id) as string | undefined
+          const matchedBlock = (f.blocks || []).find((b) => {
+            const bId = ((b as unknown as { id_blok?: string }).id_blok ?? b.id) as string | undefined
+            return String(bId) === String(trimmedId)
+          })
+          if (matchedBlock) {
+            resolvedFarmId =
+              (matchedBlock as unknown as { kebun_id?: string; farmId?: string }).kebun_id ??
+              (matchedBlock as unknown as { kebun_id?: string; farmId?: string }).farmId ??
+              farmId
+            break
+          }
         }
-      }
 
-      const data = await gatewayService.getByBlockId(trimmedId, resolvedFarmId)
-      setGateways(data || [])
-    } catch {
-      setGateways([])
-    } finally {
-      setIsLoadingGateways(false)
-    }
-  }, [farms])
+        const data = await gatewayService.getByBlockId(trimmedId, resolvedFarmId)
+        setGateways(data || [])
+      } catch {
+        setGateways([])
+      } finally {
+        setIsLoadingGateways(false)
+      }
+    },
+    [farms]
+  )
 
   useEffect(() => {
     loadGatewaysForBlock(selectedBlockId)
@@ -190,13 +188,14 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
     })
   }, [gateways, selectedBlockId])
 
-  // Auto-select gateway yang cocok jika ada
+  // Sinkronisasi mode gateway ketika filteredGateways berubah
   useEffect(() => {
     if (filteredGateways.length > 0) {
-      if (!filteredGateways.some((g) => (g.id_gateway || g.id) === selectedGatewayId)) {
+      if (!selectedGatewayId || !filteredGateways.some((g) => (g.id_gateway || g.id) === selectedGatewayId)) {
         setSelectedGatewayId(filteredGateways[0]?.id_gateway || filteredGateways[0]?.id || '')
       }
     } else {
+      setGatewayMode('auto')
       setSelectedGatewayId('')
     }
   }, [filteredGateways, selectedGatewayId])
@@ -220,51 +219,42 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
     [assignedBlockMap]
   )
 
-  // Flatten daftar semua blok untuk quick add gateway
-  const availableBlocks = useMemo<QuickBlockOption[]>(() => {
-    const list: QuickBlockOption[] = []
-    farms.forEach((farm) => {
-      (farm.blocks || []).forEach((block) => {
-        list.push({
-          id: block.id,
-          name: block.name,
-          farmName: farm.name,
-        })
-      })
-    })
-    return list
-  }, [farms])
-
-  // Callback setelah gateway baru berhasil ditambahkan via QuickAddGatewayModal
-  const handleQuickGatewaySuccess = async (newGateway: GatewayBackend) => {
-    const newGtwId = newGateway.id_gateway || newGateway.id || ''
-    if (selectedBlockId) {
-      await loadGatewaysForBlock(selectedBlockId)
-      setGateways((prev) => {
-        const exists = prev.some((g) => (g.id_gateway || g.id) === newGtwId)
-        return exists ? prev : [newGateway, ...prev]
-      })
-    } else {
-      setGateways((prev) => [newGateway, ...prev])
+  // Salin kode pairing ke clipboard
+  const handleCopyPairingCode = async () => {
+    if (!successData?.pairingCode) return
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(successData.pairingCode)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = successData.pairingCode
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+      }
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    } catch (err) {
+      console.error('Gagal menyalin kode:', err)
     }
-    if (newGtwId) {
-      setSelectedGatewayId(newGtwId)
-    }
-    setError(null)
   }
 
+  // Submit form terpadu: siapkan gateway jika auto, lalu buat node sensor secara atomik
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setIsSubscriptionError(false)
+    setError(null)
 
     if (containsMaliciousScript(kodePerangkat) || containsMaliciousScript(tipeSensor)) {
       setError(XSS_ERROR_MESSAGE)
       return
     }
 
-    // Validasi input wajib
     if (!selectedBlockId.trim()) {
-      setError('Penempatan Blok Lahan pada langkah 1 wajib dipilih.')
+      setError('Penempatan Blok Lahan wajib dipilih.')
       return
     }
 
@@ -274,48 +264,137 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
       return
     }
 
-    if (!selectedGatewayId.trim()) {
-      setError('Gateway IoT pada langkah 2 wajib dipilih. Jika belum tersedia, silakan buat Gateway terlebih dahulu.')
-      return
-    }
-
     if (!kodePerangkat.trim()) {
       setError('Kode Perangkat Node Sensor wajib diisi.')
       return
     }
 
-    // Validasi skema Zod
-    const validation = nodeSensorSchema.safeParse({
-      kode_perangkat: kodePerangkat.trim(),
-      blok_id: selectedBlockId.trim(),
-      gateway_id: selectedGatewayId.trim(),
-      tipe_sensor: tipeSensor.trim(),
-      status_koneksi: 'aktif',
-    })
-
-    if (!validation.success) {
-      const firstIssue = validation.error.issues[0]
-      let msg = firstIssue.message
-      if (firstIssue.path.includes('kode_perangkat')) {
-        msg = 'Kode Perangkat: ' + firstIssue.message
-      }
-      setError(msg)
-      return
-    }
+    setIsSubmitting(true)
 
     try {
-      // Payload bebas dari key qr_id, kode_pairing, token_perangkat
+      let resolvedGatewayId = ''
+      let resolvedGatewayCode = ''
+      let resolvedPairingCode = ''
+
+      if (gatewayMode === 'existing') {
+        if (!selectedGatewayId.trim()) {
+          setError('Pilih Gateway IoT yang tersedia di blok ini, atau gunakan mode buat baru otomatis.')
+          setIsSubmitting(false)
+          return
+        }
+        const existingGw = filteredGateways.find(
+          (g) => (g.id_gateway || g.id) === selectedGatewayId.trim()
+        )
+        resolvedGatewayId = selectedGatewayId.trim()
+        resolvedGatewayCode = existingGw?.kode_perangkat || 'GTW-IoT'
+        resolvedPairingCode = existingGw?.kode_pairing || ''
+      } else {
+        // Mode 'auto': gunakan gateway sementara jika sudah pernah dibuat untuk blok ini (saat retry)
+        if (cachedAutoGateway && cachedAutoGateway.blockId === selectedBlockId.trim()) {
+          resolvedGatewayId = cachedAutoGateway.gateway.id_gateway || cachedAutoGateway.gateway.id || ''
+          resolvedGatewayCode = cachedAutoGateway.gateway.kode_perangkat
+          resolvedPairingCode = cachedAutoGateway.gateway.kode_pairing || ''
+        } else {
+          // Buat gateway baru secara otomatis dengan kode unik deterministik
+          const cleanNode = kodePerangkat.trim().replace(/[^a-zA-Z0-9_-]/g, '').toUpperCase()
+          let candidateCode = `GTW-${cleanNode}`
+
+          const codeExists = gateways.some(
+            (g) => g.kode_perangkat.toLowerCase() === candidateCode.toLowerCase()
+          )
+          if (codeExists) {
+            candidateCode = `${candidateCode}-${Date.now().toString().slice(-4)}`
+          }
+
+          let createdGw: GatewayBackend | null = null
+          try {
+            const gwRes = await gatewayService.create({
+              blok_id: selectedBlockId.trim(),
+              kode_perangkat: candidateCode,
+              status_koneksi: 'belum_terhubung',
+            })
+            const resObj = gwRes as unknown as Record<string, unknown>
+            const resData = (resObj?.data as Record<string, unknown>)?.data || resObj?.data || resObj
+            const resDataTyped = resData as Record<string, unknown>
+            createdGw = {
+              id_gateway: String(resDataTyped?.id_gateway || resDataTyped?.id || `gtw-${Date.now()}`),
+              blok_id: selectedBlockId.trim(),
+              kode_perangkat: String(resDataTyped?.kode_perangkat || candidateCode),
+              status_koneksi: String(resDataTyped?.status_koneksi || 'belum_terhubung'),
+              kode_pairing: String(resDataTyped?.kode_pairing || ''),
+            }
+          } catch (gwErr: unknown) {
+            const errObj = gwErr as Record<string, unknown>
+            const status = (errObj?.status || (errObj?.response as Record<string, unknown>)?.status) as number
+            if (status === 422) {
+              const retryCode = `${candidateCode}-${Date.now().toString().slice(-4)}`
+              const retryRes = await gatewayService.create({
+                blok_id: selectedBlockId.trim(),
+                kode_perangkat: retryCode,
+                status_koneksi: 'belum_terhubung',
+              })
+              const retryObj = retryRes as unknown as Record<string, unknown>
+              const retryData = (retryObj?.data as Record<string, unknown>)?.data || retryObj?.data || retryObj
+              const retryDataTyped = retryData as Record<string, unknown>
+              createdGw = {
+                id_gateway: String(retryDataTyped?.id_gateway || retryDataTyped?.id || `gtw-${Date.now()}`),
+                blok_id: selectedBlockId.trim(),
+                kode_perangkat: String(retryDataTyped?.kode_perangkat || retryCode),
+                status_koneksi: String(retryDataTyped?.status_koneksi || 'belum_terhubung'),
+                kode_pairing: String(retryDataTyped?.kode_pairing || ''),
+              }
+            } else {
+              throw gwErr
+            }
+          }
+
+          if (createdGw) {
+            setCachedAutoGateway({ blockId: selectedBlockId.trim(), gateway: createdGw })
+            resolvedGatewayId = createdGw.id_gateway
+            resolvedGatewayCode = createdGw.kode_perangkat
+            resolvedPairingCode = createdGw.kode_pairing || ''
+          }
+        }
+      }
+
+      if (!resolvedGatewayId) {
+        setError('Gagal menyiapkan Gateway IoT untuk blok ini.')
+        setIsSubmitting(false)
+        return
+      }
+
+      // Validasi skema Zod untuk Node Sensor
+      const validation = nodeSensorSchema.safeParse({
+        kode_perangkat: kodePerangkat.trim(),
+        blok_id: selectedBlockId.trim(),
+        gateway_id: resolvedGatewayId,
+        tipe_sensor: tipeSensor.trim(),
+        status_koneksi: 'aktif',
+      })
+
+      if (!validation.success) {
+        const firstIssue = validation.error.issues[0]
+        let msg = firstIssue.message
+        if (firstIssue.path.includes('kode_perangkat')) {
+          msg = 'Kode Perangkat: ' + firstIssue.message
+        }
+        setError(msg)
+        setIsSubmitting(false)
+        return
+      }
+
+      // Panggil onSubmit untuk pembuatan Node Sensor di backend
       const payload: CreateNodePayload = {
         kode_perangkat: kodePerangkat.trim(),
         blok_id: selectedBlockId.trim(),
-        gateway_id: selectedGatewayId.trim(),
+        gateway_id: resolvedGatewayId,
         tipe_sensor: tipeSensor.trim(),
         status_koneksi: 'offline',
       }
 
       const res = await onSubmit(payload)
 
-      // Ambil id_sensor dari response untuk memuat kode QR resmi
+      // Dapatkan data QR dari respons atau nodeService
       const resObj = res as Record<string, unknown>
       const possibleData =
         (resObj?.data as Record<string, unknown>)?.data || resObj?.data || resObj
@@ -351,13 +430,15 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
       )
       const foundBlock = foundFarm?.blocks?.find((b) => b.id === selectedBlockId)
 
-      setNewNodeQrSuccess({
+      setSuccessData({
         nodeCode: kodePerangkat.trim(),
+        blockName: foundBlock?.name || 'Blok Lahan',
+        farmName: foundFarm?.name || 'Kebun',
+        gatewayCode: resolvedGatewayCode,
+        pairingCode: resolvedPairingCode,
         qrCodeText: qrText,
-        farmName: foundFarm?.name,
-        blockName: foundBlock?.name,
       })
-      setKodePerangkat('')
+      setCachedAutoGateway(null)
       setError(null)
     } catch (err: unknown) {
       let msg = 'Gagal menambahkan node sensor baru.'
@@ -371,19 +452,15 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
           if (errors?.blok_id) {
             msg = 'Blok lahan ini sudah memiliki node sensor aktif. Satu blok hanya dapat dipasangkan dengan satu node.'
           } else if (errors?.kode_perangkat) {
-            msg = 'Kode perangkat ini sudah digunakan. Mohon gunakan kode perangkat lain yang unik.'
+            msg = 'Kode perangkat node ini sudah digunakan. Mohon gunakan kode perangkat lain yang unik.'
           } else if (errors?.gateway_id) {
             msg = 'Gateway IoT yang dipilih tidak valid untuk blok ini.'
           } else if (responseData?.message) {
             msg = String(responseData.message)
-          } else {
-            msg = 'Data formulir tidak valid. Mohon periksa kembali isian Anda.'
           }
-        } else if (status === 402) {
-          msg = 'Batas kuota perangkat sensor untuk paket langganan Anda telah tercapai. Silakan upgrade paket pada menu Langganan.'
-          setIsSubscriptionError(true)
         } else if (status === 403) {
-          msg = 'Akses ditolak: Blok atau gateway bukan milik tenant Anda.'
+          msg = 'Batas kuota perangkat sensor pada paket langganan Anda telah tercapai.'
+          setIsSubscriptionError(true)
         } else if (status === 404) {
           msg = 'Blok atau Gateway tidak ditemukan di server.'
         } else if (errObj.message) {
@@ -391,161 +468,254 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
         }
       }
       setError(msg)
+    } finally {
+      setIsSubmitting(false)
     }
   }
+
+  // Selesaikan proses: invalidasi query TanStack dan tutup modal
+  const handleFinish = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: sensorKeys.all, refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: ['nodes'], refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: blockKeys.all, refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: ['kebun'], refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: farmKeys.all, refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: farmKeys.withBlocks(), refetchType: 'all' }),
+    ])
+    setSuccessData(null)
+    setCachedAutoGateway(null)
+    setKodePerangkat('')
+    setError(null)
+    onClose()
+  }
+
+  const isBusy = isSubmitting || externalSubmitting
+
+  const qrImageUrl = successData?.qrCodeText
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(successData.qrCodeText)}`
+    : ''
 
   return (
     <>
       <Modal
         isOpen={isOpen}
-        onClose={onClose}
-        title="Tambah Node Sensor Baru"
-        description="Daftarkan perangkat node IoT baru untuk memantau intensitas cahaya lux dan kondisi lingkungan blok lahan."
+        onClose={successData ? handleFinish : onClose}
+        title={successData ? 'Node Sensor & Gateway Berhasil Dibuat' : 'Tambah Node Sensor Baru'}
+        description={
+          successData
+            ? 'Perangkat IoT telah terdaftar di sistem. Lakukan pairing ESP32 dan pasang stiker QR pada tiang fisik.'
+            : 'Daftarkan perangkat node IoT baru untuk memantau intensitas cahaya lux dan kondisi lingkungan blok lahan.'
+        }
         maxWidth="lg"
       >
-        <form onSubmit={handleSubmit} className="space-y-5 pt-1 text-left">
-          {error && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold space-y-1">
-              <p>{error}</p>
-              {isSubscriptionError && (
-                <div className="pt-1">
-                  <Link
-                    to="/kebun/langganan"
-                    className="inline-flex items-center text-xs font-bold text-emerald-700 underline hover:text-emerald-800"
-                  >
-                    Buka Halaman Langganan
-                  </Link>
+        {successData ? (
+          /* TAMPILAN SUKSES TERPADU (Single Container, Zero Stacked Modal) */
+          <div className="space-y-4 pt-1 text-left">
+            {/* Ringkasan Perangkat */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 text-xs space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-medium">Perangkat Node:</span>
+                <span className="font-mono font-bold text-slate-900">{successData.nodeCode}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-medium">Blok Lahan:</span>
+                <span className="font-semibold text-slate-800">
+                  {successData.blockName} ({successData.farmName})
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-medium">Gateway Terhubung:</span>
+                <span className="font-mono font-semibold text-slate-800">{successData.gatewayCode}</span>
+              </div>
+            </div>
+
+            {/* Kotak Kode Pairing ESP32 */}
+            {successData.pairingCode ? (
+              <div className="bg-slate-50 border-2 border-slate-900 rounded-lg p-4 sm:p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-slate-700 shrink-0" />
+                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Kode Pairing ESP32
+                  </span>
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* LANGKAH 1: PILIH BLOK LAHAN (1 Blok = 1 Sensor) */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="select-blok-lahan"
-              className="block text-xs font-semibold text-slate-700"
-            >
-              Langkah 1: Penempatan Blok Lahan <span className="text-rose-600 font-bold ml-0.5">*</span>
-            </label>
-            <select
-              id="select-blok-lahan"
-              value={selectedBlockId}
-              onChange={(e) => {
-                setSelectedBlockId(e.target.value)
-                if (error) setError(null)
-              }}
-              required
-              className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer pr-8"
-            >
-              <option value="">Pilih Blok Lahan</option>
-              {farms.map((farm) => (
-                <optgroup key={farm.id} label={farm.name}>
-                  {(farm.blocks || []).map((b) => {
-                    const assignedNode = getAssignedNodeCode(b.id, b)
-                    const isAssigned = Boolean(assignedNode)
-                    const bName = b.name.trim()
-                    const formattedBlockName = bName.toLowerCase().startsWith('blok') ? bName : `Blok ${bName}`
-                    return (
-                      <option
-                        key={b.id}
-                        value={b.id}
-                        disabled={isAssigned}
-                        className={isAssigned ? 'text-slate-400 bg-slate-50 italic' : ''}
-                      >
-                        {farm.name} - {formattedBlockName} {isAssigned ? `(Sudah memiliki Node: ${assignedNode})` : ''}
-                      </option>
-                    )
-                  })}
-                </optgroup>
-              ))}
-            </select>
-            <p className="text-[11px] text-slate-500">
-              Satu blok lahan hanya dapat dipasangkan dengan satu unit node sensor.
-            </p>
-          </div>
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <div className="font-mono text-2xl sm:text-3xl font-bold text-slate-900 tracking-wider select-all truncate">
+                    {successData.pairingCode}
+                  </div>
 
-          {/* LANGKAH 2: PILIH GATEWAY BLOK */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between min-h-[20px]">
-              <label
-                htmlFor="select-gateway-iot"
-                className="block text-xs font-semibold text-slate-700"
-              >
-                Langkah 2: Gateway IoT Blok <span className="text-rose-600 font-bold ml-0.5">*</span>
-              </label>
-              {selectedBlockId && !(isLoadingGateways || filteredGateways.length === 0) && (
-                <button
-                  type="button"
-                  onClick={() => setIsQuickGatewayOpen(true)}
-                  className="text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline flex items-center gap-1 cursor-pointer transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Tambah Gateway</span>
-                </button>
-              )}
-            </div>
-            <select
-              id="select-gateway-iot"
-              value={selectedGatewayId}
-              onChange={(e) => {
-                setSelectedGatewayId(e.target.value)
-                if (error) setError(null)
-              }}
-              required
-              disabled={!selectedBlockId || isLoadingGateways || filteredGateways.length === 0}
-              className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed cursor-pointer pr-8"
-            >
-              {!selectedBlockId ? (
-                <option value="">Pilih Blok Lahan pada langkah 1 terlebih dahulu</option>
-              ) : isLoadingGateways ? (
-                <option value="">Memuat daftar gateway blok...</option>
-              ) : filteredGateways.length === 0 ? (
-                <option value="">Belum ada gateway di blok ini</option>
-              ) : (
-                <>
-                  <option value="">Pilih Gateway IoT</option>
-                  {filteredGateways.map((gtw) => {
-                    const gtwId = gtw.id_gateway || gtw.id || ''
-                    return (
-                      <option key={gtwId} value={gtwId}>
-                        {gtw.kode_perangkat} ({gtw.status_koneksi || 'offline'})
-                      </option>
-                    )
-                  })}
-                </>
-              )}
-            </select>
-            {selectedBlockId && !isLoadingGateways && filteredGateways.length === 0 && (
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 mt-1.5">
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Blok lahan yang dipilih belum memiliki perangkat Gateway IoT. Setiap node sensor membutuhkan Gateway aktif di blok tersebut untuk meneruskan data telemetri.
+                  <button
+                    type="button"
+                    onClick={handleCopyPairingCode}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-colors cursor-pointer shrink-0 border ${
+                      copied
+                        ? 'bg-emerald-700 text-white border-emerald-700'
+                        : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900'
+                    }`}
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>Tersalin!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        <span>Salin Kode</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <p className="text-xs text-slate-700 leading-relaxed bg-slate-100 border border-slate-200 rounded-lg p-3">
+                  Masukkan kode ini pada halaman konfigurasi WiFi ESP32. Kode hanya berlaku satu kali dan otomatis hangus setelah gateway terhubung.
                 </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsQuickGatewayOpen(true)}
-                  leftIcon={<Plus className="w-4 h-4" />}
-                  className="bg-white border-slate-300 text-slate-800 hover:bg-slate-100 text-xs font-semibold cursor-pointer shadow-xs"
-                >
-                  Buat Gateway untuk Blok Ini
-                </Button>
+              </div>
+            ) : (
+              <div className="bg-emerald-50 border border-emerald-300 rounded-lg p-3.5 text-xs text-emerald-900 flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                <p>
+                  Node terhubung ke Gateway aktif ({successData.gatewayCode}). Gateway ini telah dipasangkan sebelumnya dan siap meneruskan telemetri ke server.
+                </p>
               </div>
             )}
-          </div>
 
-          {/* LANGKAH 3: KODE PERANGKAT & TIPE SENSOR */}
-          <div className="space-y-4 pt-1">
-            {/* Input Kode Perangkat */}
-            <div className="space-y-1">
+            {/* Bagian Stiker QR Perangkat */}
+            {successData.qrCodeText && (
+              <div className="bg-white border border-slate-200 rounded-lg p-4 flex flex-col sm:flex-row items-center gap-4">
+                <div className="p-2 border-2 border-slate-200 rounded-lg shrink-0 bg-white">
+                  <img
+                    src={qrImageUrl}
+                    alt={successData.qrCodeText}
+                    className="w-28 h-28 object-contain"
+                  />
+                </div>
+                <div className="space-y-2 flex-1 text-center sm:text-left">
+                  <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-bold text-slate-800">
+                    <QrCode className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span>Stiker QR Perangkat</span>
+                  </div>
+                  <p className="font-mono text-xs font-bold text-slate-900 select-all">
+                    {successData.qrCodeText}
+                  </p>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Cetak atau unduh label QR ini untuk ditempelkan pada tiang fisik node sensor.
+                  </p>
+                  <div className="flex items-center justify-center sm:justify-start gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 cursor-pointer"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>Cetak Label</span>
+                    </button>
+                    <a
+                      href={qrImageUrl}
+                      download={`${successData.qrCodeText}.png`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-2xs cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Unduh Gambar</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tombol Selesai */}
+            <div className="flex items-center justify-end pt-3 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="primary"
+                size="md"
+                onClick={handleFinish}
+                className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-2 px-8 rounded-lg cursor-pointer"
+              >
+                Selesai
+              </Button>
+            </div>
+          </div>
+        ) : (
+          /* TAMPILAN FORM TERPADU */
+          <form onSubmit={handleSubmit} className="space-y-5 pt-1 text-left">
+            {error && (
+              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold space-y-1">
+                <p>{error}</p>
+                {isSubscriptionError && (
+                  <div className="pt-1">
+                    <Link
+                      to="/kebun/langganan"
+                      className="inline-flex items-center text-xs font-bold text-emerald-700 underline hover:text-emerald-800"
+                    >
+                      Buka Halaman Langganan
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* LANGKAH 1: PILIH BLOK LAHAN (1 Blok = 1 Sensor) */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="select-blok-lahan"
+                className="block text-xs font-semibold text-slate-800"
+              >
+                Langkah 1: Penempatan Blok Lahan <span className="text-rose-600 font-bold ml-0.5">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  id="select-blok-lahan"
+                  value={selectedBlockId}
+                  onChange={(e) => {
+                    setSelectedBlockId(e.target.value)
+                    if (error) setError(null)
+                  }}
+                  required
+                  className="block w-full appearance-none rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer pr-10"
+                >
+                  <option value="">Pilih Blok Lahan</option>
+                  {farms.map((farm) => (
+                    <optgroup key={farm.id} label={farm.name}>
+                      {(farm.blocks || []).map((b) => {
+                        const assignedNode = getAssignedNodeCode(b.id, b)
+                        const isAssigned = Boolean(assignedNode)
+                        const bName = b.name.trim()
+                        const formattedBlockName = bName.toLowerCase().startsWith('blok') ? bName : `Blok ${bName}`
+                        return (
+                          <option
+                            key={b.id}
+                            value={b.id}
+                            disabled={isAssigned}
+                            className={isAssigned ? 'text-slate-400 bg-slate-50 italic' : ''}
+                          >
+                            {farm.name} - {formattedBlockName} {isAssigned ? `(Sudah memiliki Node: ${assignedNode})` : ''}
+                          </option>
+                        )
+                      })}
+                    </optgroup>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Satu blok lahan hanya dapat dipasangkan dengan satu unit node sensor.
+              </p>
+            </div>
+
+            {/* LANGKAH 2: KODE PERANGKAT NODE */}
+            <div className="space-y-1.5">
               <label
                 htmlFor="input-kode-perangkat"
-                className="block text-xs font-semibold text-slate-700 mb-1.5"
+                className="block text-xs font-semibold text-slate-800"
               >
-                Langkah 3: Kode Perangkat Node Sensor <span className="text-rose-600 font-bold ml-0.5">*</span>
+                Langkah 2: Kode Perangkat Node Sensor <span className="text-rose-600 font-bold ml-0.5">*</span>
               </label>
-              <div className="relative rounded-xl">
+              <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                   <Radio className="w-4 h-4" />
                 </div>
@@ -560,87 +730,164 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
                   }}
                   placeholder="Contoh: ND-BLOKA-01"
                   required
-                  className="block w-full rounded-xl border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                  className="block w-full rounded-lg border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
                 />
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
-                Kode unik penanda perangkat di lapangan (contoh: ND-BLOKA-01). Stiker QR akan dibuat otomatis setelah disimpan.
+              <p className="text-[11px] text-slate-500">
+                Kode unik penanda perangkat di lapangan. Stiker QR resmi akan dibuat otomatis saat disimpan.
               </p>
             </div>
 
-            {/* Dropdown Tipe Sensor */}
+            {/* LANGKAH 3: TIPE SENSOR */}
             <div className="space-y-1.5">
               <label
                 htmlFor="select-tipe-sensor"
-                className="block text-xs font-semibold text-slate-700"
+                className="block text-xs font-semibold text-slate-800"
               >
-                Tipe Sensor <span className="text-rose-600 font-bold ml-0.5">*</span>
+                Langkah 3: Tipe Sensor <span className="text-rose-600 font-bold ml-0.5">*</span>
               </label>
               <select
                 id="select-tipe-sensor"
+                name="tipe_sensor"
                 value={tipeSensor}
                 onChange={(e) => setTipeSensor(e.target.value)}
                 required
-                className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer pr-8"
+                className="block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer pr-8"
               >
-                <option value="cahaya_lux">Sensor Intensitas Cahaya (Lux) & Suhu</option>
-                <option value="cahaya">Sensor Intensitas Cahaya (Lux)</option>
-                <option value="suhu">Sensor Suhu Lingkungan</option>
-                <option value="kelembapan">Sensor Kelembapan Tanah dan Udara</option>
+                <option value="cahaya_lux">Sensor Intensitas Cahaya (Lux)</option>
               </select>
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-            <Button
-              type="button"
-              variant="outline"
-              size="md"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="cursor-pointer"
-            >
-              Batal
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
-              disabled={isSubmitting || (Boolean(selectedBlockId) && filteredGateways.length === 0)}
-              isLoading={isSubmitting}
-              leftIcon={<Plus className="w-4 h-4" />}
-              className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold cursor-pointer shadow-xs"
-            >
-              Simpan Node
-            </Button>
-          </div>
-        </form>
+            {/* LANGKAH 4: KONFIGURASI GATEWAY IOT TERPADU */}
+            <div className="space-y-2 pt-1 border-t border-slate-100">
+              <label className="block text-xs font-semibold text-slate-800">
+                Langkah 4: Konfigurasi Gateway IoT Blok
+              </label>
+
+              {/* Kasus A: Belum ada gateway di blok ini */}
+              {!selectedBlockId ? (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-500">
+                  Pilih Blok Lahan pada langkah 1 untuk memeriksa ketersediaan Gateway.
+                </div>
+              ) : isLoadingGateways ? (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-500">
+                  Memeriksa gateway blok...
+                </div>
+              ) : filteredGateways.length === 0 ? (
+                <div className="p-3.5 bg-slate-50 border border-slate-300 rounded-lg space-y-1">
+                  <div className="flex items-center gap-2 text-slate-800 text-xs font-bold uppercase tracking-wider">
+                    <Wifi className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span>Pembuatan Gateway Otomatis</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Blok ini belum memiliki Gateway. Gateway IoT dan Kode Pairing ESP32 akan dibuat otomatis saat Anda menekan tombol Simpan Node.
+                  </p>
+                </div>
+              ) : (
+                /* Kasus B: Blok sudah memiliki gateway (berikan opsi pilih atau buat baru) */
+                <div className="space-y-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <label
+                      className={`p-3 rounded-lg border text-left cursor-pointer transition-colors flex items-start gap-2.5 ${
+                        gatewayMode === 'existing'
+                          ? 'border-emerald-600 bg-emerald-50/40 text-slate-900'
+                          : 'border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="gatewayMode"
+                        value="existing"
+                        checked={gatewayMode === 'existing'}
+                        onChange={() => setGatewayMode('existing')}
+                        className="mt-0.5 text-emerald-700 focus:ring-emerald-600"
+                      />
+                      <div className="text-xs space-y-0.5">
+                        <span className="font-bold block">Gunakan Gateway Tersedia</span>
+                        <span className="text-slate-500 text-[11px] block">
+                          Hubungkan node ke gateway yang sudah terdaftar di blok ini.
+                        </span>
+                      </div>
+                    </label>
+
+                    <label
+                      className={`p-3 rounded-lg border text-left cursor-pointer transition-colors flex items-start gap-2.5 ${
+                        gatewayMode === 'auto'
+                          ? 'border-emerald-600 bg-emerald-50/40 text-slate-900'
+                          : 'border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="gatewayMode"
+                        value="auto"
+                        checked={gatewayMode === 'auto'}
+                        onChange={() => setGatewayMode('auto')}
+                        className="mt-0.5 text-emerald-700 focus:ring-emerald-600"
+                      />
+                      <div className="text-xs space-y-0.5">
+                        <span className="font-bold block">Buat Gateway Baru Otomatis</span>
+                        <span className="text-slate-500 text-[11px] block">
+                          Generate gateway tambahan beserta kode pairing baru.
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+
+                  {gatewayMode === 'existing' && (
+                    <div className="space-y-1 pt-1">
+                      <label htmlFor="select-existing-gateway" className="block text-[11px] font-semibold text-slate-700">
+                        Pilih Gateway di Blok Ini:
+                      </label>
+                      <select
+                        id="select-existing-gateway"
+                        value={selectedGatewayId}
+                        onChange={(e) => setSelectedGatewayId(e.target.value)}
+                        required
+                        className="block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-medium text-slate-900 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer"
+                      >
+                        {filteredGateways.map((gw) => {
+                          const gwId = gw.id_gateway || gw.id || ''
+                          return (
+                            <option key={gwId} value={gwId}>
+                              {gw.kode_perangkat} ({formatGatewayStatus(gw.status_koneksi)})
+                            </option>
+                          )
+                        })}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                size="md"
+                onClick={onClose}
+                disabled={isBusy}
+                className="cursor-pointer"
+              >
+                Batal
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                disabled={isBusy || !selectedBlockId.trim() || !kodePerangkat.trim()}
+                isLoading={isBusy}
+                leftIcon={<Plus className="w-4 h-4" />}
+                className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold cursor-pointer shadow-xs"
+              >
+                Simpan Node
+              </Button>
+            </div>
+          </form>
+        )}
       </Modal>
-
-      {/* Popup Cepat Tambah Gateway */}
-      <QuickAddGatewayModal
-        isOpen={isQuickGatewayOpen}
-        availableBlocks={availableBlocks}
-        defaultBlockId={selectedBlockId}
-        onClose={() => setIsQuickGatewayOpen(false)}
-        onSuccess={handleQuickGatewaySuccess}
-      />
-
-      {/* Modal Sukses Penerbitan QR Node Baru Otomatis */}
-      {newNodeQrSuccess && (
-        <NewNodeQrSuccessModal
-          isOpen={Boolean(newNodeQrSuccess)}
-          onClose={() => {
-            setNewNodeQrSuccess(null)
-            onClose()
-          }}
-          nodeCode={newNodeQrSuccess.nodeCode}
-          qrCodeText={newNodeQrSuccess.qrCodeText}
-          farmName={newNodeQrSuccess.farmName}
-          blockName={newNodeQrSuccess.blockName}
-        />
-      )}
     </>
   )
 }

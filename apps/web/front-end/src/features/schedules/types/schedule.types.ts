@@ -7,6 +7,12 @@ export interface ActiveScheduleItem {
   startTime: string
   endTime: string
   intensity: number // Dalam persentase (contoh: 85)
+  mode?: 'manual' | 'auto'
+  isOverride?: boolean
+  targetLux?: number | null
+  intensitasMinimum?: number | null
+  baselineManualPersen?: number | null
+  statusAktif?: boolean
 }
 
 export interface DimmingLogItem {

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { X, Flower2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatDate } from '@/utils/formatters';
 import { harvestService } from '@/services/harvestService';
+import { harvestKeys, blockKeys } from '@/services/queryKeys';
 import type { HarvestCycle } from '../types/harvest.types';
 
 interface RecordFlowerModalProps {
@@ -18,6 +20,7 @@ export const RecordFlowerModal: React.FC<RecordFlowerModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const queryClient = useQueryClient();
   const [flowerDate, setFlowerDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -48,6 +51,12 @@ export const RecordFlowerModal: React.FC<RecordFlowerModalProps> = ({
       const updated = await harvestService.recordFlower(cycle.id_siklus_panen, {
         tanggal_berbunga_aktual: flowerDate,
       });
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: harvestKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: blockKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+      ]);
 
       const enriched: HarvestCycle = {
         ...updated,
