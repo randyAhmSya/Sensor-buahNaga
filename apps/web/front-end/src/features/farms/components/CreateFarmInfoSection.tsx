@@ -24,8 +24,8 @@ export const CreateFarmInfoSection: FC<CreateFarmInfoSectionProps> = ({
       <div className="space-y-5 pt-6">
         {/* Nama Kebun (Wajib) */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">
-            Nama Kebun <span className="text-rose-600 font-bold ml-0.5">*</span>
+          <label className="block text-sm font-semibold text-slate-800 mb-1.5">
+            Nama Kebun <span className="text-red-500 font-bold ml-1">*</span>
           </label>
           <InputField
             name="name"
@@ -39,8 +39,8 @@ export const CreateFarmInfoSection: FC<CreateFarmInfoSectionProps> = ({
 
         {/* Lokasi / Alamat Lengkap (Wajib) */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">
-            Lokasi / Alamat Lengkap <span className="text-rose-600 font-bold ml-0.5">*</span>
+          <label className="block text-sm font-semibold text-slate-800 mb-1.5">
+            Lokasi / Alamat Lengkap <span className="text-red-500 font-bold ml-1">*</span>
           </label>
           <textarea
             rows={3}

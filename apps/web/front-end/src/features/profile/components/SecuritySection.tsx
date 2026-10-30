@@ -1,22 +1,22 @@
 import { useState, useCallback, type FC, type ChangeEvent, type FormEvent } from 'react'
-import { ShieldCheck, Lock, CheckCircle2 } from 'lucide-react'
+import { ShieldCheck, Lock } from 'lucide-react'
 import { InputField } from '@/components/form/InputField'
 import { Button } from '@/components/ui/Button'
 import { changePasswordSchema } from '../schemas/profileSchemas'
+import { useNotify } from '@/context/NotificationContext'
 
 export const SecuritySection: FC = () => {
+  const notify = useNotify()
   const [passwords, setPasswords] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [updateSuccess, setUpdateSuccess] = useState(false)
 
   const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setPasswords((prev) => ({ ...prev, [name]: value }))
-    setUpdateSuccess(false)
     setErrors((prev) => {
       if (!prev[name]) return prev
       const next = { ...prev }
@@ -39,19 +39,18 @@ export const SecuritySection: FC = () => {
           }
         }
         setErrors(fieldErrors)
-        setUpdateSuccess(false)
         return
       }
 
       setErrors({})
-      setUpdateSuccess(true)
+      notify.success('Keamanan Akun', 'Password berhasil diperbarui!')
       setPasswords({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       })
     },
-    [passwords]
+    [passwords, notify]
   )
 
   return (
@@ -62,13 +61,6 @@ export const SecuritySection: FC = () => {
       </div>
 
       <form onSubmit={handlePasswordSubmit} className="space-y-4 max-w-xl">
-        {updateSuccess && (
-          <div className="flex items-center gap-2 p-3 text-sm text-emerald-800 bg-white border border-emerald-300 rounded-xl animate-in fade-in duration-150">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Password berhasil diperbarui!</span>
-          </div>
-        )}
-
         <InputField
           label="Password Lama"
           name="currentPassword"

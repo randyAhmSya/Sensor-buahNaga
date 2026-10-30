@@ -176,14 +176,13 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
   // ==========================================
   // Mode Petani / Admin Kebun: Service API
   // ==========================================
+  const notificationFilter = useMemo(() => {
+    return filterTab === 'belum_dibaca' ? { belum_dibaca: true } : {};
+  }, [filterTab]);
+
   const petaniNotificationsQuery = useQuery({
-    queryKey: notificationKeys.list({
-      belum_dibaca: filterTab === 'belum_dibaca' ? true : undefined,
-    }),
-    queryFn: () =>
-      notificationService.getPetaniNotifications({
-        belum_dibaca: filterTab === 'belum_dibaca' ? true : undefined,
-      }),
+    queryKey: notificationKeys.list(notificationFilter),
+    queryFn: () => notificationService.getPetaniNotifications(notificationFilter),
     enabled: !isSuperAdmin,
     staleTime: 1000 * 30,
   });

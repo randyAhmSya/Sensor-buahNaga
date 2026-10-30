@@ -9,7 +9,6 @@ export function useTelemetryLatestQuery(sensorId?: string) {
     queryFn: () => (sensorId ? telemetryService.getLatest(sensorId) : Promise.resolve(null)),
     enabled: Boolean(sensorId && sensorId.trim() && sensorId !== 'Belum Terpasang'),
     staleTime: 1000 * 30, // 30 detik
-    refetchInterval: 1000 * 60, // auto refetch setiap 60 detik
   });
 }
 

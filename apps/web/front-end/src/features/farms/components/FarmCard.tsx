@@ -12,6 +12,9 @@ import {
   Trash2,
 } from 'lucide-react';
 import type { FarmItem } from '@/types/farm.types';
+import { DEFAULT_FARM_TEMPLATE_IMAGE } from '@/config/constants';
+
+export { DEFAULT_FARM_TEMPLATE_IMAGE };
 
 interface FarmCardProps {
   farm: FarmItem;
@@ -29,9 +32,12 @@ export const FarmCard: React.FC<FarmCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
+  const [templateError, setTemplateError] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const showFallback = !farm.imageUrl || !farm.imageUrl.trim() || imgError;
+  const hasCustomImage = Boolean(farm.imageUrl && farm.imageUrl.trim() && !imgError);
+  const displayImageUrl = hasCustomImage ? farm.imageUrl : DEFAULT_FARM_TEMPLATE_IMAGE;
+  const showFallback = !hasCustomImage;
   const farmId = farm.id_kebun ?? farm.id;
 
   return (
@@ -39,34 +45,47 @@ export const FarmCard: React.FC<FarmCardProps> = ({
       onClick={() => onSelect(farmId)}
       className="bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 group border border-slate-200/90 hover:border-emerald-600 hover:shadow-md relative active:scale-[0.99]"
     >
-      {/* Gambar / Fallback Header */}
-      <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-slate-100 flex items-center justify-center">
-        {showFallback ? (
-          <div className="w-full h-full flex flex-col items-center justify-center text-emerald-700 select-none p-4 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-white/90 border border-emerald-200 shadow-2xs flex items-center justify-center mb-2">
-              <Sprout className="w-6 h-6 text-emerald-600" />
-            </div>
-            <span className="text-xs font-bold text-slate-800 line-clamp-1">{farm.name}</span>
-            <span className="text-[11px] text-slate-500 font-medium">AgroLight Smart Farm</span>
+      {/* Gambar / Banner Kebun */}
+      <div className="relative h-48 w-full overflow-hidden bg-slate-900">
+        {templateError && showFallback ? (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 text-slate-300 p-4 text-center">
+            <Sprout className="w-8 h-8 text-emerald-400 mb-1" />
+            <span className="text-xs font-semibold text-white line-clamp-1">{farm.name}</span>
+            <span className="text-[11px] text-slate-400">Kebun Buah Naga AgroLight</span>
           </div>
         ) : (
           <img
-            src={farm.imageUrl}
+            src={displayImageUrl}
             alt={farm.name}
-            onError={() => setImgError(true)}
+            loading="lazy"
+            decoding="async"
+            onError={() => {
+              if (hasCustomImage) {
+                setImgError(true);
+              } else {
+                setTemplateError(true);
+              }
+            }}
             className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
               farm.status === 'Inaktif' ? 'grayscale-[40%]' : ''
             }`}
           />
         )}
 
+        {/* Overlay Gradasi & Label Nama Kebun di Bawah Banner */}
+        <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent flex items-end justify-between pointer-events-none">
+          <span className="text-xs font-bold text-white drop-shadow-sm line-clamp-1">
+            {farm.name}
+          </span>
+        </div>
+
         {/* Status Badge di Kiri Atas */}
         <div className="absolute top-4 left-4 z-10">
           <span
-            className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-xs ${
+            className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-xs backdrop-blur-xs ${
               farm.status === 'Aktif'
-                ? 'bg-white border border-emerald-600 text-emerald-800'
-                : 'bg-white border border-slate-300 text-slate-700'
+                ? 'bg-white/95 border border-emerald-600 text-emerald-800'
+                : 'bg-white/95 border border-slate-300 text-slate-700'
             }`}
           >
             {farm.status === 'Aktif' ? (

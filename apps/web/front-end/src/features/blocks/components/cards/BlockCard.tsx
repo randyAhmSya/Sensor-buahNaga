@@ -1,41 +1,70 @@
 import React, { useState } from 'react'
-import { Maximize2, Radio, RadioTower, Layers } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Maximize2, Radio, RadioTower } from 'lucide-react'
 import type { BlockItem } from '@/types/block.types'
+import { DEFAULT_FARM_TEMPLATE_IMAGE } from '@/config/constants'
 
 interface BlockCardProps {
   block: BlockItem
+  farmId?: string
   onClick?: (block: BlockItem) => void
 }
 
-export const BlockCard: React.FC<BlockCardProps> = ({ block, onClick }) => {
+export const BlockCard: React.FC<BlockCardProps> = ({ block, farmId, onClick }) => {
+  const navigate = useNavigate()
   const [imgError, setImgError] = useState(false)
+  const [templateError, setTemplateError] = useState(false)
   const isOnline = block.status === 'Online'
-  const showFallback = !block.imageUrl || imgError
+
+  const hasCustomImage = Boolean(block.imageUrl && block.imageUrl.trim() && !imgError)
+  const displayImageUrl = hasCustomImage
+    ? block.imageUrl
+    : (!templateError ? DEFAULT_FARM_TEMPLATE_IMAGE : null)
+
+  const blockId = block.id_blok ?? block.id
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick(block)
+    } else {
+      const targetUrl = farmId
+        ? `/kebun/farms/${farmId}/blocks/${blockId}`
+        : `/kebun/blocks/${blockId}`
+      navigate(targetUrl)
+    }
+  }
 
   return (
     <div
-      onClick={() => onClick?.(block)}
-      className={`rounded-xl p-4 border transition-all duration-200 cursor-pointer flex items-start gap-4 ${
+      onClick={handleClick}
+      className={`rounded-2xl p-4 border transition-all duration-200 cursor-pointer flex items-start gap-4 group ${
         isOnline
           ? 'bg-white border-slate-200 hover:border-emerald-500 hover:shadow-md active:scale-[0.99]'
-          : 'bg-slate-50/70 border-slate-200 hover:border-slate-300 opacity-90'
+          : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs active:scale-[0.99]'
       }`}
     >
-      <div className="w-24 h-24 rounded-lg overflow-hidden shrink-0 border border-slate-100 bg-gradient-to-br from-emerald-50 via-teal-50 to-slate-100 flex items-center justify-center">
-        {showFallback ? (
-          <div className="w-full h-full flex flex-col items-center justify-center text-emerald-700 select-none p-2 text-center">
-            <div className="w-8 h-8 rounded-lg bg-white/80 border border-emerald-200 shadow-2xs flex items-center justify-center mb-1">
-              <Layers className="w-4 h-4 text-emerald-600" />
-            </div>
-            <span className="text-[10px] font-bold text-slate-700 line-clamp-1">{block.name}</span>
-          </div>
-        ) : (
+      <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 border border-slate-200 relative bg-slate-100 flex items-center justify-center">
+        {displayImageUrl ? (
           <img
-            src={block.imageUrl}
+            src={displayImageUrl}
             alt={block.name}
-            onError={() => setImgError(true)}
-            className={`w-full h-full object-cover ${!isOnline ? 'grayscale-[40%]' : ''}`}
+            loading="lazy"
+            decoding="async"
+            onError={() => {
+              if (hasCustomImage) {
+                setImgError(true)
+              } else {
+                setTemplateError(true)
+              }
+            }}
+            className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+              !isOnline ? 'grayscale-[35%]' : ''
+            }`}
           />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-emerald-800 to-slate-900 flex items-center justify-center text-white select-none">
+            <span className="text-xs font-bold">{block.name.slice(0, 2).toUpperCase()}</span>
+          </div>
         )}
       </div>
 
@@ -45,12 +74,22 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, onClick }) => {
             <h4 className="font-bold text-slate-900 text-base">{block.name}</h4>
             <span
               className={`px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wide flex items-center gap-1.5 border ${
-                isOnline
+                block.status === 'Online'
                   ? 'bg-white border-emerald-500 text-emerald-700'
+                  : block.status === 'Offline'
+                  ? 'bg-white border-rose-300 text-rose-700'
                   : 'bg-white border-slate-300 text-slate-600'
               }`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  block.status === 'Online'
+                    ? 'bg-emerald-500'
+                    : block.status === 'Offline'
+                    ? 'bg-rose-500'
+                    : 'bg-slate-400'
+                }`}
+              />
               {block.status}
             </span>
           </div>

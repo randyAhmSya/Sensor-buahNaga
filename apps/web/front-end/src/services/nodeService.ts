@@ -3,6 +3,9 @@ import type { ApiResponse } from '@/types/api.types';
 import type { NodeSensorBackend, CreateNodePayload, UpdateNodePayload } from '@/types/node.types';
 import { farmService } from './farmService';
 
+// In-flight promise cache untuk deduplikasi request simultan GET /api/petani/node?kebun_id=UUID
+const inFlightNodeRequests = new Map<string, Promise<NodeSensorBackend[]>>();
+
 export const nodeService = {
   /**
    * Mengambil daftar semua node sensor milik tenant (wajib menyertakan query param kebun_id)
@@ -34,31 +37,46 @@ export const nodeService = {
       return [];
     }
 
-    try {
-      const params = { kebun_id: targetKebunId.trim() };
-      const res = await apiClient.get<ApiResponse<NodeSensorBackend[]> | NodeSensorBackend[]>('/petani/node', {
-        params,
-      });
-
-      if (!res) return [];
-      if (Array.isArray(res)) return res as NodeSensorBackend[];
-      const obj = res as unknown as Record<string, unknown>;
-      if (Array.isArray(obj.data)) {
-        return obj.data as NodeSensorBackend[];
-      }
-      if (obj.data && typeof obj.data === 'object') {
-        const nestedData = (obj.data as Record<string, unknown>).data;
-        if (Array.isArray(nestedData)) {
-          return nestedData as NodeSensorBackend[];
-        }
-      }
-      if (Array.isArray(obj.nodes)) {
-        return obj.nodes as NodeSensorBackend[];
-      }
-      return [];
-    } catch {
-      return [];
+    const cacheKey = targetKebunId.trim();
+    const existing = inFlightNodeRequests.get(cacheKey);
+    if (existing) {
+      return existing;
     }
+
+    const fetchPromise = (async (): Promise<NodeSensorBackend[]> => {
+      try {
+        const params = { kebun_id: targetKebunId.trim() };
+        const res = await apiClient.get<ApiResponse<NodeSensorBackend[]> | NodeSensorBackend[]>('/petani/node', {
+          params,
+        });
+
+        if (!res) return [];
+        if (Array.isArray(res)) return res as NodeSensorBackend[];
+        const obj = res as unknown as Record<string, unknown>;
+        if (Array.isArray(obj.data)) {
+          return obj.data as NodeSensorBackend[];
+        }
+        if (obj.data && typeof obj.data === 'object') {
+          const nestedData = (obj.data as Record<string, unknown>).data;
+          if (Array.isArray(nestedData)) {
+            return nestedData as NodeSensorBackend[];
+          }
+        }
+        if (Array.isArray(obj.nodes)) {
+          return obj.nodes as NodeSensorBackend[];
+        }
+        return [];
+      } catch {
+        return [];
+      } finally {
+        setTimeout(() => {
+          inFlightNodeRequests.delete(cacheKey);
+        }, 5000);
+      }
+    })();
+
+    inFlightNodeRequests.set(cacheKey, fetchPromise);
+    return fetchPromise;
   },
 
   /**

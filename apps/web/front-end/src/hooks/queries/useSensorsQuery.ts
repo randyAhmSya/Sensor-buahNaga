@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sensorService } from '@/services/sensorService';
-import { sensorKeys } from '@/services/queryKeys';
+import { sensorKeys, blockKeys, farmKeys } from '@/services/queryKeys';
 import type { SensorNodeItem, SensorSummaryMetrics } from '@/types/sensor.types';
 import type { CreateNodePayload, UpdateNodePayload } from '@/types/node.types';
 import type { ApiError } from '@/services/api';
@@ -25,8 +25,15 @@ export function useCreateSensorMutation() {
 
   return useMutation({
     mutationFn: (payload: CreateNodePayload) => sensorService.create(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: sensorKeys.all });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: sensorKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['nodes'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: blockKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['kebun'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: farmKeys.all, refetchType: 'all' }),
+      ]);
     },
   });
 }
@@ -37,9 +44,16 @@ export function useUpdateSensorMutation() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateNodePayload }) =>
       sensorService.update(id, payload),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: sensorKeys.all });
-      queryClient.invalidateQueries({ queryKey: sensorKeys.detail(variables.id) });
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: sensorKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: sensorKeys.detail(variables.id), refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['nodes'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: blockKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['kebun'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: farmKeys.all, refetchType: 'all' }),
+      ]);
     },
   });
 }
@@ -49,9 +63,15 @@ export function useDeleteSensorMutation() {
 
   return useMutation({
     mutationFn: (id: string) => sensorService.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: sensorKeys.all });
-      queryClient.invalidateQueries({ queryKey: ['nodes'] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: sensorKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['nodes'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: blockKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['kebun'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: farmKeys.all, refetchType: 'all' }),
+      ]);
     },
   });
 }
@@ -61,10 +81,13 @@ export function useRegenerateNodeQrMutation() {
 
   return useMutation({
     mutationFn: (sensorId: string) => sensorService.generateNewQr(sensorId),
-    onSuccess: (_, sensorId) => {
-      queryClient.invalidateQueries({ queryKey: sensorKeys.all });
-      queryClient.invalidateQueries({ queryKey: ['nodes'] });
-      queryClient.invalidateQueries({ queryKey: sensorKeys.detail(sensorId) });
+    onSuccess: async (_, sensorId) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: sensorKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['nodes'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: sensorKeys.detail(sensorId), refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+      ]);
     },
   });
 }

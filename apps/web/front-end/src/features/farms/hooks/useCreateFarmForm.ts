@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { createFarmSchema, type CreateFarmInput } from '../schemas/farmSchema'
+import { farmKeys } from '@/services/queryKeys'
 import type { FarmItem } from '@/types/farm'
 
 const INITIAL_FORM: CreateFarmInput = {
@@ -16,6 +18,7 @@ interface UseCreateFarmFormProps {
 }
 
 export function useCreateFarmForm({ onAddFarm, onClose }: UseCreateFarmFormProps) {
+  const queryClient = useQueryClient()
   const [formData, setFormData] = useState<CreateFarmInput>(INITIAL_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof CreateFarmInput, string>>>({})
 
@@ -61,6 +64,12 @@ export function useCreateFarmForm({ onAddFarm, onClose }: UseCreateFarmFormProps
     }
 
     onAddFarm(newFarmItem)
+    queryClient.setQueryData<FarmItem[]>(['kebun'], (old = []) => [newFarmItem, ...(old || [])])
+    void Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['kebun'], refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: farmKeys.all, refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+    ])
     setFormData(INITIAL_FORM)
     setErrors({})
     onClose()

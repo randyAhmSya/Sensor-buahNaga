@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ChevronRight, ArrowLeft, Save, ChevronDown, AlertCircle } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { ChevronRight, ArrowLeft, Save, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { farmService } from '@/services/farmService';
 import { harvestService } from '@/services/harvestService';
+import { harvestKeys, blockKeys } from '@/services/queryKeys';
 import { formatDate } from '@/utils/formatters';
+import { useNotify } from '@/context/NotificationContext';
 import type { BlockOptionItem } from '../components/CreateHarvestCycleModal';
 
 export const CreateHarvestCyclePage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const notify = useNotify();
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   const [blocks, setBlocks] = useState<BlockOptionItem[]>([]);
@@ -18,14 +23,13 @@ export const CreateHarvestCyclePage: React.FC = () => {
 
   const [isLoadingBlocks, setIsLoadingBlocks] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Ambil daftar kebun & blok riil
   useEffect(() => {
     let isMounted = true;
     (async () => {
       try {
-        const farms = await farmService.getAll();
+        const farms = await farmService.getAllWithBlocks();
         const extracted: BlockOptionItem[] = farms.flatMap((farm) =>
           (farm.blocks || []).map((b) => ({
             id: b.id,
@@ -66,20 +70,19 @@ export const CreateHarvestCyclePage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBlockId) {
-      setErrorMessage('Pilih blok lahan terlebih dahulu');
+      notify.error('Validasi Gagal', 'Pilih blok lahan terlebih dahulu');
       return;
     }
     if (!lightingDate) {
-      setErrorMessage('Tanggal mulai penyinaran wajib diisi');
+      notify.error('Validasi Gagal', 'Tanggal mulai penyinaran wajib diisi');
       return;
     }
     if (!bloomingTargetDays || bloomingTargetDays < 1) {
-      setErrorMessage('Target hari berbunga minimal 1 hari');
+      notify.error('Validasi Gagal', 'Target hari berbunga minimal 1 hari');
       return;
     }
 
     setIsSubmitting(true);
-    setErrorMessage(null);
 
     try {
       await harvestService.startHarvestCycle({
@@ -88,9 +91,16 @@ export const CreateHarvestCyclePage: React.FC = () => {
         target_hari_berbunga: Number(bloomingTargetDays),
       });
 
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: harvestKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: blockKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+      ]);
+
+      notify.success('Siklus Dimulai', 'Proyeksi panen buah naga berhasil dikalkulasi.');
       navigate('/kebun/harvests');
     } catch (err: unknown) {
-      setErrorMessage((err as Error)?.message || 'Gagal menyimpan siklus panen baru.');
+      notify.error('Gagal Memulai Siklus', (err as Error)?.message || 'Gagal menyimpan siklus panen baru.');
       setIsSubmitting(false);
     }
   };
@@ -131,13 +141,6 @@ export const CreateHarvestCyclePage: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
         <div className="p-6 md:p-8 space-y-6">
-          {errorMessage && (
-            <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-700 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
-
           {/* Baris 1: Blok Lahan & Tanggal Penyinaran */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1.5">

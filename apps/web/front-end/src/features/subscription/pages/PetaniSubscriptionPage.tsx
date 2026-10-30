@@ -6,11 +6,14 @@ import {
   Clock, 
   XCircle, 
   RotateCcw,
-  Sparkles,
-  ArrowRight
+  Check,
+  ArrowRight,
+  Zap,
+  Building2,
+  Loader2
 } from 'lucide-react';
 import { petaniSubscriptionService } from '@/services/petaniSubscriptionService';
-import { petaniSubscriptionKeys } from '@/services/queryKeys';
+import { petaniSubscriptionKeys, farmKeys } from '@/services/queryKeys';
 import { ManualPaymentModal } from '../components/ManualPaymentModal';
 import type { PaketLanggananItem, PetaniPaymentStatus } from '@/types/petaniSubscription.types';
 
@@ -19,6 +22,7 @@ export const PetaniSubscriptionPage: FC = () => {
   const [selectedPaket, setSelectedPaket] = useState<PaketLanggananItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
   // 1. Query Status Langganan Tenant
   const { data: statusData, isLoading: isLoadingStatus } = useQuery({
@@ -43,8 +47,24 @@ export const PetaniSubscriptionPage: FC = () => {
     setIsModalOpen(true);
   };
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = (isOnline?: boolean) => {
+    // Invalidate queries seketika
     queryClient.invalidateQueries({ queryKey: petaniSubscriptionKeys.all });
+    queryClient.invalidateQueries({ queryKey: farmKeys.all });
+
+    if (isOnline) {
+      setIsCheckingStatus(true);
+      // Sinkronisasi status kedua kali setelah jeda singkat untuk memastikan webhook/notifikasi backend tersimpan
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: petaniSubscriptionKeys.all });
+        queryClient.invalidateQueries({ queryKey: farmKeys.all });
+      }, 2500);
+
+      // Tutup banner notifikasi setelah beberapa detik
+      setTimeout(() => {
+        setIsCheckingStatus(false);
+      }, 7000);
+    }
   };
 
   const statusLangganan = statusData?.status_langganan || 'trial';
@@ -59,13 +79,29 @@ export const PetaniSubscriptionPage: FC = () => {
     }).format(val);
   };
 
-  const renderStatusBadge = (status: PetaniPaymentStatus) => {
+  // Normalisasi Status Transaksi (Aturan Bisnis: berhasil & diverifikasi -> Berhasil)
+  const renderStatusBadge = (status: PetaniPaymentStatus | string) => {
     switch (status) {
       case 'berhasil':
+      case 'diverifikasi':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>Berhasil</span>
+          </span>
+        );
+      case 'menunggu_pembayaran':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-300">
+            <Clock className="w-3.5 h-3.5" />
+            <span>Menunggu Pembayaran</span>
+          </span>
+        );
+      case 'menunggu_verifikasi':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200">
+            <Clock className="w-3.5 h-3.5" />
+            <span>Menunggu Verifikasi</span>
           </span>
         );
       case 'ditolak':
@@ -75,15 +111,42 @@ export const PetaniSubscriptionPage: FC = () => {
             <span>Ditolak</span>
           </span>
         );
-      case 'menunggu_verifikasi':
       default:
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200">
             <Clock className="w-3.5 h-3.5" />
-            <span>Menunggu Verifikasi</span>
+            <span className="capitalize">{status ? status.replace('_', ' ') : 'Diproses'}</span>
           </span>
         );
     }
+  };
+
+  // Badge Metode Pembayaran
+  const renderPaymentMethodBadge = (metode: string | undefined | null) => {
+    const isOnline =
+      metode &&
+      (metode.toLowerCase().includes('midtrans') ||
+        metode.toLowerCase().includes('online') ||
+        metode.toLowerCase().includes('otomatis') ||
+        metode.toLowerCase().includes('snap') ||
+        metode.toLowerCase().includes('qris') ||
+        metode.toLowerCase().includes('va'));
+
+    if (isOnline) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+          <Zap className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Midtrans (Otomatis)</span>
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+        <Building2 className="w-3.5 h-3.5 text-slate-500" />
+        <span>Transfer Manual</span>
+      </span>
+    );
   };
 
   return (
@@ -96,10 +159,40 @@ export const PetaniSubscriptionPage: FC = () => {
             <span>Langganan Kebun</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Pantau status masa aktif tenant, perpanjang paket via transfer bank, dan periksa riwayat pembayaran.
+            Pantau status masa aktif tenant, perpanjang paket via pembayaran instan atau transfer bank, dan periksa riwayat transaksi.
           </p>
         </div>
       </div>
+
+      {/* Banner Notifikasi: Memeriksa Status Pembayaran dari Server */}
+      {isCheckingStatus && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white border border-emerald-200 flex items-center justify-center shrink-0">
+              <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-emerald-950">
+                Memeriksa status pembayaran dari server...
+              </p>
+              <p className="text-[11px] text-emerald-700 mt-0.5">
+                Sistem sedang memverifikasi notifikasi transaksi dari gateway Midtrans secara otomatis.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: petaniSubscriptionKeys.all });
+              queryClient.invalidateQueries({ queryKey: farmKeys.all });
+              setIsCheckingStatus(false);
+            }}
+            className="px-3.5 py-1.5 rounded-lg bg-white border border-emerald-200 text-xs font-semibold text-emerald-800 hover:bg-emerald-100/50 transition-colors cursor-pointer self-start sm:self-auto shrink-0"
+          >
+            Segarkan Sekarang
+          </button>
+        </div>
+      )}
 
       {/* Kartu Status Masa Aktif Saat Ini */}
       <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs">
@@ -198,17 +291,17 @@ export const PetaniSubscriptionPage: FC = () => {
                     {paket.deskripsi || 'Akses penuh seluruh fitur monitoring sensor, jadwal lampu otomatis, dan estimasi panen.'}
                   </p>
 
-                  <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                  <div className="mt-4 pt-4 border-t border-slate-100 space-y-2.5">
                     <div className="flex items-center gap-2 text-xs text-slate-700">
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
                       <span>Monitoring Sensor & IoT Real-time</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-slate-700">
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
                       <span>Jadwal Lampu Otomatis & Dimming</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-slate-700">
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
                       <span>Estimasi Panen & Riwayat Scan QR</span>
                     </div>
                   </div>
@@ -224,7 +317,7 @@ export const PetaniSubscriptionPage: FC = () => {
                     <ArrowRight className="w-4 h-4" />
                   </button>
                   <p className="text-[11px] text-center text-slate-400 mt-2">
-                    Metode: Transfer Manual Antar-Bank
+                    Metode: Midtrans Instan atau Transfer Manual
                   </p>
                 </div>
               </div>
@@ -237,10 +330,10 @@ export const PetaniSubscriptionPage: FC = () => {
       <div className="space-y-4 pt-4">
         <div>
           <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-            Riwayat Pengajuan & Pembayaran
+            Riwayat Transaksi & Pembayaran
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Daftar transaksi transfer manual yang pernah Anda ajukan ke Super Admin.
+            Daftar transaksi pembayaran langganan melalui Midtrans maupun transfer bank manual.
           </p>
         </div>
 
@@ -253,6 +346,7 @@ export const PetaniSubscriptionPage: FC = () => {
                   <th className="py-3.5 px-4">Paket Langganan</th>
                   <th className="py-3.5 px-4">Tambahan Hari</th>
                   <th className="py-3.5 px-4">Nominal</th>
+                  <th className="py-3.5 px-4">Metode Pembayaran</th>
                   <th className="py-3.5 px-4">Status</th>
                   <th className="py-3.5 px-4">Catatan / Alasan</th>
                   <th className="py-3.5 px-4 text-right">Aksi</th>
@@ -261,13 +355,13 @@ export const PetaniSubscriptionPage: FC = () => {
               <tbody className="divide-y divide-slate-100">
                 {isLoadingRiwayat ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-400">
+                    <td colSpan={8} className="py-8 text-center text-slate-400">
                       Memuat riwayat transaksi...
                     </td>
                   </tr>
                 ) : !riwayatData?.items || riwayatData.items.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-400">
+                    <td colSpan={8} className="py-8 text-center text-slate-400">
                       Belum ada riwayat transaksi pembayaran.
                     </td>
                   </tr>
@@ -288,14 +382,15 @@ export const PetaniSubscriptionPage: FC = () => {
                         <td className="py-3.5 px-4 font-bold text-slate-900">{trx.nama_paket}</td>
                         <td className="py-3.5 px-4 font-semibold text-slate-700">+{trx.tambahan_hari} Hari</td>
                         <td className="py-3.5 px-4 font-bold text-slate-900">{formatRupiah(trx.harga)}</td>
+                        <td className="py-3.5 px-4">{renderPaymentMethodBadge(trx.metode_pembayaran)}</td>
                         <td className="py-3.5 px-4">{renderStatusBadge(trx.status_pembayaran)}</td>
                         <td className="py-3.5 px-4 max-w-xs">
                           {trx.status_pembayaran === 'ditolak' ? (
                             <span className="text-slate-700 font-medium">
-                              {trx.alasan_penolakan || 'Bukti transfer tidak valid atau tidak terbaca.'}
+                              {trx.alasan_penolakan || 'Pembayaran expire/cancel/deny'}
                             </span>
                           ) : (
-                            <span className="text-slate-400">-</span>
+                            <span className="text-slate-400 font-normal">-</span>
                           )}
                         </td>
                         <td className="py-3.5 px-4 text-right">
@@ -315,7 +410,7 @@ export const PetaniSubscriptionPage: FC = () => {
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xs transition-all cursor-pointer active:scale-95"
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
-                              <span>Unggah Ulang</span>
+                              <span>Beli Ulang</span>
                             </button>
                           )}
                         </td>
@@ -354,7 +449,7 @@ export const PetaniSubscriptionPage: FC = () => {
         </div>
       </div>
 
-      {/* Modal Pembayaran Manual */}
+      {/* Modal Pembayaran Paket (Midtrans Snap & Transfer Manual) */}
       <ManualPaymentModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

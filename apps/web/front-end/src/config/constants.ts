@@ -50,3 +50,8 @@ export const HARVEST_PHASES = {
 } as const
 
 export type HarvestPhase = (typeof HARVEST_PHASES)[keyof typeof HARVEST_PHASES]
+
+// Template Gambar Default Kebun Buah Naga / Pertanian Tropis Terkurasi
+export const DEFAULT_FARM_TEMPLATE_IMAGE =
+  'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
+

@@ -10,14 +10,15 @@ import {
   Building2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Toast, type ToastType } from '@/components/feedback/Toast'
 import { DebouncedSearchInput } from '@/components/common/DebouncedSearchInput'
 import { useAdminUsers, useAdminTenants } from '@/hooks/useAdmin'
 import type { AdminUserItem, AdminUserRole } from '@/types/admin.types'
+import { useNotify } from '@/context/NotificationContext'
 import { UserCreateModal } from '../components/UserCreateModal'
 import { UserToggleStatusModal } from '../components/UserToggleStatusModal'
 
 export const SuperAdminUsersPage: FC = () => {
+  const notify = useNotify()
   const [currentPage, setCurrentPage] = useState(1)
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState<'ALL' | AdminUserRole>('ALL')
@@ -27,26 +28,8 @@ export const SuperAdminUsersPage: FC = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [togglingUser, setTogglingUser] = useState<AdminUserItem | null>(null)
 
-  // Toast state
-  const [toastState, setToastState] = useState<{
-    isVisible: boolean
-    type: ToastType
-    title: string
-    message: string
-  }>({
-    isVisible: false,
-    type: 'success',
-    title: '',
-    message: '',
-  })
-
-  const showToast = (title: string, message: string, type: ToastType = 'success') => {
-    setToastState({
-      isVisible: true,
-      type,
-      title,
-      message,
-    })
+  const showToast = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
+    notify[type](title, message)
   }
 
   // TanStack Query untuk data tenant (digunakan untuk fallback pencocokan tenant_id)
@@ -142,19 +125,6 @@ export const SuperAdminUsersPage: FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Toast Notification */}
-      {toastState.isVisible && (
-        <div className="fixed top-5 right-5 z-50">
-          <Toast
-            type={toastState.type}
-            title={toastState.title}
-            message={toastState.message}
-            isVisible={toastState.isVisible}
-            onClose={() => setToastState((prev) => ({ ...prev, isVisible: false }))}
-          />
-        </div>
-      )}
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

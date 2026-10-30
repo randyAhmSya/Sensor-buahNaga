@@ -22,10 +22,10 @@ export const DeleteScheduleModal: React.FC<DeleteScheduleModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full overflow-hidden scale-in-95 duration-200">
+      <div className="bg-white rounded-xl border border-slate-300 shadow-xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-150">
         {/* Header Modal */}
         <div className="p-6 pb-4 flex items-start justify-between">
-          <div className="w-12 h-12 rounded-2xl border border-rose-200 bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-lg border border-rose-300 bg-rose-50 text-rose-700 flex items-center justify-center shrink-0">
             <AlertTriangle className="w-6 h-6" />
           </div>
           <button

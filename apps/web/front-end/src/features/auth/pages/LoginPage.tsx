@@ -3,8 +3,7 @@ import { Link, Navigate } from 'react-router-dom'
 import { 
   Mail, 
   Lock, 
-  ArrowRight,
-  AlertCircle
+  ArrowRight
 } from 'lucide-react'
 import { BrandLogo } from '@/components/common/BrandLogo'
 import { Button } from '@/components/ui/Button'
@@ -16,7 +15,7 @@ import { USER_ROLES } from '@/config/constants'
 
 export const LoginPage: FC = () => {
   const { user, isAuthenticated } = useAuthStore()
-  const { formData, errors, generalError, isSubmitting, handleChange, handleSubmit } = useLoginForm()
+  const { formData, errors, isSubmitting, handleChange, handleSubmit } = useLoginForm()
 
   if (isAuthenticated && user) {
     if (user.role === USER_ROLES.SUPER_ADMIN) {
@@ -48,13 +47,6 @@ export const LoginPage: FC = () => {
             <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Masuk ke Akun Anda</h2>
             <p className="text-sm text-slate-500 mt-1">Masukkan kredensial akun untuk mengakses dasbor kebun.</p>
           </div>
-
-          {generalError && (
-            <div className="mb-4 p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-medium flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-              <span>{generalError}</span>
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}

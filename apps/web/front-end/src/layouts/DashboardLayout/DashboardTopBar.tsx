@@ -6,6 +6,7 @@ import { USER_ROLES } from '@/config/constants'
 import { authService } from '@/services/authService'
 import { NotificationPopover } from '@/components/common/NotificationPopover'
 import { UserAvatar } from '@/components/common/UserAvatar'
+import { useFarmsQuery } from '@/hooks/queries/useFarmsQuery'
 
 interface DashboardTopBarProps {
   onOpenMobileSidebar: () => void
@@ -16,7 +17,12 @@ export const DashboardTopBar: FC<DashboardTopBarProps> = ({ onOpenMobileSidebar 
   const { user: authUser, logout } = useAuthStore()
 
   const isSuperAdmin = authUser?.role === USER_ROLES.SUPER_ADMIN
-  const activeFarmName = isSuperAdmin ? 'Sistem Terpusat (Super Admin)' : 'AgroLight Smart Farm'
+  const { data: farms = [] } = useFarmsQuery(undefined, {
+    enabled: !isSuperAdmin,
+  })
+  const activeFarmName = isSuperAdmin 
+    ? 'Sistem Terpusat (Super Admin)' 
+    : farms[0]?.name || 'AgroLight Smart Farm'
 
   const userName = authUser?.name || 'Budi Santoso'
   const userEmail = authUser?.email || 'budi@agrolight.id'

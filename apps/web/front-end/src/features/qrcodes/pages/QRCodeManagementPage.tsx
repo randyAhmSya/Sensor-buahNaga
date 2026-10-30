@@ -1,21 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
-  ScanLine, 
   Printer, 
   RefreshCw, 
-  Power, 
-  CheckCircle2, 
-  AlertCircle, 
-  X 
+  Power 
 } from 'lucide-react';
 import { qrCodeService } from '@/services/qrService';
 import { sensorService } from '@/services/sensorService';
 import { nodeService } from '@/services/nodeService';
 import { qrKeys } from '@/services/queryKeys';
-import { ScanQRModal } from '../components/ScanQRModal';
 import { PrintQRModal, type PrintQRModalData } from '../components/PrintQRModal';
 import { DebouncedSearchInput } from '@/components/common/DebouncedSearchInput';
+import { useNotify } from '@/context/NotificationContext';
 
 export interface RegisteredQRItem {
   id: string;
@@ -31,14 +27,13 @@ export interface RegisteredQRItem {
 
 export const QRCodeManagementPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const notify = useNotify();
 
   // Tab aktif: default Tab 1 ("registered") sesuai permintaan petani
   const [activeTab, setActiveTab] = useState<'registered' | 'logs'>('registered');
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [selectedPrintQR, setSelectedPrintQR] = useState<PrintQRModalData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isActionPending, setIsActionPending] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Ambil daftar node sensor untuk mendapatkan stiker QR terdaftar
   const { 
@@ -206,23 +201,23 @@ export const QRCodeManagementPage: React.FC = () => {
   // Handler: Ubah Status Aktif / Nonaktif QR
   const handleToggleStatus = async (item: RegisteredQRItem) => {
     if (!item.qrId) {
-      setToast({ type: 'error', message: 'ID QR tidak valid.' });
+      notify.error('Validasi Gagal', 'ID QR tidak valid.');
       return;
     }
     setIsActionPending(true);
     try {
       await qrCodeService.update(item.qrId, { status_qr: !item.status });
-      setToast({
-        type: 'success',
-        message: `Status QR ${item.qrCodeText} diubah menjadi ${!item.status ? 'Aktif' : 'Nonaktif'}.`,
-      });
+      notify.success(
+        'Status Diperbarui',
+        `Status QR ${item.qrCodeText} diubah menjadi ${!item.status ? 'Aktif' : 'Nonaktif'}.`
+      );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: qrKeys.all }),
         refetchNodes(),
         refetchLogs(),
       ]);
     } catch {
-      setToast({ type: 'error', message: 'Gagal memperbarui status QR.' });
+      notify.error('Gagal Memperbarui', 'Gagal memperbarui status QR.');
     } finally {
       setIsActionPending(false);
     }
@@ -231,23 +226,23 @@ export const QRCodeManagementPage: React.FC = () => {
   // Handler: Buat Ulang Kode QR Baru untuk Node Sensor
   const handleGenerateNewQR = async (item: RegisteredQRItem) => {
     if (!item.sensorId) {
-      setToast({ type: 'error', message: 'ID Node Sensor tidak ditemukan.' });
+      notify.error('Validasi Gagal', 'ID Node Sensor tidak ditemukan.');
       return;
     }
     setIsActionPending(true);
     try {
       await sensorService.generateNewQr(item.sensorId);
-      setToast({
-        type: 'success',
-        message: `Kode QR baru untuk ${item.nodeCode} berhasil dibuat.`,
-      });
+      notify.success(
+        'Kode QR Dibuat',
+        `Kode QR baru untuk ${item.nodeCode} berhasil dibuat.`
+      );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: qrKeys.all }),
         refetchNodes(),
         refetchLogs(),
       ]);
     } catch {
-      setToast({ type: 'error', message: 'Gagal membuat QR baru.' });
+      notify.error('Gagal Membuat QR', 'Terjadi kesalahan sistem saat membuat stiker QR baru.');
     } finally {
       setIsActionPending(false);
     }
@@ -255,54 +250,16 @@ export const QRCodeManagementPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* Toast Feedback Notifikasi */}
-      {toast && (
-        <div
-          className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 shadow-xs ${
-            toast.type === 'success'
-              ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-              : 'bg-rose-50 border-rose-300 text-rose-900'
-          }`}
-          role="alert"
-        >
-          <div className="flex items-center gap-3">
-            {toast.type === 'success' ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
-            )}
-            <p className="text-xs md:text-sm font-semibold">{toast.message}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setToast(null)}
-            className="p-1 rounded-lg hover:bg-black/5 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-            aria-label="Tutup notifikasi"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Header Halaman Tanpa AI Slop */}
+      {/* Header Halaman: Fokus Manajemen Stiker QR */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
-            Manajemen Kode QR Sensor
+            Manajemen Stiker QR Perangkat
           </h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
-            Kelola stiker QR fisik node sensor dan pantau riwayat verifikasi lapangan.
+            Kelola stiker QR fisik node sensor dan pantau riwayat verifikasi lapangan dari perangkat mobile.
           </p>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setIsScanModalOpen(true)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-xs transition-all duration-150 active:scale-[0.98] cursor-pointer shrink-0"
-        >
-          <ScanLine className="w-4 h-4" strokeWidth={2} />
-          <span>Pindai Kode QR</span>
-        </button>
       </div>
 
       {/* Navigasi Tab */}
@@ -321,7 +278,7 @@ export const QRCodeManagementPage: React.FC = () => {
             <span
               className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                 activeTab === 'registered'
-                  ? 'bg-emerald-100 text-emerald-800'
+                  ? 'bg-emerald-600 text-white'
                   : 'bg-slate-100 text-slate-600'
               }`}
             >
@@ -342,7 +299,7 @@ export const QRCodeManagementPage: React.FC = () => {
             <span
               className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                 activeTab === 'logs'
-                  ? 'bg-emerald-100 text-emerald-800'
+                  ? 'bg-emerald-600 text-white'
                   : 'bg-slate-100 text-slate-600'
               }`}
             >
@@ -412,10 +369,10 @@ export const QRCodeManagementPage: React.FC = () => {
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold border-2 ${
                             item.status
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                              : 'bg-slate-100 text-slate-700 border-slate-300'
+                              ? 'bg-white text-emerald-800 border-emerald-600'
+                              : 'bg-white text-slate-700 border-slate-300'
                           }`}
                         >
                           <span
@@ -431,7 +388,7 @@ export const QRCodeManagementPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleOpenPrintModal(item)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[34px] rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold cursor-pointer transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[34px] rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700 text-xs font-semibold cursor-pointer transition-colors shadow-2xs"
                             title="Pratinjau & Cetak Stiker"
                           >
                             <Printer className="w-3.5 h-3.5" />
@@ -539,10 +496,10 @@ export const QRCodeManagementPage: React.FC = () => {
                         </td>
                         <td className="py-3.5 px-4 text-right">
                           <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold border-2 ${
                               isQrActive
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                                : 'bg-slate-100 text-slate-700 border-slate-300'
+                                ? 'bg-white text-emerald-800 border-emerald-600'
+                                : 'bg-white text-slate-700 border-slate-300'
                             }`}
                           >
                             <span
@@ -563,14 +520,7 @@ export const QRCodeManagementPage: React.FC = () => {
         </div>
       )}
 
-      {/* Modal Scanner QR Kamera & Manual */}
-      <ScanQRModal
-        isOpen={isScanModalOpen}
-        onClose={() => {
-          setIsScanModalOpen(false);
-          refetchLogs();
-        }}
-      />
+
 
       {/* Modal Cetak & Pratinjau Stiker QR */}
       {selectedPrintQR && (

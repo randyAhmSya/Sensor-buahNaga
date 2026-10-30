@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, MapPin, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { DEFAULT_FARM_TEMPLATE_IMAGE } from '@/config/constants'
 
 interface FarmDetailHeaderProps {
   farmId?: string
@@ -22,7 +23,12 @@ export const FarmDetailHeader: React.FC<FarmDetailHeaderProps> = ({
 }) => {
   const navigate = useNavigate()
   const [imgError, setImgError] = React.useState(false)
-  const showFallback = !bannerUrl || imgError
+  const [templateError, setTemplateError] = React.useState(false)
+
+  const hasCustomBanner = Boolean(bannerUrl && bannerUrl.trim() && !imgError)
+  const displayBannerUrl = hasCustomBanner
+    ? bannerUrl
+    : (!templateError ? DEFAULT_FARM_TEMPLATE_IMAGE : null)
 
   return (
     <div className="space-y-4">
@@ -37,11 +43,17 @@ export const FarmDetailHeader: React.FC<FarmDetailHeaderProps> = ({
 
       {/* Banner */}
       <div className="relative w-full h-48 md:h-64 rounded-2xl overflow-hidden border border-slate-200 shadow-2xs bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 flex items-center justify-center">
-        {!showFallback && (
+        {displayBannerUrl && (
           <img
-            src={bannerUrl}
+            src={displayBannerUrl}
             alt={name}
-            onError={() => setImgError(true)}
+            onError={() => {
+              if (hasCustomBanner) {
+                setImgError(true)
+              } else {
+                setTemplateError(true)
+              }
+            }}
             className="w-full h-full object-cover"
           />
         )}

@@ -1,6 +1,7 @@
 import React from 'react'
 import { History } from 'lucide-react'
 import type { CycleHistoryItem } from '@/types/block.types'
+import { formatIndoDate } from '@/utils/formatters'
 
 interface CycleHistoryTableProps {
   history: CycleHistoryItem[]
@@ -36,8 +37,8 @@ export const CycleHistoryTable: React.FC<CycleHistoryTableProps> = ({ history })
               history.map((row) => (
                 <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-4 font-semibold text-slate-900">{row.id}</td>
-                  <td className="py-3.5 px-4 text-slate-600">{row.startDate}</td>
-                  <td className="py-3.5 px-4 text-slate-600">{row.actualHarvestDate}</td>
+                  <td className="py-3.5 px-4 text-slate-600">{formatIndoDate(row.startDate)}</td>
+                  <td className="py-3.5 px-4 text-slate-600">{formatIndoDate(row.actualHarvestDate)}</td>
                   <td className="py-3.5 px-4 font-medium text-slate-700">{row.durationDays} Hari</td>
                   <td className="py-3.5 px-4 text-right">
                     <span

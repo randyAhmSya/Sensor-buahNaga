@@ -9,6 +9,8 @@ interface RealtimeChartSectionProps {
   onRangeChange?: (range: TimeFilter) => void
   hasTelemetry?: boolean
   isOnline?: boolean
+  nodeStatus?: string
+  lastSeen?: string
   deviceId?: string
   telemetryData?: ReadSensor[]
 }
@@ -18,6 +20,8 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
   onRangeChange,
   hasTelemetry = false,
   isOnline = false,
+  nodeStatus = '',
+  lastSeen = '',
   deviceId = 'Belum Terpasang',
   telemetryData = [],
 }) => {
@@ -128,7 +132,7 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
           <Activity className="w-4 h-4 text-emerald-700" />
           <h3 className="text-base font-bold text-slate-900">Telemetri Intensitas & Suhu</h3>
           {chartPoints && (
-            <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 ml-1">
+            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-white text-emerald-800 border-2 border-emerald-600 ml-1">
               {chartPoints.latestLux} lx | {chartPoints.latestTemp}°C
             </span>
           )}
@@ -159,11 +163,19 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
             <Activity className="w-6 h-6" />
           </div>
           <h4 className="text-sm font-bold text-slate-800 mb-1">
-            {!isInstalled ? 'Node Belum Dipasangkan' : 'Sensor Terhubung'}
+            {!isInstalled
+              ? 'Node Belum Dipasangkan'
+              : (nodeStatus || '').toLowerCase() === 'offline'
+              ? 'Node Offline'
+              : 'Sensor Terhubung'}
           </h4>
           <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
             {!isInstalled
               ? 'Pasangkan perangkat node sensor IoT pada blok ini untuk mulai mengukur intensitas cahaya dan suhu secara real-time.'
+              : (nodeStatus || '').toLowerCase() === 'belum_pernah_terlihat'
+              ? 'Menunggu data telemetri pertama...'
+              : (nodeStatus || '').toLowerCase() === 'offline'
+              ? `Node offline, data terakhir pada ${lastSeen && lastSeen.trim() ? lastSeen : 'Belum ada data'}`
               : 'Sensor terhubung. Menunggu data telemetri pertama...'}
           </p>
         </div>

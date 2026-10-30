@@ -17,7 +17,6 @@ export const HarvestSummaryCards: React.FC<HarvestSummaryCardsProps> = ({ metric
         value={metrics.activeCycles}
         unit="Blok Aktif"
         icon={Sprout}
-        colorVariant="amber"
         description="Tanaman sedang dalam fase induksi atau pembungaan"
       />
 
@@ -26,7 +25,6 @@ export const HarvestSummaryCards: React.FC<HarvestSummaryCardsProps> = ({ metric
         title="Estimasi Panen Terdekat"
         value={metrics.nearestHarvestDate ? formatDate(metrics.nearestHarvestDate) : 'Belum Ada'}
         icon={CalendarCheck}
-        colorVariant="emerald"
         description={metrics.nearestHarvestDate ? 'Proyeksi panen buah berikutnya' : 'Belum ada siklus aktif'}
       />
 
@@ -36,7 +34,6 @@ export const HarvestSummaryCards: React.FC<HarvestSummaryCardsProps> = ({ metric
         value={metrics.completedCycles}
         unit="Terselesaikan"
         icon={CheckCircle2}
-        colorVariant="blue"
         description="Riwayat panen sukses yang telah dicatat"
         className="sm:col-span-2 lg:col-span-1"
       />

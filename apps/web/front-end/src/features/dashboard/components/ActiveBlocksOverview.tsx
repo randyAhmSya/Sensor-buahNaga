@@ -17,9 +17,7 @@ export const ActiveBlocksOverview: React.FC<ActiveBlocksOverviewProps> = ({
     <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 md:p-6 flex flex-col justify-between h-full">
       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-700 flex items-center justify-center shrink-0">
-            <Layers className="w-4 h-4" />
-          </div>
+          <Layers className="w-4 h-4 text-slate-400 shrink-0" strokeWidth={1.75} />
           <div>
             <h3 className="text-sm font-bold text-slate-900">Operasional Blok Lahan</h3>
             <p className="text-xs text-slate-500">Status penyinaran blok malam ini</p>
@@ -58,7 +56,7 @@ export const ActiveBlocksOverview: React.FC<ActiveBlocksOverviewProps> = ({
               <div className="flex items-center justify-end">
                 {item.status === 'Menyala' ? (
                   <StatusBadge
-                    status={`${item.lightIntensity}%`}
+                    status="Menyala"
                     variant="active"
                     icon={<Lightbulb className="w-3.5 h-3.5 shrink-0" />}
                   />

@@ -80,7 +80,7 @@ export const ScanQRModal: React.FC<ScanQRModalProps> = ({ isOpen, onClose }) => 
         {/* Header Modal */}
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-300 flex items-center justify-center text-emerald-800 shrink-0">
               <ScanLine className="w-4 h-4" />
             </div>
             <div>
@@ -153,14 +153,14 @@ export const ScanQRModal: React.FC<ScanQRModalProps> = ({ isOpen, onClose }) => 
 
           {/* Result Card */}
           {result && (
-            <div className="border border-emerald-200 bg-emerald-50/40 rounded-2xl p-4 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-start justify-between gap-3 border-b border-emerald-100 pb-3">
+            <div className="border border-slate-300 bg-slate-50 rounded-lg p-4 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-700 text-white flex items-center justify-center shadow-xs">
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-900 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-md">
                       QR Terverifikasi
                     </span>
                     <h4 className="text-base font-bold text-slate-900 mt-0.5">
@@ -192,7 +192,7 @@ export const ScanQRModal: React.FC<ScanQRModalProps> = ({ isOpen, onClose }) => 
               {/* Data Detail Hirarki: Kebun -> Blok -> Sensor */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 {/* Nama Kebun */}
-                <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1">
+                <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs space-y-1">
                   <div className="flex items-center gap-1.5 text-slate-400 font-semibold text-[11px]">
                     <Building2 className="w-3.5 h-3.5 text-slate-500" />
                     <span>Kebun</span>
@@ -208,7 +208,7 @@ export const ScanQRModal: React.FC<ScanQRModalProps> = ({ isOpen, onClose }) => 
                 </div>
 
                 {/* Nama Blok Lahan */}
-                <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1">
+                <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs space-y-1">
                   <div className="flex items-center gap-1.5 text-slate-400 font-semibold text-[11px]">
                     <Layers className="w-3.5 h-3.5 text-slate-500" />
                     <span>Blok Lahan</span>
@@ -224,7 +224,7 @@ export const ScanQRModal: React.FC<ScanQRModalProps> = ({ isOpen, onClose }) => 
                 </div>
 
                 {/* Tipe Sensor */}
-                <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1">
+                <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs space-y-1">
                   <div className="flex items-center gap-1.5 text-slate-400 font-semibold text-[11px]">
                     <Radio className="w-3.5 h-3.5 text-slate-500" />
                     <span>Tipe Sensor</span>
@@ -235,7 +235,7 @@ export const ScanQRModal: React.FC<ScanQRModalProps> = ({ isOpen, onClose }) => 
                 </div>
 
                 {/* ID Perangkat */}
-                <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1">
+                <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs space-y-1">
                   <div className="flex items-center gap-1.5 text-slate-400 font-semibold text-[11px]">
                     <Cpu className="w-3.5 h-3.5 text-slate-500" />
                     <span>Primary Key Sensor</span>

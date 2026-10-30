@@ -1,4 +1,4 @@
-export type BlockStatus = 'Online' | 'Offline'
+export type BlockStatus = 'Online' | 'Offline' | 'Belum Terpasang'
 
 export interface BlokBackend {
   id_blok: string
@@ -23,6 +23,7 @@ export interface BlokBackend {
     id?: string
     kode_perangkat: string
     status_koneksi: string
+    terakhir_terlihat?: string
   }
 }
 
@@ -32,6 +33,8 @@ export interface CreateBlokPayload {
   keterangan?: string
   luas_area?: number
   foto?: File
+  status?: 'Online' | 'Offline' | string
+  sensor_id?: string
 }
 
 export interface UpdateBlokPayload {
@@ -40,6 +43,8 @@ export interface UpdateBlokPayload {
   luas_area?: number
   url_foto?: string
   foto?: File
+  status?: 'Online' | 'Offline' | string
+  sensor_id?: string
 }
 
 export interface BlockItem {
@@ -111,6 +116,7 @@ export interface BlokStatusLampuNode {
   id_sensor: string
   kode_perangkat: string
   status_online: boolean
+  status?: 'online' | 'offline' | 'belum_pernah_terlihat'
   terakhir_terlihat: string | null
 }
 

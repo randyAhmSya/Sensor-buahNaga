@@ -1,8 +1,12 @@
 import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { createFarmSchema, type CreateFarmInput } from '../schemas/farm.schema'
 import { farmService } from '@/services/farmService'
+import { farmKeys } from '@/services/queryKeys'
+import { compressImageFile } from '@/utils/imageCompressor'
 import type { ToastType } from '@/components/feedback/Toast'
+import { useNotify } from '@/context/NotificationContext'
 
 export interface FarmToast {
   type: ToastType
@@ -12,6 +16,8 @@ export interface FarmToast {
 
 export function useEditFarmPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const notify = useNotify()
   const { farmId, id } = useParams<{ farmId?: string; id?: string }>()
   const effectiveId = farmId || id || ''
 
@@ -123,29 +129,26 @@ export function useEditFarmPage() {
 
     setIsSubmitting(true)
     try {
+      const fileToUpload = selectedFile ? await compressImageFile(selectedFile) : undefined
       await farmService.update(effectiveId, {
         name: formData.name,
         location: formData.location,
         status: formData.status,
-        foto: selectedFile || undefined,
+        foto: fileToUpload,
       })
 
-      // Navigasi kembali dengan flash state toast untuk notifikasi sukses
-      navigate('/kebun/farms', {
-        state: {
-          toast: {
-            type: 'success',
-            title: 'Perubahan Disimpan',
-            message: `Data kebun "${formData.name}" berhasil diperbarui.`,
-          },
-        },
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['kebun'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: farmKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: farmKeys.withBlocks(), refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: farmKeys.detail(effectiveId), refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+      ])
+
+      notify.success('Perubahan Disimpan', `Data kebun "${formData.name}" berhasil diperbarui.`)
+      navigate('/kebun/farms')
     } catch (err: unknown) {
-      setToast({
-        type: 'error',
-        title: 'Gagal Menyimpan',
-        message: err instanceof Error ? err.message : 'Terjadi kesalahan saat mengupdate kebun.',
-      })
+      notify.error('Gagal Menyimpan', err instanceof Error ? err.message : 'Terjadi kesalahan saat mengupdate kebun.')
     } finally {
       setIsSubmitting(false)
     }

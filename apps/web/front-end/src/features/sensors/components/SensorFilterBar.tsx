@@ -63,8 +63,9 @@ export const SensorFilterBar: FC<SensorFilterBarProps> = ({
             className="w-full appearance-none pl-3.5 pr-9 py-2.5 min-h-[44px] bg-white border border-slate-200/90 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-none focus:border-emerald-600 cursor-pointer shadow-2xs transition-colors"
           >
             <option value="Semua Status">Semua Status</option>
-            <option value="Aktif">Aktif</option>
-            <option value="Nonaktif">Nonaktif</option>
+            <option value="online">Online</option>
+            <option value="offline">Offline</option>
+            <option value="belum_pernah_terlihat">Belum Pernah Terhubung</option>
           </select>
           <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
