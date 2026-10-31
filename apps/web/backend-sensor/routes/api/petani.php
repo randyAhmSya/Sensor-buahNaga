@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\petani\AutoDimmingController;
 use App\Http\Controllers\petani\BlokController;
+use App\Http\Controllers\petani\DashboardController;
 use App\Http\Controllers\petani\GatewayController;
 use App\Http\Controllers\petani\JadwalLampuController;
 use App\Http\Controllers\petani\JadwalRingkasanController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\petani\LogEnergyController;
 use App\Http\Controllers\petani\LogPeredupanController;
 use App\Http\Controllers\petani\NodeController;
 use App\Http\Controllers\petani\SiklusPanenController;
+use App\Http\Controllers\petani\NodeRingkasanController;
 use App\Http\Controllers\petani\TelemetriController;
 // use App\Http\Controllers\petani\TenantAccessController;
 use App\Http\Middleware\EnsureLanggananAktif;
@@ -48,9 +50,11 @@ Route::prefix('notifikasi')->middleware(['auth:sanctum', EnsureTenantAktif::clas
 
 // ===== Butuh langganan aktif =====
 Route::middleware(['auth:sanctum', EnsureTenantAktif::class, EnsureLanggananAktif::class])->group(function () {
+    Route::get('dashboard', [DashboardController::class, 'index']);
     Route::apiResource('kebun', KebunController::class);
     Route::apiResource('blok', BlokController::class);
     Route::post('/node/{id}/generate-qr', [NodeController::class, 'generateNewQr']);
+    Route::get('node/{id}/ringkasan', [NodeRingkasanController::class, 'show']);
     Route::apiResource('node', NodeController::class);
     Route::apiResource('gateway', GatewayController::class);
     Route::get('qr/logs', [KodeQrController::class, 'logs']);
