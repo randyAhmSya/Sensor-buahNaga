@@ -34,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'superAdmin' => \App\Http\Middleware\EnsureIsSuperAdmin::class,
         ]);
+        $middleware->appendToGroup('api', \App\Http\Middleware\ProfilRequest::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

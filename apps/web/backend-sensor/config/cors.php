@@ -32,7 +32,7 @@ return [
 
     // Ambil daftar origin dari .env dan parse menjadi array secara dinamis
     'allowed_origins' => array_filter(
-        explode(',', env('FRONTEND_URL', 'http://localhost:3000'))
+        explode(',', env('FRONTEND_URL', 'http://localhost:5173'))
     ),
 
     'allowed_origins_patterns' => [],
