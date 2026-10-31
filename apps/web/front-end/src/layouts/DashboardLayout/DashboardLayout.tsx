@@ -8,24 +8,26 @@ import { petaniSubscriptionService } from '@/services/petaniSubscriptionService'
 import { petaniSubscriptionKeys } from '@/services/queryKeys'
 import { useAuthStore } from '@/store/useAuthStore'
 import { USER_ROLES } from '@/config/constants'
+import { useSaasMode } from '@/context/SaasContext'
 
 export const DashboardLayout: FC = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const location = useLocation()
   const { user } = useAuthStore()
+  const { isSaasEnabled } = useSaasMode()
 
   const isSuperAdmin = user?.role === USER_ROLES.SUPER_ADMIN
   const isExcludedPath = location.pathname.includes('/kebun/langganan') || location.pathname.includes('/kebun/akses-tenant')
 
-  // Check subscription status for non-superadmin
+  // Check subscription status for non-superadmin (hanya jika mode SaaS aktif)
   const { data: subscriptionStatus } = useQuery({
     queryKey: petaniSubscriptionKeys.status(),
     queryFn: () => petaniSubscriptionService.getStatus(),
-    enabled: !isSuperAdmin && !!user,
+    enabled: !isSuperAdmin && !!user && isSaasEnabled,
     staleTime: 60 * 1000,
   })
 
-  const isExpired = subscriptionStatus?.status_langganan === 'kadaluarsa'
+  const isExpired = isSaasEnabled && subscriptionStatus?.status_langganan === 'kadaluarsa'
 
   // Tutup drawer saat menekan tombol Escape
   useEffect(() => {

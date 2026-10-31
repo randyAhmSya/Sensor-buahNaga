@@ -77,7 +77,7 @@ export function Toast({
   return (
     <div
       className={cn(
-        'pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border p-4 shadow-lg transition-all duration-200 ease-out',
+        'pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border p-4 shadow-xl transition-all duration-200 ease-out',
         currentVisual.card
       )}
       role={type === 'error' ? 'alert' : 'status'}

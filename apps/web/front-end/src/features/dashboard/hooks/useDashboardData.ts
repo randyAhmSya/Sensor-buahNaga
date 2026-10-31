@@ -7,6 +7,7 @@ import { petaniSubscriptionService } from '@/services/petaniSubscriptionService'
 import { notificationService } from '@/services/notificationService';
 import { scheduleService } from '@/services/scheduleService';
 import { fetchLogEnergy } from '@/services/energyService';
+import { useSaasMode } from '@/context/SaasContext';
 import {
   petaniSubscriptionKeys,
   notificationKeys,
@@ -61,6 +62,8 @@ export interface DashboardData {
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function useDashboardData(): DashboardData {
+  const { isSaasEnabled } = useSaasMode();
+
   // 1. Ambil daftar kebun via shared query (deduplikasi bersama Layout/Navbar)
   const { data: farms = [], isLoading: isLoadingFarms } = useFarmsQuery();
 
@@ -77,6 +80,7 @@ export function useDashboardData(): DashboardData {
     queryKey: petaniSubscriptionKeys.status(),
     queryFn: () => petaniSubscriptionService.getStatus(),
     staleTime: 60_000,
+    enabled: isSaasEnabled,
   });
   const subscriptionStatus = subscriptionQuery.data ?? null;
 

@@ -7,12 +7,15 @@ import {
   Settings,
   LayoutDashboard,
   LogOut,
+  CreditCard,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/useAuthStore'
 import { authService } from '@/services/authService'
 import { NotificationPopover } from '@/components/common/NotificationPopover'
 import { DebouncedSearchInput } from '@/components/common/DebouncedSearchInput'
 import { UserAvatar } from '@/components/common/UserAvatar'
+import { useSaasMode } from '@/context/SaasContext'
+import { useNotify } from '@/context/NotificationContext'
 
 interface SuperAdminTopBarProps {
   onOpenMobileSidebar: () => void
@@ -21,6 +24,8 @@ interface SuperAdminTopBarProps {
 export const SuperAdminTopBar: FC<SuperAdminTopBarProps> = ({ onOpenMobileSidebar }) => {
   const navigate = useNavigate()
   const { user: authUser, logout } = useAuthStore()
+  const { isSaasEnabled, toggleSaasMode } = useSaasMode()
+  const notify = useNotify()
 
   const userName = authUser?.name || 'Super Admin'
   const userEmail = authUser?.email || 'admin@agrolight.com'
@@ -95,6 +100,43 @@ export const SuperAdminTopBar: FC<SuperAdminTopBarProps> = ({ onOpenMobileSideba
 
         {/* Komponen Notifikasi Popover */}
         <NotificationPopover role="super_admin" />
+
+        {/* Toggle Mode SaaS (Utilitarian) */}
+        <button
+          type="button"
+          onClick={() => {
+            toggleSaasMode()
+            if (isSaasEnabled) {
+              notify.info(
+                'Mode SaaS Dinonaktifkan',
+                'Fitur langganan dan transaksi pembayaran disembunyikan untuk Sempro.'
+              )
+            } else {
+              notify.success(
+                'Mode SaaS Diaktifkan',
+                'Seluruh fitur paket langganan dan verifikasi transaksi kini ditampilkan.'
+              )
+            }
+          }}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer select-none active:scale-98 ${
+            isSaasEnabled
+              ? 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100'
+              : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
+          }`}
+          title="Klik untuk mengubah status fitur langganan (SaaS)"
+        >
+          <CreditCard className="w-3.5 h-3.5 shrink-0" />
+          <span>Fitur SaaS:</span>
+          <span
+            className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+              isSaasEnabled
+                ? 'bg-emerald-700 text-white'
+                : 'bg-slate-300 text-slate-800'
+            }`}
+          >
+            {isSaasEnabled ? 'ON' : 'OFF'}
+          </span>
+        </button>
 
         <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
 

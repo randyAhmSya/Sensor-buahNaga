@@ -10,6 +10,7 @@ import { RecentActivityTable } from '../components/RecentActivityTable';
 import { DashboardAlertNotificationsWidget } from '../components/DashboardAlertNotificationsWidget';
 import { LazyVisibleChart } from '@/components/common/LazyVisibleChart';
 import { useDashboardData } from '../hooks/useDashboardData';
+import { useSaasMode } from '@/context/SaasContext';
 
 const LazyIntensityDimmingLineChart = React.lazy(() =>
   import('../components/IntensityDimmingLineChart').then((m) => ({
@@ -50,6 +51,7 @@ const ChartCardSkeleton: React.FC<{ minHeight?: string }> = ({ minHeight = 'min-
 
 export const FarmerDashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isSaasEnabled } = useSaasMode();
   const {
     metricCards,
     recentActivities,
@@ -77,8 +79,10 @@ export const FarmerDashboardPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-8">
-      {/* Level 1: Subscription Warning Banner (Kondisional: Muncul jika <= 3 hari / masa tenggang / kadaluarsa) */}
-      <SubscriptionWarningBanner status={subscriptionStatus} isLoading={isLoading} />
+      {/* Level 1: Subscription Warning Banner (Kondisional: Muncul jika mode SaaS aktif & <= 3 hari / masa tenggang / kadaluarsa) */}
+      {isSaasEnabled && (
+        <SubscriptionWarningBanner status={subscriptionStatus} isLoading={isLoading} />
+      )}
 
       {/* Header Dashboard & Export */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">

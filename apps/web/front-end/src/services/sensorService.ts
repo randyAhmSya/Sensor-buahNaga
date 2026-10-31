@@ -50,11 +50,14 @@ export const sensorService = {
   getAll: async (kebunId?: string): Promise<SensorNodeItem[]> => {
     try {
       let targetKebunId = kebunId && kebunId !== 'Semua Kebun' ? kebunId.trim() : undefined;
+      let resolvedFarmName: string | undefined = undefined;
+
       // Jika kebun_id belum disediakan, ambil ID kebun pertama yang valid dari GET /api/petani/kebun
       if (!targetKebunId) {
         const farms = await farmService.getAll();
         if (farms.length > 0) {
           targetKebunId = farms[0].id;
+          resolvedFarmName = farms[0].name;
         }
       }
 
@@ -64,7 +67,7 @@ export const sensorService = {
 
       const rawNodes = await nodeService.getAll(targetKebunId);
       if (rawNodes && rawNodes.length > 0) {
-        return rawNodes.map((node) => mapNodeToSensorItem(node));
+        return rawNodes.map((node) => mapNodeToSensorItem(node, resolvedFarmName));
       }
       return [];
     } catch {
