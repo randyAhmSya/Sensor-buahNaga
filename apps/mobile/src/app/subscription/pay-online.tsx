@@ -7,7 +7,8 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { Stack, useLocalSearchParams, router } from "expo-router";
+import { Stack, useLocalSearchParams, router, Redirect } from "expo-router";
+import { FITUR_LANGGANAN } from "@/config/features";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as WebBrowser from "expo-web-browser";
@@ -23,7 +24,7 @@ function formatRupiah(amount: number): string {
   }).format(amount);
 }
 
-export default function PayOnlineScreen() {
+function PayOnlineScreenInner() {
   const { paketId, namaPaket, harga, tambahanHari } = useLocalSearchParams<{
     paketId: string;
     namaPaket: string;
@@ -222,4 +223,11 @@ export default function PayOnlineScreen() {
       </SafeAreaView>
     </>
   );
+}
+
+export default function PayOnlineScreen() {
+  if (!FITUR_LANGGANAN) {
+    return <Redirect href="/(tabs)" />;
+  }
+  return <PayOnlineScreenInner />;
 }

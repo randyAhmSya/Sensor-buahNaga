@@ -1,82 +1,64 @@
 import React from "react";
-import { Text, View, Image } from "react-native";
+import { Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Card } from "@/component/ui/Card";
-import type { NodeDetail } from "@/constant/NodeDetails";
+import { StatusBadge } from "@/component/ui/StatusBadge";
+import type { NodeRingkasanNodeInfo } from "@/types/api/nodeRingkasan.dto";
+import type { BadgeTone } from "@/theme/tokens";
+import { formatWaktuRelatif } from "@/utils/date";
 
 interface Props {
-  node: NodeDetail;
+  node: NodeRingkasanNodeInfo;
 }
 
 export function NodeHeroCard({ node }: Props) {
-  const isOnline = node.status === "ACTIVE";
+  let tone: BadgeTone = "neutral";
+  let statusLabel = "Belum Terlihat";
+
+  if (node.status === "online") {
+    tone = "success";
+    statusLabel = "Online";
+  } else if (node.status === "offline") {
+    tone = "danger";
+    statusLabel = "Offline";
+  } else {
+    tone = "neutral";
+    statusLabel = "Belum Pernah Terlihat";
+  }
+
+  const locationText = `${node.kebun?.nama_kebun || "Kebun"} - ${node.blok?.nama_blok || "Blok"}`;
+  const waktuAktifText = node.terakhir_terlihat
+    ? `Terakhir aktif: ${formatWaktuRelatif(node.terakhir_terlihat)}`
+    : "Belum pernah mengirim data";
 
   return (
-    <Card className="mt-4 overflow-hidden border border-slate-200 bg-white">
-      {node.image && node.image.trim() !== "" ? (
-        <View className="h-44 w-full">
-          <Image
-            source={{ uri: node.image }}
-            className="h-full w-full"
-            resizeMode="cover"
-          />
-        </View>
-      ) : null}
-
-      <View className="p-4">
-        <View className="flex-row items-center justify-between gap-2">
-          <View className="flex-row items-center gap-2.5 flex-1 mr-2" style={{ flexShrink: 1 }}>
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200">
-              <Ionicons name="hardware-chip-outline" size={18} color="#059669" />
-            </View>
-            <View className="flex-1" style={{ flexShrink: 1 }}>
-              <Text className="text-base font-bold text-slate-900" numberOfLines={1}>
-                {node.name || node.id}
-              </Text>
-              <Text className="text-xs text-slate-600 mt-0.5" numberOfLines={1}>
-                {node.location}
-              </Text>
-            </View>
+    <Card className="mt-4 border border-slate-200 bg-white p-4">
+      {/* Baris 1: Kode Perangkat & Satu Badge Status Solid */}
+      <View className="flex-row items-center justify-between gap-2">
+        <View className="flex-row items-center gap-2.5 flex-1 mr-2" style={{ flexShrink: 1 }}>
+          <View className="h-10 w-10 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400">
+            <Ionicons name="hardware-chip-outline" size={20} color="#334155" />
           </View>
 
-          <View
-            className={`rounded-full px-3 py-1 border ${
-              isOnline
-                ? "bg-emerald-50 border-emerald-300"
-                : "bg-slate-100 border-slate-300"
-            }`}
-          >
-            <Text
-              className={`text-xs font-bold ${
-                isOnline ? "text-emerald-800" : "text-slate-700"
-              }`}
-            >
-              {isOnline ? "Online" : "Offline"}
+          <View className="flex-1" style={{ flexShrink: 1 }}>
+            <Text className="text-base font-bold text-slate-900" numberOfLines={1}>
+              {node.kode_perangkat || node.id_sensor}
+            </Text>
+            <Text className="text-xs text-slate-600 mt-0.5" numberOfLines={1}>
+              {locationText}
             </Text>
           </View>
         </View>
 
-        <View className="mt-3 pt-3 border-t border-slate-200 flex-row items-center justify-between">
-          <View className="flex-row items-center gap-1.5">
-            <Ionicons
-              name={isOnline ? "wifi" : "wifi-outline"}
-              size={14}
-              color={isOnline ? "#059669" : "#64748B"}
-            />
-            <Text className="text-xs font-medium text-slate-600">
-              {node.connection.signal || (isOnline ? "Terhubung" : "Terputus")}
-            </Text>
-          </View>
+        <StatusBadge tone={tone} label={statusLabel} size="sm" />
+      </View>
 
-          {node.connection.lastSeen ? (
-            <View className="flex-row items-center gap-1">
-              <Ionicons name="time-outline" size={12} color="#64748B" />
-              <Text className="text-xs text-slate-600">
-                {node.connection.lastSeen}
-              </Text>
-            </View>
-          ) : null}
-        </View>
+      {/* Baris 2: Satu Keterangan Waktu Aktif Tunggal (Bebas Duplikasi Label) */}
+      <View className="mt-3 pt-3 border-t border-slate-200 flex-row items-center gap-1.5">
+        <Ionicons name="time-outline" size={14} color="#64748B" />
+        <Text className="text-xs font-medium text-slate-600">
+          {waktuAktifText}
+        </Text>
       </View>
     </Card>
   );

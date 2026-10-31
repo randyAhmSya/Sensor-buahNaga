@@ -42,7 +42,10 @@ export default function LoginScreen() {
       setIsSubmitting(true);
       setErrorMessage(null);
 
-      console.log("[LoginScreen] Mencoba login dengan email:", trimmedEmail);
+      if (__DEV__) {
+        const maskedEmail = trimmedEmail.replace(/(?<=^.).*(?=@)/, "***");
+        console.log("[LoginScreen] Mencoba login dengan email:", maskedEmail);
+      }
       await authService.login(trimmedEmail, password);
 
       // Redirect ke halaman dashboard utama
@@ -122,7 +125,7 @@ export default function LoginScreen() {
         <View className="flex-1 justify-center max-w-md w-full self-center py-6">
           {/* Logo & Brand Header */}
           <View className="items-center mb-8">
-            <View className="w-20 h-20 rounded-3xl bg-white shadow-sm border border-emerald-100 items-center justify-center mb-4 p-2">
+            <View className="w-20 h-20 rounded-lg bg-white shadow-sm border border-slate-200 items-center justify-center mb-4 p-2">
               <Image
                 source={LOGO_IMG}
                 className="w-16 h-16"
@@ -140,7 +143,7 @@ export default function LoginScreen() {
 
           {/* Inline Error Banner */}
           {errorMessage ? (
-            <View className="mb-5 flex-row items-center gap-3 bg-red-50 border border-red-200 rounded-2xl p-3.5">
+            <View className="mb-5 flex-row items-center gap-3 bg-white border-[1.5px] border-rose-600 rounded-lg p-3.5">
               <Ionicons name="alert-circle" size={20} color="#DC2626" />
               <Text className="flex-1 text-xs text-red-700 font-medium">
                 {errorMessage}
@@ -149,13 +152,13 @@ export default function LoginScreen() {
           ) : null}
 
           {/* Form Card */}
-          <View className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 gap-5">
+          <View className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 gap-5">
             {/* Input Email */}
             <View className="gap-2">
               <Text className="text-xs font-semibold uppercase tracking-wider text-slate-600">
                 Alamat Email
               </Text>
-              <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus:border-emerald-600">
+              <View className="flex-row items-center bg-white border-[1.5px] border-slate-400 rounded-lg px-4 py-3 focus:border-emerald-600">
                 <Ionicons
                   name="mail-outline"
                   size={18}
@@ -184,7 +187,7 @@ export default function LoginScreen() {
               <Text className="text-xs font-semibold uppercase tracking-wider text-slate-600">
                 Kata Sandi
               </Text>
-              <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus:border-emerald-600">
+              <View className="flex-row items-center bg-white border-[1.5px] border-slate-400 rounded-lg px-4 py-3 focus:border-emerald-600">
                 <Ionicons
                   name="lock-closed-outline"
                   size={18}
@@ -262,7 +265,7 @@ export default function LoginScreen() {
               onPress={handleLogin}
               disabled={isSubmitting}
               activeOpacity={0.85}
-              className={`flex-row items-center justify-center rounded-2xl py-3.5 mt-2 shadow-sm ${
+              className={`flex-row items-center justify-center rounded-lg py-3.5 mt-2 shadow-sm ${
                 isSubmitting ? "bg-slate-400" : "bg-emerald-700"
               }`}
               accessibilityRole="button"

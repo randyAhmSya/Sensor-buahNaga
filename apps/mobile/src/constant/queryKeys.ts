@@ -1,4 +1,8 @@
 export const QUERY_KEYS = {
+  kebun: {
+    all: ['kebuns'] as const,
+    list: () => ['kebuns', 'list'] as const,
+  },
   dashboard: {
     all: ['dashboard'] as const,
     blokLampu: (blokId: string) => ['dashboard', 'blokLampu', blokId] as const,
@@ -12,6 +16,7 @@ export const QUERY_KEYS = {
     all: ['nodes'] as const,
     detail: (id: string) => ['nodes', id] as const,
   },
+  nodeRingkasan: (id: string) => ['node-ringkasan', id] as const,
   jadwalLampu: {
     all: ['jadwalLampu'] as const,
     aktif: (sensorId?: string) => ['jadwalLampu', 'aktif', sensorId] as const,

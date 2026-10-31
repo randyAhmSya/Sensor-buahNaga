@@ -1,21 +1,20 @@
-import apiClient from './apiClient';
-import axios from 'axios';
+import apiClient from "./apiClient";
+import { ensureKebunList } from "./kebunService";
 import type {
   ActionIssueGroup,
-  ActivityItem,
   GardenStats,
   HarvestEstimate,
   QuickAction,
-  WeatherInfo,
-} from '@/constant/dashboard';
+} from "@/constant/dashboard";
+import { QUICK_ACTIONS } from "@/constant/dashboard";
 import type {
-  BackendKebunDTO,
-  BackendSensorDTO,
-  BackendReadSensorDTO,
-  BackendSiklusPanenDTO,
-} from '@/types/api';
-import type { BlokLampuSummary, BlokStatusLampuDTO } from '@/types/notification';
-import { mapToDashboardData } from './mappers/dashboardMapper';
+  BackendDashboardData,
+  DashboardNodeItem,
+  DashboardBacaanTerakhir,
+} from "@/types/dashboard";
+import type { BackendKebunDTO } from "@/types/api";
+import type { BlokLampuSummary } from "@/types/notification";
+import { hitungHariSisa, hitungRipenessPercent } from "@/types/harvest";
 
 export interface BackendBlokDTO {
   id_blok: string;
@@ -29,179 +28,192 @@ export interface BackendBlokDTO {
 }
 
 export interface DashboardData {
-  weather: WeatherInfo;
+  kebunInfo: {
+    id_kebun: string;
+    nama_kebun: string;
+    lokasi_kebun: string;
+    status_kebun: string;
+  };
+  ringkasan: {
+    jumlah_blok: number;
+    jumlah_node: number;
+    node_online: number;
+    node_offline: number;
+    node_belum_terlihat: number;
+    siklus_berjalan: number;
+    bacaan_terbaru: DashboardBacaanTerakhir | null;
+  };
   stats: GardenStats;
   quickActions: QuickAction[];
-  activities: ActivityItem[];
   harvestEstimates: HarvestEstimate[];
   actionIssueGroups: ActionIssueGroup[];
   blokLampuSummaries: BlokLampuSummary[];
 }
 
+function getEmptyDashboardData(farmName: string, farmLocation: string): DashboardData {
+  return {
+    kebunInfo: {
+      id_kebun: "",
+      nama_kebun: farmName,
+      lokasi_kebun: farmLocation,
+      status_kebun: "aktif",
+    },
+    ringkasan: {
+      jumlah_blok: 0,
+      jumlah_node: 0,
+      node_online: 0,
+      node_offline: 0,
+      node_belum_terlihat: 0,
+      siklus_berjalan: 0,
+      bacaan_terbaru: null,
+    },
+    stats: {
+      totalGardens: 0,
+      activeNodes: 0,
+      avgHealthPercent: 100,
+    },
+    quickActions: QUICK_ACTIONS,
+    harvestEstimates: [],
+    actionIssueGroups: [],
+    blokLampuSummaries: [],
+  };
+}
+
 /**
- * Mengonsumsi data nyata dari API Backend Laravel (AgroLight) melalui DTO dan Mapper:
- * - GET /api/petani/kebun
- * - GET /api/petani/node
- * - GET /api/petani/telemetri
- * - GET /api/petani/siklus-panen (per blok lahan dengan query param blok_id)
- * - GET /api/petani/blok/{id}/status-lampu (per blok via Promise.allSettled dengan 402 guard)
+ * Mengonsumsi data nyata dari API Backend Laravel (AgroLight) melalui endpoint agregasi tunggal:
+ * GET /api/petani/dashboard?kebun_id={id}
+ * Tidak melakukan request paralel ekstra ke telemetri atau node.
  */
-export async function fetchDashboardData(): Promise<DashboardData> {
-  // 1. Ambil daftar kebun milik tenant petani
-  const kebunRes = await apiClient.get<{ status: string; data: BackendKebunDTO[] }>(
-    '/petani/kebun',
-  );
-  const kebuns: BackendKebunDTO[] = kebunRes.data?.data || [];
+export async function fetchDashboardData(specificKebunId?: string): Promise<DashboardData> {
+  let kebunId = specificKebunId;
+  let farmName = "Kebun Buah Naga";
+  let farmLocation = "Banyuwangi";
 
-  let allNodes: BackendSensorDTO[] = [];
-  let telemetryList: BackendReadSensorDTO[] = [];
-  let siklusList: BackendSiklusPanenDTO[] = [];
-  let blokList: Array<BackendBlokDTO & { nama_kebun: string }> = [];
-
-  // 2. Ambil data nodes dan blok dari setiap kebun
-  if (kebuns.length > 0) {
-    const nodePromises = kebuns.map((k) =>
-      apiClient
-        .get<{ status: string; data: BackendSensorDTO[] }>('/petani/node', {
-          params: { kebun_id: k.id_kebun },
-        })
-        .then((res: { data?: { data?: BackendSensorDTO[] } }) => res.data?.data || [])
-        .catch(() => [] as BackendSensorDTO[]),
-    );
-
-    const blokPromises = kebuns.map((k) =>
-      apiClient
-        .get<{ status: string; data: BackendBlokDTO[] }>('/petani/blok', {
-          params: { kebun_id: k.id_kebun },
-        })
-        .then((res: { data?: { data?: BackendBlokDTO[] } }) =>
-          (res.data?.data || []).map((b: BackendBlokDTO) => ({ ...b, nama_kebun: k.nama_kebun })),
-        )
-        .catch(() => [] as Array<BackendBlokDTO & { nama_kebun: string }>),
-    );
-
-    const [nodeResults, blokResults] = await Promise.all([
-      Promise.all(nodePromises),
-      Promise.all(blokPromises),
-    ]);
-
-    allNodes = nodeResults.flat();
-    blokList = blokResults.flat();
-  }
-
-  // 3. Ambil ringkasan status lampu per blok menggunakan Promise.allSettled & 402 Guard
-  const blokLampuSummaries: BlokLampuSummary[] = [];
-  if (blokList.length > 0) {
-    let is402Encountered = false;
-
-    const settled = await Promise.allSettled(
-      blokList.map(async (blok) => {
-        if (is402Encountered) return null;
-        try {
-          const res = await apiClient.get<{
-            status: string;
-            data: BlokStatusLampuDTO;
-          }>(`/petani/blok/${blok.id_blok}/status-lampu`);
-
-          const statusData = res.data?.data;
-          if (!statusData) return null;
-
-          const total = Number(statusData.jumlah_lampu || 0);
-          const online = Number(statusData.jumlah_online || 0);
-          const offline = Number(statusData.jumlah_offline || 0);
-          const batas = Number(statusData.batas_offline_detik || 90);
-          const persentase = total > 0 ? Math.round((online / total) * 100) : 0;
-
-          let statusKoneksi: 'optimal' | 'sebagian_offline' | 'semua_offline' | 'kosong' = 'optimal';
-          if (total === 0) {
-            statusKoneksi = 'kosong';
-          } else if (online === 0) {
-            statusKoneksi = 'semua_offline';
-          } else if (offline > 0) {
-            statusKoneksi = 'sebagian_offline';
-          }
-
-          const summary: BlokLampuSummary = {
-            idBlok: blok.id_blok,
-            namaBlok: blok.nama_blok,
-            namaKebun: blok.nama_kebun,
-            jumlahLampu: total,
-            jumlahOnline: online,
-            jumlahOffline: offline,
-            batasOfflineDetik: batas,
-            persentaseOnline: persentase,
-            statusKoneksi,
-          };
-          return summary;
-        } catch (err: unknown) {
-          if (axios.isAxiosError(err) && err.response?.status === 402) {
-            is402Encountered = true;
-          }
-          return null;
-        }
-      }),
-    );
-
-    for (const item of settled) {
-      if (item.status === 'fulfilled' && item.value) {
-        blokLampuSummaries.push(item.value);
-      }
+  // 1. Ambil kebun pertama jika ID belum ditentukan (via deduplikasi TanStack Query)
+  if (!kebunId) {
+    const kebuns = await ensureKebunList();
+    if (kebuns.length > 0) {
+      kebunId = kebuns[0].id_kebun;
+      farmName = kebuns[0].nama_kebun;
+      farmLocation = kebuns[0].lokasi_kebun || farmLocation;
     }
   }
 
-  // 4. Ambil telemetri sensor terakhir jika node tersedia
-  const activeSensor =
-    allNodes.find(
-      (n) => n.status_koneksi === 'online' || n.status_koneksi === 'terhubung',
-    ) || allNodes[0];
-
-  if (activeSensor) {
-    try {
-      const telemetriRes = await apiClient.get<{
-        status: string;
-        data: BackendReadSensorDTO[];
-      }>('/petani/telemetri', {
-        params: { sensor_id: activeSensor.id_sensor, limit: 10 },
-      });
-      telemetryList = telemetriRes.data?.data || [];
-    } catch {
-      telemetryList = [];
-    }
+  if (!kebunId) {
+    return getEmptyDashboardData(farmName, farmLocation);
   }
 
-  // 5. Ambil siklus panen riil lintas blok lahan (kontrak query param: blok_id)
-  if (blokList.length > 0) {
-    const siklusPromises = blokList.map((b) =>
-      apiClient
-        .get<{ status: string; data: BackendSiklusPanenDTO[] }>(
-          '/petani/siklus-panen',
-          { params: { blok_id: b.id_blok } },
-        )
-        .then((res: { data?: { data?: BackendSiklusPanenDTO[] } }) =>
-          (res.data?.data || []).map((s: BackendSiklusPanenDTO) => ({
-            ...s,
-            blok: {
-              id_blok: b.id_blok,
-              nama_blok: b.nama_blok,
-              kebun: { id_kebun: b.kebun_id, nama_kebun: b.nama_kebun },
-            },
-          })),
-        )
-        .catch(() => [] as BackendSiklusPanenDTO[]),
-    );
-
-    const settledSiklus = await Promise.allSettled(siklusPromises);
-    siklusList = settledSiklus
-      .filter((item): item is PromiseFulfilledResult<BackendSiklusPanenDTO[]> => item.status === 'fulfilled')
-      .flatMap((item) => item.value);
-  }
-
-  // 6. Transformasikan data DTO mentah menggunakan pure mapper
-  return mapToDashboardData({
-    kebuns,
-    allNodes,
-    telemetryList,
-    siklusList,
-    blokLampuSummaries,
+  // 2. Request tunggal ke endpoint agregasi dashboard backend
+  const res = await apiClient.get<{
+    status: string;
+    pesan?: string;
+    data: BackendDashboardData;
+  }>("/petani/dashboard", {
+    params: { kebun_id: kebunId },
   });
+
+  const raw = res.data.data;
+
+  // 3. Kumpulkan daftar node offline untuk aksi peringatan
+  const allOfflineNodes: DashboardNodeItem[] = [];
+  raw.blok.forEach((b) => {
+    b.node.forEach((n) => {
+      if (n.status === "offline") {
+        allOfflineNodes.push(n);
+      }
+    });
+  });
+
+  // 4. Ringkasan status lampu blok
+  const blokLampuSummaries: BlokLampuSummary[] = raw.blok.map((b) => {
+    const total = b.jumlah_node;
+    const online = b.node.filter((n) => n.status === "online").length;
+    const offline = b.node.filter((n) => n.status === "offline").length;
+    const batas = raw.ringkasan.batas_offline_detik || 90;
+    const persentase = total > 0 ? Math.round((online / total) * 100) : 0;
+
+    let statusKoneksi: "optimal" | "sebagian_offline" | "semua_offline" | "kosong" =
+      "optimal";
+    if (total === 0) statusKoneksi = "kosong";
+    else if (online === 0) statusKoneksi = "semua_offline";
+    else if (offline > 0) statusKoneksi = "sebagian_offline";
+
+    return {
+      idBlok: b.id_blok,
+      namaBlok: b.nama_blok,
+      namaKebun: raw.kebun.nama_kebun || farmName,
+      jumlahLampu: total,
+      jumlahOnline: online,
+      jumlahOffline: offline,
+      persentaseOnline: persentase,
+      statusKoneksi,
+      batasOfflineDetik: batas,
+    };
+  });
+
+  // 5. Estimasi panen dari blok dengan siklus aktif
+  const harvestEstimates: HarvestEstimate[] = raw.blok
+    .filter((b) => b.siklus_aktif && b.siklus_aktif.status_siklus === "BERJALAN")
+    .map((b, idx) => {
+      const s = b.siklus_aktif!;
+      return {
+        id: s.id_siklus_panen || `h-${idx}`,
+        nodeId: b.nama_blok,
+        ripenessPercent: hitungRipenessPercent(
+          s.tanggal_penyinaran,
+          s.estimasi_tanggal_panen,
+        ),
+        daysRemaining: hitungHariSisa(s.estimasi_tanggal_panen),
+      };
+    });
+
+  // 6. Action Needed (Masalah perangkat node offline)
+  const actionIssueGroups: ActionIssueGroup[] = [];
+  if (allOfflineNodes.length > 0) {
+    actionIssueGroups.push({
+      category: "Perangkat Terputus",
+      issues: allOfflineNodes.map((node) => ({
+        id: node.id_sensor,
+        nodeId: node.kode_perangkat,
+        title: "Perangkat Node Offline - Terputus dari Gateway",
+        location: raw.kebun.nama_kebun || farmName,
+        icon: "wifi-outline",
+        severity: "warning",
+      })),
+    });
+  }
+
+  const totalGardens = 1;
+  const activeNodesCount = raw.ringkasan.node_online;
+  const avgHealthPercent =
+    raw.ringkasan.jumlah_node > 0
+      ? Math.round((raw.ringkasan.node_online / raw.ringkasan.jumlah_node) * 100)
+      : 100;
+
+  return {
+    kebunInfo: {
+      id_kebun: raw.kebun.id_kebun,
+      nama_kebun: raw.kebun.nama_kebun,
+      lokasi_kebun: raw.kebun.lokasi_kebun || farmLocation,
+      status_kebun: raw.kebun.status_kebun || "aktif",
+    },
+    ringkasan: {
+      jumlah_blok: raw.ringkasan.jumlah_blok,
+      jumlah_node: raw.ringkasan.jumlah_node,
+      node_online: raw.ringkasan.node_online,
+      node_offline: raw.ringkasan.node_offline,
+      node_belum_terlihat: raw.ringkasan.node_belum_terlihat,
+      siklus_berjalan: raw.ringkasan.siklus_berjalan,
+      bacaan_terbaru: raw.ringkasan.bacaan_terbaru ?? null,
+    },
+    stats: {
+      totalGardens,
+      activeNodes: activeNodesCount,
+      avgHealthPercent,
+    },
+    quickActions: QUICK_ACTIONS,
+    harvestEstimates,
+    actionIssueGroups,
+    blokLampuSummaries,
+  };
 }

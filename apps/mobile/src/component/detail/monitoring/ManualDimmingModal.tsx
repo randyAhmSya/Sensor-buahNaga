@@ -110,11 +110,15 @@ export function ManualDimmingModal({
       onClose();
     } catch (err: unknown) {
       const errorDetails = err as JadwalErrorDetails;
-      setErrorMessage(errorDetails.message || "Gagal mengubah mode ke manual.");
 
-      // Jika error 429, set countdown timer
-      if (errorDetails.status === 429 && errorDetails.retryAfterSeconds) {
-        setCooldownSeconds(errorDetails.retryAfterSeconds);
+      // Jika error 429 (rate limit cooldown), kembalikan nilai slider ke nilai server & kunci kontrol
+      if (errorDetails.status === 429) {
+        setBrightness(initialValue);
+        const retrySeconds = errorDetails.retryAfterSeconds || 7;
+        setCooldownSeconds(retrySeconds);
+        setErrorMessage(null);
+      } else {
+        setErrorMessage(errorDetails.message || "Gagal mengubah mode ke manual.");
       }
     }
   };
@@ -129,7 +133,7 @@ export function ManualDimmingModal({
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-end bg-black/60">
-        <View className="bg-white rounded-t-3xl p-6 pb-9 shadow-2xl">
+        <View className="bg-white rounded-t-xl p-6 pb-9 shadow-2xl">
           {/* Header Modal */}
           <View className="flex-row items-center justify-between pb-3 border-b border-gray-100">
             <View>
@@ -143,7 +147,7 @@ export function ManualDimmingModal({
             <PressableOpacity
               onPress={onClose}
               disabled={overrideMutation.isPending}
-              className="p-1.5 rounded-full bg-gray-100"
+              className="p-1.5 rounded-lg bg-gray-100"
             >
               <Ionicons name="close" size={20} color="#4B5563" />
             </PressableOpacity>
@@ -151,7 +155,7 @@ export function ManualDimmingModal({
 
           {/* Banner Error / Cooldown */}
           {errorMessage && (
-            <View className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl flex-row items-start gap-2">
+            <View className="mt-4 p-3 bg-white border-[1.5px] border-rose-600 rounded-lg flex-row items-start gap-2">
               <Ionicons
                 name="alert-circle"
                 size={18}
@@ -165,10 +169,10 @@ export function ManualDimmingModal({
           )}
 
           {cooldownSeconds > 0 && (
-            <View className="mt-3 p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex-row items-center gap-2">
+            <View className="mt-3 p-2.5 bg-white border-[1.5px] border-amber-500 rounded-lg flex-row items-center gap-2">
               <Ionicons name="time-outline" size={16} color="#D97706" />
               <Text className="text-xs text-amber-800 font-medium">
-                Tunggu {cooldownSeconds} detik sebelum mencoba lagi.
+                Coba lagi dalam {cooldownSeconds} detik.
               </Text>
             </View>
           )}
@@ -184,10 +188,10 @@ export function ManualDimmingModal({
               <PressableOpacity
                 onPress={handleDecrease}
                 disabled={brightness <= 0 || isButtonDisabled}
-                className={`w-12 h-12 rounded-full items-center justify-center border ${
+                className={`w-12 h-12 rounded-lg items-center justify-center border ${
                   brightness <= 0 || isButtonDisabled
                     ? "bg-gray-100 border-gray-200 opacity-40"
-                    : "bg-emerald-50 border-emerald-300"
+                    : "bg-white border-[1.5px] border-slate-400"
                 }`}
               >
                 <Ionicons
@@ -210,10 +214,10 @@ export function ManualDimmingModal({
               <PressableOpacity
                 onPress={handleIncrease}
                 disabled={brightness >= 100 || isButtonDisabled}
-                className={`w-12 h-12 rounded-full items-center justify-center border ${
+                className={`w-12 h-12 rounded-lg items-center justify-center border ${
                   brightness >= 100 || isButtonDisabled
                     ? "bg-gray-100 border-gray-200 opacity-40"
-                    : "bg-emerald-50 border-emerald-300"
+                    : "bg-white border-[1.5px] border-slate-400"
                 }`}
               >
                 <Ionicons
@@ -250,10 +254,10 @@ export function ManualDimmingModal({
                     key={preset}
                     onPress={() => handleSelectPreset(preset)}
                     disabled={isButtonDisabled}
-                    className={`flex-1 py-2 rounded-xl border items-center justify-center ${
+                    className={`flex-1 py-2 rounded-lg border items-center justify-center ${
                       isSelected
-                        ? "bg-emerald-700 border-emerald-700"
-                        : "bg-white border-gray-200"
+                        ? "bg-[#047857] border-[1.5px] border-[#047857]"
+                        : "bg-white border-[1.5px] border-slate-400"
                     }`}
                   >
                     <Text
@@ -269,7 +273,7 @@ export function ManualDimmingModal({
             </View>
 
             {/* Keterangan Dampak */}
-            <View className="mt-4 p-3 bg-gray-50 rounded-xl w-full border border-gray-100 flex-row items-center gap-2">
+            <View className="mt-4 p-3 bg-white rounded-lg w-full border-[1.5px] border-slate-400 flex-row items-center gap-2">
               <Ionicons name="information-circle" size={16} color="#059669" />
               <Text className="flex-1 text-[11px] text-gray-600 leading-relaxed">
                 Lampu blok ini akan menyala tetap di kecerahan ini selama jam
@@ -283,7 +287,7 @@ export function ManualDimmingModal({
             <PressableOpacity
               onPress={onClose}
               disabled={overrideMutation.isPending}
-              className="flex-1 py-3.5 rounded-xl bg-gray-100 items-center justify-center border border-gray-200"
+              className="flex-1 py-3.5 rounded-lg bg-white items-center justify-center border-[1.5px] border-slate-400"
             >
               <Text className="text-sm font-semibold text-gray-700">Batal</Text>
             </PressableOpacity>
@@ -291,7 +295,7 @@ export function ManualDimmingModal({
             <PressableOpacity
               onPress={handleConfirm}
               disabled={isButtonDisabled}
-              className={`flex-1 py-3.5 rounded-xl items-center justify-center ${
+              className={`flex-1 py-3.5 rounded-lg items-center justify-center ${
                 isButtonDisabled
                   ? "bg-emerald-300 opacity-70"
                   : "bg-emerald-700 active:bg-emerald-800"

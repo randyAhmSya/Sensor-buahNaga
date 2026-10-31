@@ -10,6 +10,7 @@ import { LogoutButton } from '@/component/profile/LogoutButton';
 import { router } from 'expo-router';
 import { authService } from '@/service/authService';
 import { queryClient } from '@/lib/queryClient';
+import { FITUR_LANGGANAN } from '@/config/features';
 
 export default function ProfileScreen() {
   const { state, refetch } = useProfile();
@@ -55,6 +56,9 @@ export default function ProfileScreen() {
   }
 
   const { user, menu } = state.data;
+  const activeMenu = FITUR_LANGGANAN
+    ? menu
+    : menu.filter((item) => item.key !== 'subscription');
 
   return (
     <View className="flex-1 bg-slate-50">
@@ -67,7 +71,7 @@ export default function ProfileScreen() {
         contentContainerStyle={{ paddingBottom: 110 }}
       >
         <ProfileMenu
-          items={menu}
+          items={activeMenu}
           onItemPress={(key) => {
             switch (key) {
               case 'notifications':
@@ -79,11 +83,13 @@ export default function ProfileScreen() {
                 break;
 
               case 'subscription':
-                router.push('/subscription' as never);
+                if (FITUR_LANGGANAN) {
+                  router.push('/subscription' as never);
+                }
                 break;
 
               default:
-                console.log('Menu dipiih:', key);
+                console.log('Menu dipilih:', key);
             }
           }}
         />

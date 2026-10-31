@@ -8,10 +8,12 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { Stack, useLocalSearchParams, router } from "expo-router";
+import { Stack, useLocalSearchParams, router, Redirect } from "expo-router";
+import { FITUR_LANGGANAN } from "@/config/features";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 import { useBuyManualMutation } from "@/hooks/useSubscription";
 
 function formatRupiah(amount: number): string {
@@ -22,7 +24,7 @@ function formatRupiah(amount: number): string {
   }).format(amount);
 }
 
-export default function PayManualScreen() {
+function PayManualScreenInner() {
   const { paketId, namaPaket, harga, tambahanHari } = useLocalSearchParams<{
     paketId: string;
     namaPaket: string;
@@ -76,13 +78,28 @@ export default function PayManualScreen() {
     }
 
     try {
-      const fileUri = selectedImage.uri;
+      let fileUri = selectedImage.uri;
+
+      // Kompresi foto bukti bayar maksimal lebar 1280px dan kualitas 0.7 JPEG untuk menghemat kuota kebun
+      try {
+        const manipResult = await ImageManipulator.manipulateAsync(
+          selectedImage.uri,
+          [{ resize: { width: 1280 } }],
+          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG },
+        );
+        if (manipResult && manipResult.uri) {
+          fileUri = manipResult.uri;
+        }
+      } catch (manipErr) {
+        if (__DEV__) {
+          console.warn("[pay-manual] Fallback upload tanpa kompresi manipulasi:", manipErr);
+        }
+      }
+
       const fileName =
         selectedImage.fileName ||
-        `bukti_transfer_${Date.now()}.${
-          selectedImage.mimeType?.split("/")[1] || "jpg"
-        }`;
-      const mimeType = selectedImage.mimeType || "image/jpeg";
+        `bukti_transfer_${Date.now()}.jpg`;
+      const mimeType = "image/jpeg";
 
       await buyManualMutation.mutateAsync({
         paketId,
@@ -156,9 +173,9 @@ export default function PayManualScreen() {
           </View>
 
           {/* Rekening Tujuan */}
-          <View className="mb-4 rounded-2xl bg-emerald-50/60 p-5 border border-emerald-200">
+          <View className="mb-4 rounded-lg bg-white p-5 border border-emerald-300">
             <View className="flex-row items-center gap-2 mb-3">
-              <Ionicons name="business-outline" size={20} color="#15803d" />
+              <Ionicons name="business-outline" size={20} color="#047857" />
               <Text className="text-sm font-bold text-emerald-950">
                 Rekening Pembayaran Resmi AgroLight
               </Text>
@@ -225,7 +242,7 @@ export default function PayManualScreen() {
             ) : (
               <Pressable
                 onPress={handlePickImage}
-                className="rounded-2xl border-2 border-dashed border-emerald-300 bg-emerald-50/30 p-8 items-center justify-center active:bg-emerald-50"
+                className="rounded-lg border-2 border-dashed border-emerald-300 bg-white p-8 items-center justify-center active:bg-emerald-50"
               >
                 <View className="h-12 w-12 rounded-full bg-emerald-100 items-center justify-center mb-2">
                   <Ionicons name="cloud-upload-outline" size={26} color="#15803d" />
@@ -267,4 +284,11 @@ export default function PayManualScreen() {
       </SafeAreaView>
     </>
   );
+}
+
+export default function PayManualScreen() {
+  if (!FITUR_LANGGANAN) {
+    return <Redirect href="/(tabs)" />;
+  }
+  return <PayManualScreenInner />;
 }

@@ -3,6 +3,7 @@ import { Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Card } from "@/component/ui/Card";
 import { PressableOpacity } from "@/component/ui/PressableOpacity";
+import { StatusBadge } from "@/component/ui/StatusBadge";
 import type { QrScanLogItem } from "@/service/qrScanService";
 
 interface ActivityCardProps {
@@ -38,12 +39,9 @@ export const ActivityCard = memo(function ActivityCard({
     log.status_scan === "berhasil" || log.status_scan === "sukses";
 
   const statusLabel = isSuccess ? "Berhasil" : "Gagal";
-  const badgeTextColor = isSuccess ? "#065F46" : "#9F1239";
-  const badgeBgColor = isSuccess ? "#ECFDF5" : "#FFF1F2";
-  const badgeBorderColor = isSuccess ? "#A7F3D0" : "#FECDD3";
+  const tone: "success" | "danger" = isSuccess ? "success" : "danger";
   const iconName = isSuccess ? "qr-code-outline" : "close-circle-outline";
-  const iconColor = isSuccess ? "#059669" : "#E11D48";
-  const iconBgColor = isSuccess ? "#ECFDF5" : "#FFF1F2";
+  const iconColor = isSuccess ? "#047857" : "#DC2626";
 
   const qrText = log.teks_kode_qr || "QR Node";
   const nodeText = log.kode_perangkat
@@ -59,8 +57,7 @@ export const ActivityCard = memo(function ActivityCard({
       <Card className="mb-3 flex-row items-center gap-3 p-3.5 border border-slate-200 bg-white">
         {/* Leading Icon */}
         <View
-          className="h-11 w-11 items-center justify-center rounded-xl border border-slate-200"
-          style={{ backgroundColor: iconBgColor }}
+          className="h-11 w-11 items-center justify-center rounded-lg border-[1.5px] border-slate-400 bg-white"
         >
           <Ionicons name={iconName} size={22} color={iconColor} />
         </View>
@@ -76,20 +73,7 @@ export const ActivityCard = memo(function ActivityCard({
                 {qrText}
               </Text>
             </View>
-            <View
-              className="rounded-full px-2 py-0.5 border"
-              style={{
-                backgroundColor: badgeBgColor,
-                borderColor: badgeBorderColor,
-              }}
-            >
-              <Text
-                className="text-[10px] font-bold"
-                style={{ color: badgeTextColor }}
-              >
-                {statusLabel}
-              </Text>
-            </View>
+            <StatusBadge tone={tone} label={statusLabel} size="sm" />
           </View>
 
           {nodeText && (

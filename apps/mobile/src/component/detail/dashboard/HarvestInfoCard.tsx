@@ -26,9 +26,9 @@ export function HarvestInfoCard({ data }: HarvestInfoCardProps) {
     : null;
 
   return (
-    <View className="mt-4 rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden">
-      <View className="bg-gray-50 px-4 py-2.5 border-b border-gray-100">
-        <Text className="text-xs font-bold uppercase tracking-wider text-gray-500">
+    <View className="mt-4 rounded-lg bg-white border border-slate-200 shadow-sm overflow-hidden">
+      <View className="bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+        <Text className="text-xs font-bold uppercase tracking-wider text-slate-500">
           Parameter & Linimasa Siklus
         </Text>
       </View>
@@ -56,11 +56,11 @@ export function HarvestInfoCard({ data }: HarvestInfoCardProps) {
 
 function Item({ label, value, highlight }: ItemProps) {
   return (
-    <View className="flex-row justify-between items-center border-b border-gray-100 px-4 py-3">
-      <Text className="text-sm text-gray-500">{label}</Text>
+    <View className="flex-row justify-between items-center border-b border-slate-100 px-4 py-3">
+      <Text className="text-sm text-slate-500">{label}</Text>
       <Text
         className={`text-sm font-semibold ${
-          highlight ? 'text-green-700 font-bold' : 'text-gray-900'
+          highlight ? 'text-emerald-700 font-bold' : 'text-slate-900'
         }`}
       >
         {value}

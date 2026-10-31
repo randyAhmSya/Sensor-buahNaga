@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import { Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ListRowCard } from "@/component/ui/ListRowCard";
+import { StatusBadge } from "@/component/ui/StatusBadge";
 import type { MonitoringNode } from "@/constant/monitoring";
 
 interface NodeCardProps {
@@ -15,26 +16,46 @@ export const NodeCard = memo(function NodeCard({
 }: NodeCardProps) {
   const isOnline =
     node.statusKoneksi === "online" ||
-    node.statusKoneksi === "terhubung" ||
-    node.status === "normal";
+    node.statusKoneksi === "terhubung";
 
-  const statusLabel = isOnline ? "Aktif" : "Inactive";
-  const badgeTextColor = isOnline ? "#065F46" : "#9F1239";
-  const badgeBgColor = isOnline ? "#ECFDF5" : "#FFF1F2";
-  const badgeBorderColor = isOnline ? "#A7F3D0" : "#FECDD3";
-  const iconColor = isOnline ? "#059669" : "#E11D48";
-  const iconBgColor = isOnline ? "#ECFDF5" : "#FFF1F2";
+  const isBelumTerlihat =
+    node.statusKoneksi === "belum_pernah_terlihat" ||
+    (!isOnline && (!node.time || node.time === "-" || node.time === "Belum ada data"));
+
+  let tone: "success" | "danger" | "neutral" = "danger";
+  let statusLabel = "Offline";
+  let iconColor = "#DC2626";
+
+  if (isOnline) {
+    statusLabel = "Online";
+    tone = "success";
+    iconColor = "#047857";
+  } else if (isBelumTerlihat) {
+    statusLabel = "Belum Terlihat";
+    tone = "neutral";
+    iconColor = "#475569";
+  }
+
+  const displayTime =
+    !node.time || node.time === "-" || node.time === "Belum ada data"
+      ? "Belum ada data"
+      : node.time;
 
   return (
     <ListRowCard
       onPress={onPress}
       leading={
         <View
-          className="h-10 w-10 items-center justify-center rounded-xl border border-slate-200"
-          style={{ backgroundColor: iconBgColor }}
+          className="h-10 w-10 items-center justify-center rounded-lg border-[1.5px] border-slate-400 bg-white"
         >
           <Ionicons
-            name={isOnline ? "hardware-chip-outline" : "alert-circle-outline"}
+            name={
+              isOnline
+                ? "hardware-chip-outline"
+                : isBelumTerlihat
+                  ? "help-circle-outline"
+                  : "alert-circle-outline"
+            }
             size={20}
             color={iconColor}
           />
@@ -50,20 +71,7 @@ export const NodeCard = memo(function NodeCard({
             {node.code || node.id}
           </Text>
         </View>
-        <View
-          className="rounded-full px-2.5 py-0.5 border"
-          style={{
-            backgroundColor: badgeBgColor,
-            borderColor: badgeBorderColor,
-          }}
-        >
-          <Text
-            className="text-[10px] font-bold"
-            style={{ color: badgeTextColor }}
-          >
-            {statusLabel}
-          </Text>
-        </View>
+        <StatusBadge tone={tone} label={statusLabel} size="sm" />
       </View>
 
       <Text className="mt-0.5 text-xs text-slate-600" numberOfLines={1}>
@@ -87,7 +95,9 @@ export const NodeCard = memo(function NodeCard({
 
         <View className="flex-row items-center gap-1 ml-auto">
           <Ionicons name="time-outline" size={11} color="#64748B" />
-          <Text className="text-[11px] font-medium text-slate-600">{node.time}</Text>
+          <Text className="text-[11px] font-medium text-slate-600">
+            {displayTime}
+          </Text>
         </View>
       </View>
     </ListRowCard>

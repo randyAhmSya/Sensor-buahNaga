@@ -1,6 +1,7 @@
-﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constant/queryKeys";
 import { subscriptionService } from "@/service/subscriptionService";
+import { FITUR_LANGGANAN } from "@/config/features";
 import type {
   PaketLangganan,
   StatusLangganan,
@@ -17,6 +18,7 @@ export function useSubscriptionPackages() {
     queryKey: QUERY_KEYS.subscription.packages(),
     queryFn: () => subscriptionService.getPaketAktif(),
     staleTime: 1000 * 60 * 10, // 10 menit
+    enabled: FITUR_LANGGANAN,
   });
 }
 
@@ -29,6 +31,7 @@ export function useSubscriptionStatus() {
     queryFn: () => subscriptionService.getStatus(),
     staleTime: 1000 * 60 * 2, // 2 menit
     retry: 1,
+    enabled: FITUR_LANGGANAN,
   });
 }
 
@@ -40,6 +43,7 @@ export function useSubscriptionHistory(page = 1, perPage = 15) {
     queryKey: QUERY_KEYS.subscription.history({ page, perPage }),
     queryFn: () => subscriptionService.getRiwayat(page, perPage),
     staleTime: 1000 * 60 * 2,
+    enabled: FITUR_LANGGANAN,
   });
 }
 

@@ -57,7 +57,7 @@ export default function AccountSetting() {
             Informasi Profil
           </Text>
 
-          <View className="rounded-2xl bg-white p-4 border border-slate-200">
+          <View className="rounded-lg bg-white p-4 border border-slate-200">
             <InputField
               icon="person-outline"
               label="Nama Lengkap"
@@ -84,7 +84,7 @@ export default function AccountSetting() {
             Keamanan Akun
           </Text>
 
-          <View className="rounded-2xl bg-white p-4 border border-slate-200">
+          <View className="rounded-lg bg-white p-4 border border-slate-200">
             <InputField
               icon="lock-closed-outline"
               label="Kata Sandi Saat Ini"
@@ -112,7 +112,7 @@ export default function AccountSetting() {
 
           <Pressable
             disabled={isSaving}
-            className={`mt-6 rounded-xl bg-emerald-700 py-3.5 active:bg-emerald-800 ${
+            className={`mt-6 rounded-lg bg-emerald-700 py-3.5 active:bg-emerald-800 ${
               isSaving ? "opacity-70" : ""
             }`}
             onPress={handleSave}
@@ -148,7 +148,7 @@ function InputField({
     <View className="mb-3.5">
       <Text className="mb-1.5 text-xs font-semibold text-slate-700">{label}</Text>
 
-      <View className="flex-row items-center rounded-xl border border-slate-200 bg-slate-50 px-3">
+      <View className="flex-row items-center rounded-lg border border-slate-200 bg-slate-50 px-3">
         <Ionicons name={icon} size={18} color="#64748B" />
 
         <TextInput

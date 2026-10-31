@@ -79,7 +79,7 @@ export default function ActivityScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top", "left", "right"]}>
+      <SafeAreaView className="flex-1 bg-gray-50" style={{ flex: 1 }} edges={["top", "left", "right"]}>
         {/* Header */}
         <View className="border-b border-gray-100 bg-white px-4 py-3.5">
           <View className="flex-row items-center justify-between">
@@ -102,18 +102,10 @@ export default function ActivityScreen() {
                 </Text>
               </View>
             </View>
-
-            <Pressable
-              onPress={() => router.push("/scan")}
-              className="flex-row items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5"
-            >
-              <Ionicons name="scan-outline" size={14} color="#15803d" />
-              <Text className="text-xs font-bold text-emerald-800">Scan</Text>
-            </Pressable>
           </View>
 
           {/* Search Bar */}
-          <Card className="mt-3 flex-row items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200">
+          <Card className="mt-3 flex-row items-center gap-2 px-3 py-2 bg-white border-[1.5px] border-slate-400">
             <Ionicons name="search" size={16} color="#9CA3AF" />
             <TextInput
               value={searchQuery}
@@ -133,13 +125,15 @@ export default function ActivityScreen() {
           <View className="mt-3 flex-row items-center gap-2">
             <Pressable
               onPress={() => setFilterStatus("all")}
-              className={`rounded-full px-3.5 py-1.5 ${
-                filterStatus === "all" ? "bg-emerald-800" : "bg-gray-100"
+              className={`rounded-full px-3.5 py-1.5 border-[1.5px] ${
+                filterStatus === "all"
+                  ? "bg-[#047857] border-[#047857]"
+                  : "bg-white border-slate-400"
               }`}
             >
               <Text
                 className={`text-xs font-semibold ${
-                  filterStatus === "all" ? "text-white" : "text-gray-700"
+                  filterStatus === "all" ? "text-white" : "text-slate-700"
                 }`}
               >
                 Semua ({logs.length})
@@ -148,13 +142,15 @@ export default function ActivityScreen() {
 
             <Pressable
               onPress={() => setFilterStatus("success")}
-              className={`rounded-full px-3.5 py-1.5 ${
-                filterStatus === "success" ? "bg-emerald-800" : "bg-gray-100"
+              className={`rounded-full px-3.5 py-1.5 border-[1.5px] ${
+                filterStatus === "success"
+                  ? "bg-[#047857] border-[#047857]"
+                  : "bg-white border-slate-400"
               }`}
             >
               <Text
                 className={`text-xs font-semibold ${
-                  filterStatus === "success" ? "text-white" : "text-gray-700"
+                  filterStatus === "success" ? "text-white" : "text-slate-700"
                 }`}
               >
                 Berhasil (
@@ -171,13 +167,15 @@ export default function ActivityScreen() {
 
             <Pressable
               onPress={() => setFilterStatus("failed")}
-              className={`rounded-full px-3.5 py-1.5 ${
-                filterStatus === "failed" ? "bg-emerald-800" : "bg-gray-100"
+              className={`rounded-full px-3.5 py-1.5 border-[1.5px] ${
+                filterStatus === "failed"
+                  ? "bg-[#047857] border-[#047857]"
+                  : "bg-white border-slate-400"
               }`}
             >
               <Text
                 className={`text-xs font-semibold ${
-                  filterStatus === "failed" ? "text-white" : "text-gray-700"
+                  filterStatus === "failed" ? "text-white" : "text-slate-700"
                 }`}
               >
                 Gagal (
@@ -205,8 +203,8 @@ export default function ActivityScreen() {
           />
         ) : filteredLogs.length === 0 ? (
           <View className="flex-1 items-center justify-center p-8">
-            <View className="h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 mb-3">
-              <Ionicons name="document-text-outline" size={32} color="#15803d" />
+            <View className="h-16 w-16 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400 mb-3">
+              <Ionicons name="document-text-outline" size={32} color="#047857" />
             </View>
             <Text className="text-base font-bold text-gray-900 text-center">
               Tidak Ada Catatan Aktivitas
@@ -214,23 +212,15 @@ export default function ActivityScreen() {
             <Text className="mt-1 text-xs text-gray-500 text-center max-w-xs">
               {searchQuery || filterStatus !== "all"
                 ? "Tidak ada data riwayat yang cocok dengan filter atau pencarian Anda."
-                : "Semua data scan QR fisik node sensor akan otomatis terekam di layar ini."}
+                : "Semua data scan QR fisik node sensor akan otomatis terekam di layar ini. Gunakan tombol Scan pada menu navigasi bawah untuk mulai memindai."}
             </Text>
-            <Pressable
-              onPress={() => router.push("/scan")}
-              className="mt-5 flex-row items-center gap-2 rounded-full bg-emerald-800 px-5 py-2.5 active:bg-emerald-900"
-            >
-              <Ionicons name="scan-outline" size={16} color="#ffffff" />
-              <Text className="text-xs font-bold text-white">
-                Pindai QR Node Baru
-              </Text>
-            </Pressable>
           </View>
         ) : (
           <ScrollView
             className="flex-1 px-4 pt-3"
+            style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 40 }}
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }

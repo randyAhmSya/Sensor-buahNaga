@@ -1,4 +1,6 @@
+import { AppState } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useIsFocused } from 'expo-router';
 import axios from 'axios';
 import {
   notificationService,
@@ -26,14 +28,18 @@ export function useNotifications(params?: GetNotifikasiParams) {
       if (isPaymentRequiredError(error)) return false;
       return failureCount < 2;
     },
-    staleTime: 15000,
+    staleTime: 30000,
+    refetchOnMount: false,
   });
 }
 
 /**
  * Hook ringan untuk polling/membaca unread badge count di navbar / header.
+ * Hanya melakukan polling saat layar aktif dan aplikasi di foreground.
  */
 export function useUnreadNotificationCount() {
+  const isFocused = useIsFocused();
+
   return useQuery<number, Error>({
     queryKey: QUERY_KEYS.notifications.unreadCount,
     queryFn: () => notificationService.getUnreadCount(),
@@ -42,7 +48,14 @@ export function useUnreadNotificationCount() {
       return failureCount < 1;
     },
     staleTime: 30000,
-    refetchInterval: 60000,
+    refetchOnMount: false,
+    refetchInterval: () => {
+      if (!isFocused || AppState.currentState !== 'active') {
+        return false;
+      }
+      return 60000; // 60 detik
+    },
+    refetchIntervalInBackground: false,
   });
 }
 

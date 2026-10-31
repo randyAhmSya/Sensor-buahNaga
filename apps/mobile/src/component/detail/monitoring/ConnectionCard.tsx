@@ -2,6 +2,7 @@ import React from "react";
 import { Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Card } from "@/component/ui/Card";
+import { StatusBadge } from "@/component/ui/StatusBadge";
 
 interface Props {
   connection: {
@@ -29,15 +30,11 @@ export function ConnectionCard({ connection }: Props) {
           </Text>
         </View>
 
-        <View
-          className={`rounded-full px-3 py-1 ${
-            isConnected ? "bg-emerald-700" : "bg-slate-400"
-          }`}
-        >
-          <Text className="text-xs font-semibold text-white">
-            {isConnected ? "MQTT Terhubung" : "MQTT Terputus"}
-          </Text>
-        </View>
+        <StatusBadge
+          tone={isConnected ? "success" : "danger"}
+          label={isConnected ? "MQTT Terhubung" : "MQTT Terputus"}
+          size="sm"
+        />
       </View>
 
       {connection.lastSeen && (

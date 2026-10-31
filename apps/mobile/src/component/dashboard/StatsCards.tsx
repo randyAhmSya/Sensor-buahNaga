@@ -41,8 +41,8 @@ const StatCard = memo(function StatCard({
 }) {
   return (
     <Card className="flex-1 items-center gap-1.5 p-3.5">
-      <View className="h-8 w-8 items-center justify-center rounded-lg bg-emerald-50">
-        <Ionicons name={icon} size={18} color="#059669" />
+      <View className="h-10 w-10 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400">
+        <Ionicons name={icon} size={20} color="#334155" />
       </View>
       <Text className="text-center text-[11px] font-semibold uppercase tracking-wider text-slate-600">
         {label}

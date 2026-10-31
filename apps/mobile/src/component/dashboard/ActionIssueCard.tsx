@@ -15,7 +15,6 @@ export const ActionIssueCard = memo(function ActionIssueCard({
 }: ActionIssueCardProps) {
   const isCritical = issue.severity === "critical";
   const accentColor = isCritical ? "#DC2626" : "#D97706";
-  const accentBg = isCritical ? "#FEE2E2" : "#FEF3C7";
 
   return (
     <ListRowCard
@@ -23,8 +22,8 @@ export const ActionIssueCard = memo(function ActionIssueCard({
       leading={
         <View className="relative">
           <View
-            className="h-10 w-10 items-center justify-center rounded-xl border-2"
-            style={{ borderColor: accentBg }}
+            className="h-10 w-10 items-center justify-center rounded-xl bg-white border-[1.5px]"
+            style={{ borderColor: accentColor }}
           >
             <Ionicons name={issue.icon} size={18} color={accentColor} />
           </View>

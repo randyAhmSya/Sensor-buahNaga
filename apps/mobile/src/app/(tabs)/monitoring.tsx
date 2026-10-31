@@ -2,9 +2,9 @@ import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
-  ScrollView,
+  FlatList,
   RefreshControl,
-  Pressable,
+  type ListRenderItem,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,6 +15,7 @@ import { FilterPills } from "@/component/monitoring/FilterPills";
 import { NodeSection } from "@/component/monitoring/NodeSection";
 import { EmptyNodeScanState } from "@/component/detail/monitoring/EmptyNodeScanState";
 import { AsyncStateView } from "@/component/ui/AsyncStateView";
+import type { MonitoringGroup } from "@/constant/monitoring";
 
 export default function MonitoringScreen() {
   const {
@@ -25,6 +26,8 @@ export default function MonitoringScreen() {
     activeFilter,
     setActiveFilter,
     filteredGroups,
+    summary,
+    isOffline,
   } = useMonitoring();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -42,43 +45,58 @@ export default function MonitoringScreen() {
     });
   }, []);
 
-  const totalNodes =
-    state.status === "success"
-      ? state.data.groups.reduce((acc, g) => acc + g.nodes.length, 0)
-      : 0;
+  const renderGroupItem: ListRenderItem<MonitoringGroup> = useCallback(
+    ({ item: group }) => (
+      <NodeSection
+        group={group}
+        onNodePress={handleNodePress}
+      />
+    ),
+    [handleNodePress],
+  );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top", "left", "right"]}>
+    <SafeAreaView style={{ flex: 1 }} className="flex-1 bg-slate-50" edges={["top", "left", "right"]}>
       {/* Header */}
-      <View className="border-b border-gray-100 bg-white px-5 py-4">
+      <View className="border-b border-slate-200 bg-white px-5 py-4">
         <View className="flex-row items-center justify-between">
-          <View className="flex-1 pr-3">
-            <Text className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+          <View className="flex-1">
+            <Text className="text-xs font-bold uppercase tracking-wider text-emerald-800">
               Monitoring Jaringan
             </Text>
-            <Text className="text-xl font-extrabold text-gray-900">
+            <Text className="text-xl font-extrabold text-slate-900">
               Daftar Node Sensor
             </Text>
-            <Text className="mt-0.5 text-xs text-gray-500">
-              {totalNodes > 0
-                ? `${totalNodes} node sensor terhubung kebun`
+            <Text className="mt-0.5 text-xs text-slate-600">
+              {summary.total > 0
+                ? `${summary.total} node sensor terhubung kebun`
                 : "Memantau telemetri seluruh node sensor"}
             </Text>
           </View>
+        </View>
 
-          <Pressable
-            onPress={() => router.push("/scan")}
-            className="flex-row items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-2 active:bg-emerald-100"
-            accessibilityRole="button"
-            accessibilityLabel="Pindai QR Node Baru"
-          >
-            <Ionicons name="scan-outline" size={16} color="#15803d" />
-            <Text className="text-xs font-bold text-emerald-800">Scan QR</Text>
-          </Pressable>
+        {/* Node Status Summary Strip Utilitarian - Latar Putih Solid + Border 1.5px Tegas */}
+        <View className="mt-3 flex-row gap-2">
+          <View className="flex-1 rounded-lg bg-white border-[1.5px] border-slate-400 p-2 items-center">
+            <Text className="text-xs font-black text-slate-900">{summary.total}</Text>
+            <Text className="text-[10px] font-semibold text-slate-700">Total Node</Text>
+          </View>
+          <View className="flex-1 rounded-lg bg-white border-[1.5px] border-[#047857] p-2 items-center">
+            <Text className="text-xs font-black text-emerald-800">{summary.online}</Text>
+            <Text className="text-[10px] font-semibold text-emerald-700">Online</Text>
+          </View>
+          <View className="flex-1 rounded-lg bg-white border-[1.5px] border-[#DC2626] p-2 items-center">
+            <Text className="text-xs font-black text-rose-800">{summary.offline}</Text>
+            <Text className="text-[10px] font-semibold text-rose-700">Offline</Text>
+          </View>
+          <View className="flex-1 rounded-lg bg-white border-[1.5px] border-slate-400 p-2 items-center">
+            <Text className="text-xs font-black text-slate-900">{summary.belumTerlihat}</Text>
+            <Text className="text-[10px] font-semibold text-slate-700">Belum Terlihat</Text>
+          </View>
         </View>
 
         {/* Search Bar */}
-        <View className="mt-4">
+        <View className="mt-3">
           <SearchBar
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -102,6 +120,16 @@ export default function MonitoringScreen() {
         />
       </View>
 
+      {/* Banner Offline Tegas - Latar Putih Solid + Border 1.5px Amber */}
+      {isOffline && (
+        <View className="mx-4 mt-2 px-3.5 py-2 rounded-lg bg-white border-[1.5px] border-amber-500 flex-row items-center gap-2">
+          <Ionicons name="cloud-offline" size={16} color="#B45309" />
+          <Text className="text-xs font-bold text-amber-900 flex-1">
+            Sedang offline, menampilkan data terakhir
+          </Text>
+        </View>
+      )}
+
       {/* Main Content */}
       {state.status === "loading" && <AsyncStateView status="loading" />}
 
@@ -116,7 +144,7 @@ export default function MonitoringScreen() {
       {state.status === "success" && (
         <>
           {filteredGroups.length === 0 ? (
-            <View className="flex-1 justify-center px-4">
+            <View style={{ flex: 1 }} className="flex-1 justify-center px-4">
               <EmptyNodeScanState
                 title={
                   searchQuery.trim() !== "" || activeFilter !== "all"
@@ -126,44 +154,23 @@ export default function MonitoringScreen() {
                 description={
                   searchQuery.trim() !== "" || activeFilter !== "all"
                     ? "Tidak ada node sensor yang cocok dengan kata kunci atau filter yang Anda pilih."
-                    : "Pindai QR code pada fisik node sensor Anda untuk menghubungkannya ke sistem pemantauan kebun."
+                    : "Gunakan tombol Scan di menu navigasi bawah untuk menghubungkan fisik node sensor ke sistem."
                 }
-                buttonText="Pindai QR Node Baru"
-                onScanPress={() => router.push("/scan")}
               />
             </View>
           ) : (
-            <ScrollView
-              className="flex-1 px-4"
+            <FlatList
+              data={filteredGroups}
+              keyExtractor={(group) => group.dateLabel}
+              renderItem={renderGroupItem}
+              style={{ flex: 1 }}
+              contentContainerStyle={{ flexGrow: 1, paddingBottom: 100, paddingTop: 6, paddingHorizontal: 16 }}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 120, paddingTop: 6 }}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
               }
-            >
-              {filteredGroups.map((group) => (
-                <NodeSection
-                  key={group.dateLabel}
-                  group={group}
-                  onNodePress={handleNodePress}
-                />
-              ))}
-            </ScrollView>
+            />
           )}
-
-          {/* Floating Action Button (FAB) "Pindai QR Node Baru" */}
-          <Pressable
-            onPress={() => router.push("/scan")}
-            className="absolute right-5 bottom-28 flex-row items-center gap-2 rounded-full bg-emerald-800 px-4 py-3 shadow-lg active:bg-emerald-900"
-            style={{ elevation: 6 }}
-            accessibilityRole="button"
-            accessibilityLabel="Pindai QR Node Baru"
-          >
-            <Ionicons name="scan-outline" size={18} color="#ffffff" />
-            <Text className="text-xs font-bold text-white tracking-wide">
-              Pindai QR Baru
-            </Text>
-          </Pressable>
         </>
       )}
     </SafeAreaView>

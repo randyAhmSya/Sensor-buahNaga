@@ -23,6 +23,8 @@ export function useProfile(): UseProfileReturn {
   } = useQuery<ProfileData, Error>({
     queryKey: QUERY_KEYS.profile.all,
     queryFn: fetchProfileData,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
   });
 
   const state: ProfileState = useMemo(() => {

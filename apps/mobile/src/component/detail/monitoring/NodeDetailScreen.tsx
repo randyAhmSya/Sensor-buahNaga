@@ -2,14 +2,14 @@ import React from "react";
 import { ScrollView, View, ActivityIndicator, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import { useNodeDetail } from "@/hooks/useNodeDetails";
+import { useNodeRingkasan } from "@/hooks/useNodeRingkasan";
 import { PressableOpacity } from "@/component/ui/PressableOpacity";
 
 import { NodeHeroCard } from "./NodeHeroCard";
 import { SensorGrid } from "./SensorGrid";
-import { ConnectionCard } from "./ConnectionCard";
 import { LightingScheduleCard } from "./LightingScheduleCard";
-import { HarvestPredictionCard } from "./HarvestPredictionCard";
+import { DimmingHistoryChartCard } from "./DimmingHistoryChartCard";
+import { DeviceInfoCard } from "./DeviceInfoCard";
 import { NodeDetailHeader } from "./NodeDetailHeader";
 import { EmptyNodeScanState } from "./EmptyNodeScanState";
 
@@ -18,8 +18,8 @@ interface NodeDetailScreenProps {
 }
 
 export function NodeDetailScreen({ nodeId }: NodeDetailScreenProps) {
-  const { node, loading, error, isInvalidUuid, refetch } =
-    useNodeDetail(nodeId);
+  const { ringkasan, loading, error, isInvalidIdentifier, refetch } =
+    useNodeRingkasan(nodeId);
 
   // 1. Loading State
   if (loading) {
@@ -27,9 +27,9 @@ export function NodeDetailScreen({ nodeId }: NodeDetailScreenProps) {
       <View className="flex-1 bg-gray-50">
         <NodeDetailHeader nodeId={nodeId || "Memuat..."} />
         <View className="flex-1 items-center justify-center p-8">
-          <ActivityIndicator size="large" color="#15803d" />
-          <Text className="text-xs text-slate-400 mt-3 font-medium">
-            Memuat data telemetri node...
+          <ActivityIndicator size="large" color="#047857" />
+          <Text className="text-xs text-slate-500 mt-3 font-medium">
+            Memuat ringkasan data node...
           </Text>
         </View>
       </View>
@@ -37,14 +37,13 @@ export function NodeDetailScreen({ nodeId }: NodeDetailScreenProps) {
   }
 
   // 2. Jika format QR Code tidak sesuai
-  if (isInvalidUuid) {
+  if (isInvalidIdentifier) {
     return (
       <View className="flex-1 bg-gray-50">
         <NodeDetailHeader nodeId="QR Code Tidak Sesuai" />
         <EmptyNodeScanState
           title="Format QR Code Tidak Sesuai"
-          description="Kode QR yang dipindai bukan ID atau kode serial node yang valid. Silakan pindai ulang QR Code pada fisik node."
-          buttonText="Pindai Ulang QR Code"
+          description="Kode QR yang dipindai bukan ID atau kode serial node yang valid. Silakan gunakan tombol Scan pada menu navigasi bawah untuk memindai ulang."
           isError={true}
         />
       </View>
@@ -52,7 +51,7 @@ export function NodeDetailScreen({ nodeId }: NodeDetailScreenProps) {
   }
 
   // 3. Error Boundary / Retry State jika query API gagal
-  if (error && !node) {
+  if (error && !ringkasan) {
     return (
       <View className="flex-1 bg-gray-50">
         <NodeDetailHeader nodeId={nodeId || "Gagal Memuat"} />
@@ -83,55 +82,68 @@ export function NodeDetailScreen({ nodeId }: NodeDetailScreenProps) {
         <NodeDetailHeader nodeId="Belum Dipindai" />
         <EmptyNodeScanState
           title="Belum Ada Node yang Dipindai"
-          description="Silakan pindai QR code pada fisik node sensor terlebih dahulu untuk memantau data telemetri."
-          buttonText="Pindai QR Node"
+          description="Silakan gunakan tombol Scan pada menu navigasi bawah untuk memindai QR code pada fisik node sensor."
         />
       </View>
     );
   }
 
   // 5. Jika nodeId ada namun tidak ditemukan di backend
-  if (!node) {
+  if (!ringkasan) {
     return (
       <View className="flex-1 bg-gray-50">
         <NodeDetailHeader nodeId={nodeId} />
         <EmptyNodeScanState
           title="Node Tidak Ditemukan"
-          description={`Data node dengan ID "${nodeId}" tidak ditemukan di sistem atau Anda tidak memiliki akses ke kebun terkait.`}
-          buttonText="Pindai Node Lain"
+          description={`Data node dengan ID "${nodeId}" tidak ditemukan di sistem atau Anda tidak memiliki akses ke kebun terkait. Gunakan tombol Scan pada menu navigasi bawah untuk memindai node lain.`}
         />
       </View>
     );
   }
 
-  // 6. Data Riil Berhasil Dimuat
+  // 6. Data Riil Berhasil Dimuat dari Endpoint Tunggal Ringkasan
+  const nodeInfo = ringkasan.node;
+
   return (
     <View className="flex-1 bg-gray-50">
-      <NodeDetailHeader nodeId={node.name || node.id} />
+      <NodeDetailHeader nodeId={nodeInfo.kode_perangkat || nodeInfo.id_sensor} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerClassName="px-4 pb-28"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 110 }}
       >
-        <NodeHeroCard node={node} />
+        {/* Header Kartu: Kode Perangkat, Kebun-Blok, Satu Status Badge Solid, Waktu Aktif */}
+        <NodeHeroCard node={nodeInfo} />
 
-        <View className="mt-5">
-          <SensorGrid sensor={node.sensor} />
-        </View>
-
-        <View className="mt-5">
-          <ConnectionCard connection={node.connection} />
-        </View>
-
-        <View className="mt-5">
-          <LightingScheduleCard
-            schedule={node.schedule}
-            sensorId={node.sensorId || node.id}
+        {/* Grid 4 Metrik: Cahaya, Suhu, Energi, Dimming */}
+        <View className="mt-4">
+          <SensorGrid
+            bacaan={ringkasan.bacaan_terakhir}
+            energi={ringkasan.energi}
+            dimming={ringkasan.dimming_terakhir}
           />
         </View>
 
-        <View className="mt-5">
-          <HarvestPredictionCard harvest={node.harvest} />
+        {/* Mode Lampu: Mode, Jam Nyala, Asal Jadwal, Parameter, Jendela Nyala */}
+        <View className="mt-4">
+          <LightingScheduleCard
+            sensorId={nodeInfo.id_sensor}
+            jadwalInfo={ringkasan.jadwal}
+            onRefresh={refetch}
+          />
+        </View>
+
+        {/* Grafik Riwayat Auto-Dimming: Dimuat Setelah Ringkasan Selesai */}
+        <View className="mt-4">
+          <DimmingHistoryChartCard
+            sensorId={nodeInfo.id_sensor}
+            enabled={Boolean(ringkasan)}
+          />
+        </View>
+
+        {/* Info Perangkat Fisik (Collapsible di Bagian Bawah) */}
+        <View className="mt-4">
+          <DeviceInfoCard node={nodeInfo} />
         </View>
       </ScrollView>
     </View>

@@ -1,6 +1,7 @@
 import { PROFILE_MENU, type UserProfile } from "@/constant/profile";
 import type { ProfileData } from "@/service/profileService";
 import type { BackendKebunDTO, BackendSensorDTO } from "@/types/api";
+import { FITUR_LANGGANAN } from "@/config/features";
 
 interface CurrentUserContext {
   nama_lengkap?: string;
@@ -13,16 +14,21 @@ interface CurrentUserContext {
 export function mapToProfileData({
   currentUser,
   kebuns,
-  nodes,
+  nodes = [],
+  activeNodesCount,
 }: {
   currentUser?: CurrentUserContext | null;
   kebuns: BackendKebunDTO[];
-  nodes: BackendSensorDTO[];
+  nodes?: BackendSensorDTO[];
+  activeNodesCount?: number;
 }): ProfileData {
   const totalGardens = kebuns.length;
-  const activeNodes = nodes.filter(
-    (n) => n.status_koneksi === "online" || n.status_koneksi === "terhubung",
-  ).length;
+  const activeNodes =
+    activeNodesCount !== undefined
+      ? activeNodesCount
+      : nodes.filter(
+          (n) => n.status_koneksi === "online" || n.status_koneksi === "terhubung",
+        ).length;
 
   const firstLocation =
     kebuns[0]?.lokasi_kebun ||
@@ -42,8 +48,12 @@ export function mapToProfileData({
     activeNodes,
   };
 
+  const filteredMenu = FITUR_LANGGANAN
+    ? PROFILE_MENU
+    : PROFILE_MENU.filter((item) => item.key !== "subscription");
+
   return {
     user,
-    menu: PROFILE_MENU,
+    menu: filteredMenu,
   };
 }
