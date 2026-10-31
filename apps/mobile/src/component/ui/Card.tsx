@@ -1,6 +1,7 @@
 import React from "react";
 import { View, type ViewProps } from "react-native";
 import { Card_Shadow } from "@/constant/styles";
+import { radius } from "@/theme/tokens";
 
 interface CardProps extends ViewProps {
   className?: string;
@@ -9,8 +10,8 @@ interface CardProps extends ViewProps {
 export function Card({ className = "", style, children, ...rest }: CardProps) {
   return (
     <View
-      className={`rounded-2xl bg-white border border-slate-200 ${className}`}
-      style={[Card_Shadow, style]}
+      className={`rounded-lg bg-white border border-slate-200 ${className}`}
+      style={[{ borderRadius: radius.card }, Card_Shadow, style]}
       {...rest}
     >
       {children}

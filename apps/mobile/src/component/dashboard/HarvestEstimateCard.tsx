@@ -18,8 +18,8 @@ export const HarvestEstimateCard = memo(function HarvestEstimateCard({
     <ListRowCard
       onPress={onPress}
       leading={
-        <View className="h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200">
-          <Ionicons name="leaf-outline" size={20} color="#059669" />
+        <View className="h-11 w-11 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400">
+          <Ionicons name="leaf-outline" size={20} color="#047857" />
         </View>
       }
       trailing={

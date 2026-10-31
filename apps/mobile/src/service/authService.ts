@@ -34,7 +34,10 @@ export const authService = {
    */
   async login(email: string, password: string): Promise<LoginResponseData> {
     const trimmedEmail = email.trim();
-    console.log("[authService.login] Mengirim kredensial login:", { email: trimmedEmail });
+    if (__DEV__) {
+      const maskedEmail = trimmedEmail.replace(/(?<=^.).*(?=@)/, "***");
+      console.log("[authService.login] Mengirim kredensial login:", { email: maskedEmail });
+    }
 
     try {
       const response = await apiClient.post<BackendLoginResponse>(
@@ -75,7 +78,9 @@ export const authService = {
         await authStorage.setUser(user);
       }
 
-      console.log("[authService.login] Token berhasil disimpan di persistent storage. Role:", role);
+      if (__DEV__) {
+        console.log("[authService.login] Sesi autentikasi berhasil disimpan di persistent storage. Role:", role);
+      }
 
       return {
         user: user || ({ email: trimmedEmail, role } as AuthUser),

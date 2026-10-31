@@ -149,7 +149,7 @@ export function HarvestDetailScreen({ nodeId }: Props) {
             <Pressable
               onPress={handleOpenFlowerModal}
               disabled={recordFlowerMutation.isPending}
-              className="flex-row items-center justify-center gap-2 rounded-xl bg-amber-500 py-3.5 px-4 shadow-sm active:bg-amber-600"
+              className="flex-row items-center justify-center gap-2 rounded-lg bg-amber-500 py-3.5 px-4 shadow-sm active:bg-amber-600"
             >
               {recordFlowerMutation.isPending ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
@@ -168,7 +168,7 @@ export function HarvestDetailScreen({ nodeId }: Props) {
             <Pressable
               onPress={handleConfirmFinishHarvest}
               disabled={finishHarvestMutation.isPending}
-              className="flex-row items-center justify-center gap-2 rounded-xl bg-green-700 py-3.5 px-4 shadow-sm active:bg-green-800"
+              className="flex-row items-center justify-center gap-2 rounded-lg bg-emerald-700 py-3.5 px-4 shadow-sm active:bg-emerald-800"
             >
               {finishHarvestMutation.isPending ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
@@ -193,9 +193,9 @@ export function HarvestDetailScreen({ nodeId }: Props) {
         onRequestClose={() => setFlowerModalVisible(false)}
       >
         <View className="flex-1 justify-center items-center bg-black/50 px-6">
-          <View className="w-full bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
+          <View className="w-full bg-white rounded-lg p-6 shadow-xl border border-slate-200">
             <View className="flex-row items-center gap-2.5 mb-2">
-              <View className="h-9 w-9 items-center justify-center rounded-full bg-amber-100">
+              <View className="h-9 w-9 items-center justify-center rounded-lg bg-amber-100">
                 <Ionicons name="flower" size={20} color="#D97706" />
               </View>
               <Text className="text-base font-bold text-gray-900">
@@ -214,7 +214,7 @@ export function HarvestDetailScreen({ nodeId }: Props) {
               value={flowerDate}
               onChangeText={setFlowerDate}
               placeholder="Contoh: 2026-10-26"
-              className="border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 bg-gray-50 mb-6 font-medium"
+              className="border border-slate-300 rounded-lg px-4 py-3 text-sm text-gray-900 bg-slate-50 mb-6 font-medium"
               autoCapitalize="none"
               autoCorrect={false}
             />
@@ -222,7 +222,7 @@ export function HarvestDetailScreen({ nodeId }: Props) {
             <View className="flex-row gap-3">
               <Pressable
                 onPress={() => setFlowerModalVisible(false)}
-                className="flex-1 py-3 rounded-xl bg-gray-100 items-center justify-center"
+                className="flex-1 py-3 rounded-lg bg-gray-100 items-center justify-center"
               >
                 <Text className="font-semibold text-gray-700 text-sm">Batal</Text>
               </Pressable>
@@ -230,7 +230,7 @@ export function HarvestDetailScreen({ nodeId }: Props) {
               <Pressable
                 onPress={handleSaveFlowerDate}
                 disabled={recordFlowerMutation.isPending}
-                className="flex-1 py-3 rounded-xl bg-amber-500 items-center justify-center shadow-sm"
+                className="flex-1 py-3 rounded-lg bg-amber-500 items-center justify-center shadow-sm"
               >
                 {recordFlowerMutation.isPending ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />

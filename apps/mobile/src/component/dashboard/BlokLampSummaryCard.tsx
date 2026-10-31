@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { BlokLampuSummary } from '@/types/notification';
+import { StatusBadge } from '@/component/ui/StatusBadge';
+import type { BadgeTone } from '@/theme/tokens';
 
 interface BlokLampSummaryCardProps {
   summaries: BlokLampuSummary[];
@@ -13,11 +15,11 @@ export function BlokLampSummaryCard({ summaries }: BlokLampSummaryCardProps) {
   }
 
   return (
-    <View className="mb-4 rounded-2xl bg-white p-4 border border-slate-200">
+    <View className="mb-4 rounded-lg bg-white p-4 border border-slate-200">
       <View className="flex-row items-center justify-between mb-3 border-b border-slate-200 pb-2.5">
         <View className="flex-row items-center gap-2">
-          <View className="h-7 w-7 items-center justify-center rounded-lg bg-amber-50 border border-amber-200">
-            <Ionicons name="bulb-outline" size={16} color="#D97706" />
+          <View className="h-7 w-7 items-center justify-center rounded-md bg-amber-500">
+            <Ionicons name="bulb-outline" size={16} color="#0F172A" />
           </View>
           <Text className="text-sm font-bold text-slate-900">
             Status Lampu per Blok
@@ -31,28 +33,24 @@ export function BlokLampSummaryCard({ summaries }: BlokLampSummaryCardProps) {
 
       <View className="gap-2.5">
         {summaries.map((blok) => {
-          let badgeBg = 'bg-emerald-50 border border-emerald-300';
-          let badgeText = 'text-emerald-800';
+          let tone: BadgeTone = 'success';
           let badgeLabel = `${blok.persentaseOnline}% Online`;
 
           if (blok.statusKoneksi === 'kosong') {
-            badgeBg = 'bg-slate-100 border border-slate-300';
-            badgeText = 'text-slate-700';
+            tone = 'neutral';
             badgeLabel = 'Tanpa Lampu';
           } else if (blok.statusKoneksi === 'semua_offline') {
-            badgeBg = 'bg-rose-50 border border-rose-300';
-            badgeText = 'text-rose-800';
+            tone = 'danger';
             badgeLabel = 'Semua Offline';
           } else if (blok.statusKoneksi === 'sebagian_offline') {
-            badgeBg = 'bg-amber-50 border border-amber-300';
-            badgeText = 'text-amber-800';
+            tone = 'warning';
             badgeLabel = `${blok.jumlahOffline} Offline`;
           }
 
           return (
             <View
               key={blok.idBlok}
-              className="flex-row items-center justify-between bg-slate-50 rounded-xl p-3 border border-slate-200"
+              className="flex-row items-center justify-between bg-white rounded-lg p-3 border-[1.5px] border-slate-400"
             >
               <View className="flex-1 mr-2" style={{ flexShrink: 1 }}>
                 <Text className="text-xs font-bold text-slate-900" numberOfLines={1}>
@@ -63,11 +61,7 @@ export function BlokLampSummaryCard({ summaries }: BlokLampSummaryCardProps) {
                 </Text>
               </View>
 
-              <View className={`rounded-full px-2.5 py-0.5 ${badgeBg}`}>
-                <Text className={`text-[10px] font-bold ${badgeText}`}>
-                  {badgeLabel}
-                </Text>
-              </View>
+              <StatusBadge tone={tone} label={badgeLabel} size="sm" />
             </View>
           );
         })}

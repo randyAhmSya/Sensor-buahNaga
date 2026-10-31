@@ -1,10 +1,8 @@
 import {
   QUICK_ACTIONS,
   type ActionIssueGroup,
-  type ActivityItem,
   type GardenStats,
   type HarvestEstimate,
-  type WeatherInfo,
 } from '@/constant/dashboard';
 import type { DashboardData } from '@/service/dashboardService';
 import type {
@@ -15,19 +13,6 @@ import type {
 } from '@/types/api';
 import type { BlokLampuSummary } from '@/types/notification';
 import { hitungHariSisa, hitungRipenessPercent } from '@/types/harvest';
-
-export function formatJamWib(dateStr?: string | null): string {
-  if (!dateStr) return '-';
-  try {
-    const d = new Date(dateStr);
-    return (
-      d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) +
-      ' WIB'
-    );
-  } catch {
-    return dateStr;
-  }
-}
 
 export function mapToDashboardData({
   kebuns,
@@ -65,44 +50,23 @@ export function mapToDashboardData({
     avgHealthPercent,
   };
 
-  // 2. Olah cuaca dari sensor
+  // 2. Bacaan terbaru dari telemetri aktual (bila ada)
   const latestTelemetry = telemetryList[0];
-  const suhu = latestTelemetry?.suhu
-    ? Math.round(Number(latestTelemetry.suhu))
-    : 28;
-  const lux = latestTelemetry?.nilai_lux
-    ? Number(latestTelemetry.nilai_lux)
-    : 0;
-  const weatherCondition =
-    lux > 800
-      ? 'Cerah Terik'
-      : lux > 300
-        ? 'Cerah Berawan'
-        : lux > 50
-          ? 'Mendung'
-          : 'Malam Hari';
+  const bacaanTerbaru = latestTelemetry
+    ? {
+        nilai_lux: Math.round(Number(latestTelemetry.nilai_lux || 0)),
+        suhu:
+          latestTelemetry.suhu !== null && latestTelemetry.suhu !== undefined
+            ? Math.round(Number(latestTelemetry.suhu))
+            : null,
+        dicatat_pada: latestTelemetry.dicatat_pada || new Date().toISOString(),
+        basi: false,
+        id_sensor: activeSensor?.id_sensor,
+        kode_perangkat: activeSensor?.kode_perangkat,
+      }
+    : null;
 
-  const weather: WeatherInfo = {
-    temperatureC: suhu,
-    condition: weatherCondition,
-  };
-
-  // 3. Aktivitas sensor
-  const activities: ActivityItem[] = telemetryList
-    .slice(0, 5)
-    .map((item, index) => {
-      const luxVal = Number(item.nilai_lux || 0);
-      return {
-        id: item.id_read_sensor || `act-${index}`,
-        nodeId: activeSensor?.kode_perangkat || `Node-${index + 1}`,
-        location: kebuns[0]?.nama_kebun || 'Kebun Buah Naga',
-        lightLux: Math.round(luxVal),
-        powerWh: Math.round(luxVal * 0.1),
-        time: formatJamWib(item.dicatat_pada),
-      };
-    });
-
-  // 4. Estimasi panen riil dari backend (UUID id_siklus_panen valid)
+  // 3. Estimasi panen riil dari backend
   const harvestEstimates: HarvestEstimate[] = siklusList
     .filter((s) => s.status_siklus === 'BERJALAN')
     .slice(0, 5)
@@ -116,7 +80,7 @@ export function mapToDashboardData({
       daysRemaining: hitungHariSisa(s.estimasi_tanggal_panen),
     }));
 
-  // 5. Action Needed (Masalah perangkat)
+  // 4. Action Needed (Masalah perangkat)
   const offlineNodes = allNodes.filter(
     (n) => n.status_koneksi === 'offline' || n.status_koneksi === 'terputus',
   );
@@ -129,19 +93,36 @@ export function mapToDashboardData({
       issues: offlineNodes.map((node) => ({
         id: node.id_sensor,
         nodeId: node.kode_perangkat,
-        title: 'Perangkat Node Offline - Terputus dari Gateway',
-        location: kebuns[0]?.nama_kebun || 'Area Kebun',
+        title: 'Node Sensor Offline',
+        location: kebuns[0]?.nama_kebun || 'Kebun Buah Naga',
         icon: 'wifi-outline',
         severity: 'warning',
       })),
     });
   }
 
+  const kebunInfo = {
+    id_kebun: kebuns[0]?.id_kebun || '',
+    nama_kebun: kebuns[0]?.nama_kebun || 'Kebun Buah Naga',
+    lokasi_kebun: kebuns[0]?.lokasi_kebun || 'Banyuwangi',
+    status_kebun: kebuns[0]?.status_kebun ? String(kebuns[0].status_kebun) : 'aktif',
+  };
+
+  const ringkasan = {
+    jumlah_blok: blokLampuSummaries.length,
+    jumlah_node: allNodes.length,
+    node_online: activeNodesCount,
+    node_offline: offlineNodes.length,
+    node_belum_terlihat: Math.max(0, allNodes.length - activeNodesCount - offlineNodes.length),
+    siklus_berjalan: harvestEstimates.length,
+    bacaan_terbaru: bacaanTerbaru,
+  };
+
   return {
-    weather,
+    kebunInfo,
+    ringkasan,
     stats,
     quickActions: QUICK_ACTIONS,
-    activities,
     harvestEstimates,
     actionIssueGroups,
     blokLampuSummaries,

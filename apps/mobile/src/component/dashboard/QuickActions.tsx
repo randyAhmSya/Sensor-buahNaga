@@ -1,8 +1,8 @@
 import React, { memo } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { TAB_COLORS } from "@/constant/Tabs";
 import { PressableOpacity } from "@/component/ui/PressableOpacity";
+import { colors, radius } from "@/theme/tokens";
 import type { QuickAction } from "@/constant/dashboard";
 
 interface QuickActionsProps {
@@ -51,8 +51,10 @@ const ActionPill = memo(function ActionPill({
       onPress={onPress}
       activeOpacity={0.85}
       style={{
-        backgroundColor: isActive ? TAB_COLORS.active : "#F3F4F6",
-        borderRadius: 999,
+        backgroundColor: isActive ? colors.status.success.bg : "#FFFFFF",
+        borderColor: isActive ? colors.status.success.bg : "#CBD5E1",
+        borderWidth: 1,
+        borderRadius: radius.control,
         paddingHorizontal: 16,
         paddingVertical: 10,
         flexDirection: "row",
@@ -62,7 +64,7 @@ const ActionPill = memo(function ActionPill({
       <Ionicons
         name={action.icon}
         size={16}
-        color={isActive ? "#FFFFFF" : "#374151"}
+        color={isActive ? colors.status.success.text : "#1E293B"}
       />
 
       <Text
@@ -70,7 +72,7 @@ const ActionPill = memo(function ActionPill({
           marginLeft: 8,
           fontSize: 14,
           fontWeight: "600",
-          color: isActive ? "#FFFFFF" : "#374151",
+          color: isActive ? colors.status.success.text : "#1E293B",
         }}
       >
         {action.label}

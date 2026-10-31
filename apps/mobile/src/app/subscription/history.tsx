@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,8 @@ import {
   Pressable,
   ActivityIndicator,
 } from "react-native";
-import { Stack, router } from "expo-router";
+import { Stack, router, Redirect } from "expo-router";
+import { FITUR_LANGGANAN } from "@/config/features";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSubscriptionHistory } from "@/hooks/useSubscription";
@@ -72,7 +73,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export default function SubscriptionHistoryScreen() {
+function SubscriptionHistoryScreenInner() {
   const { data, isLoading, refetch } = useSubscriptionHistory(1, 20);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -200,4 +201,11 @@ export default function SubscriptionHistoryScreen() {
       </SafeAreaView>
     </>
   );
+}
+
+export default function SubscriptionHistoryScreen() {
+  if (!FITUR_LANGGANAN) {
+    return <Redirect href="/(tabs)" />;
+  }
+  return <SubscriptionHistoryScreenInner />;
 }

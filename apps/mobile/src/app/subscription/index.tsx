@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,8 @@ import {
   ActivityIndicator,
   Modal,
 } from "react-native";
-import { Stack, router } from "expo-router";
+import { Stack, router, Redirect } from "expo-router";
+import { FITUR_LANGGANAN } from "@/config/features";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -25,7 +26,7 @@ function formatRupiah(amount: number): string {
   }).format(amount);
 }
 
-export default function SubscriptionIndexScreen() {
+function SubscriptionIndexScreenInner() {
   const {
     data: statusData,
     isLoading: statusLoading,
@@ -320,7 +321,7 @@ export default function SubscriptionIndexScreen() {
                 {/* Opsi 1: Midtrans Online */}
                 <Pressable
                   onPress={handleChooseOnline}
-                  className="flex-row items-center justify-between rounded-2xl border border-emerald-300 bg-emerald-50/50 p-4 active:bg-emerald-100"
+                  className="flex-row items-center justify-between rounded-lg border border-emerald-300 bg-white p-4 active:bg-emerald-50"
                 >
                   <View className="flex-row items-center gap-3">
                     <View className="h-10 w-10 rounded-xl bg-emerald-700 items-center justify-center">
@@ -365,4 +366,11 @@ export default function SubscriptionIndexScreen() {
       </SafeAreaView>
     </>
   );
+}
+
+export default function SubscriptionIndexScreen() {
+  if (!FITUR_LANGGANAN) {
+    return <Redirect href="/(tabs)" />;
+  }
+  return <SubscriptionIndexScreenInner />;
 }

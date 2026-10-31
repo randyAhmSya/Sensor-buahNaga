@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   TextInput,
-  Pressable,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -12,8 +11,10 @@ import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '@/service/apiClient';
+import { useKebunList } from '@/hooks/useKebun';
 import { useCreateHarvestMutation } from '@/hooks/useHarvest';
 import { formatTanggalPetani } from '@/types/harvest';
+import { PressableOpacity } from '@/component/ui/PressableOpacity';
 import type { BackendKebunDTO } from '@/types/api';
 import type { BackendBlokDTO } from '@/service/dashboardService';
 
@@ -26,14 +27,8 @@ export default function CreateHarvestScreen() {
   const [targetBunga, setTargetBunga] = useState('21');
   const [targetPanen, setTargetPanen] = useState('50');
 
-  // Ambil data kebun
-  const { data: kebunList = [], isLoading: isLoadingKebun } = useQuery<BackendKebunDTO[]>({
-    queryKey: ['petani', 'kebun'],
-    queryFn: async () => {
-      const res = await apiClient.get<{ data: BackendKebunDTO[] }>('/petani/kebun');
-      return res.data?.data || [];
-    },
-  });
+  // Ambil data kebun via cache terpusat
+  const { data: kebunList = [], isLoading: isLoadingKebun } = useKebunList();
 
   // Pilih kebun pertama secara default
   useEffect(() => {
@@ -93,7 +88,6 @@ export default function CreateHarvestScreen() {
       return;
     }
 
-    // Body JSON wajib mengirim block_id sesuai validator addSiklusPanenRequest
     createMutation.mutate(
       {
         block_id: selectedBlokId,
@@ -103,24 +97,33 @@ export default function CreateHarvestScreen() {
       },
       {
         onSuccess: (data) => {
-          Alert.alert(
-            'Siklus Berhasil Dimulai',
-            'Siklus penyinaran baru telah aktif tercatat di sistem.',
-            [
-              {
-                text: 'Buka Detail Siklus',
-                onPress: () => {
+          Alert.alert('Sukses', 'Siklus penyinaran berhasil didaftarkan.', [
+            {
+              text: 'Buka Detail',
+              onPress: () => {
+                if (data?.id_siklus_panen) {
                   router.replace({
                     pathname: '/harvest/[id]',
                     params: { id: data.id_siklus_panen },
                   });
-                },
+                } else {
+                  router.back();
+                }
               },
-            ],
-          );
+            },
+            {
+              text: 'Selesai',
+              onPress: () => router.back(),
+              style: 'cancel',
+            },
+          ]);
         },
-        onError: (err) => {
-          Alert.alert('Gagal Memulai Siklus', err.message || 'Terjadi kesalahan sistem.');
+        onError: (err: unknown) => {
+          const message =
+            err instanceof Error
+              ? err.message
+              : 'Gagal memulai siklus penyinaran. Pastikan koneksi stabil.';
+          Alert.alert('Gagal', message);
         },
       },
     );
@@ -137,52 +140,52 @@ export default function CreateHarvestScreen() {
       />
 
       <ScrollView
-        className="flex-1 bg-gray-50"
+        className="flex-1 bg-slate-50"
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
       >
         {/* Header Hero Card */}
-        <View className="bg-green-800 rounded-2xl p-5 mb-5 shadow-sm">
+        <View className="bg-emerald-800 rounded-lg p-5 mb-5 shadow-sm border border-emerald-700">
           <View className="flex-row items-center gap-2 mb-2">
             <Ionicons name="sunny" size={24} color="#FDE047" />
             <Text className="text-white font-bold text-base">
               Penyinaran Lampu & Estimasi Panen
             </Text>
           </View>
-          <Text className="text-green-100 text-xs leading-4">
+          <Text className="text-emerald-100 text-xs leading-4">
             Catat tanggal dimulainya lampu induksi bunga buah naga di blok lahan Anda.
             Sistem otomatis memproyeksikan tanggal mekar bunga dan masa panen.
           </Text>
         </View>
 
         {/* Pemilihan Kebun */}
-        <View className="bg-white rounded-xl p-4 mb-4 border border-gray-100 shadow-sm">
-          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+        <View className="bg-white rounded-lg p-4 mb-4 border border-slate-200 shadow-sm">
+          <Text className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
             1. Pilih Kebun
           </Text>
           {isLoadingKebun ? (
-            <ActivityIndicator size="small" color="#166534" />
+            <ActivityIndicator size="small" color="#047857" />
           ) : (
             <View className="flex-row flex-wrap gap-2">
               {kebunList.map((k) => {
                 const isSelected = selectedKebunId === k.id_kebun;
                 return (
-                  <Pressable
+                  <PressableOpacity
                     key={k.id_kebun}
                     onPress={() => setSelectedKebunId(k.id_kebun)}
                     className={`px-3 py-2 rounded-lg border ${
                       isSelected
-                        ? 'bg-green-50 border-green-600'
-                        : 'bg-gray-50 border-gray-200'
+                        ? 'bg-emerald-700 border-emerald-700'
+                        : 'bg-white border-slate-300'
                     }`}
                   >
                     <Text
-                      className={`text-xs font-semibold ${
-                        isSelected ? 'text-green-800 font-bold' : 'text-gray-700'
+                      className={`text-xs font-bold ${
+                        isSelected ? 'text-white' : 'text-slate-700'
                       }`}
                     >
                       {k.nama_kebun}
                     </Text>
-                  </Pressable>
+                  </PressableOpacity>
                 );
               })}
             </View>
@@ -190,36 +193,36 @@ export default function CreateHarvestScreen() {
         </View>
 
         {/* Pemilihan Blok */}
-        <View className="bg-white rounded-xl p-4 mb-4 border border-gray-100 shadow-sm">
-          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+        <View className="bg-white rounded-lg p-4 mb-4 border border-slate-200 shadow-sm">
+          <Text className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
             2. Pilih Blok Lahan
           </Text>
           {isLoadingBlok ? (
-            <ActivityIndicator size="small" color="#166534" />
+            <ActivityIndicator size="small" color="#047857" />
           ) : blokList.length === 0 ? (
-            <Text className="text-xs text-gray-400">Tidak ada blok pada kebun ini.</Text>
+            <Text className="text-xs text-slate-400">Tidak ada blok pada kebun ini.</Text>
           ) : (
             <View className="flex-row flex-wrap gap-2">
               {blokList.map((b) => {
                 const isSelected = selectedBlokId === b.id_blok;
                 return (
-                  <Pressable
+                  <PressableOpacity
                     key={b.id_blok}
                     onPress={() => setSelectedBlokId(b.id_blok)}
                     className={`px-3 py-2 rounded-lg border ${
                       isSelected
-                        ? 'bg-green-50 border-green-600'
-                        : 'bg-gray-50 border-gray-200'
+                        ? 'bg-emerald-700 border-emerald-700'
+                        : 'bg-white border-slate-300'
                     }`}
                   >
                     <Text
-                      className={`text-xs font-semibold ${
-                        isSelected ? 'text-green-800 font-bold' : 'text-gray-700'
+                      className={`text-xs font-bold ${
+                        isSelected ? 'text-white' : 'text-slate-700'
                       }`}
                     >
                       {b.nama_blok}
                     </Text>
-                  </Pressable>
+                  </PressableOpacity>
                 );
               })}
             </View>
@@ -227,46 +230,46 @@ export default function CreateHarvestScreen() {
         </View>
 
         {/* Parameter Siklus */}
-        <View className="bg-white rounded-xl p-4 mb-4 border border-gray-100 shadow-sm gap-3">
-          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+        <View className="bg-white rounded-lg p-4 mb-4 border border-slate-200 shadow-sm gap-3">
+          <Text className="text-xs font-bold text-slate-500 uppercase tracking-wider">
             3. Parameter Penyinaran
           </Text>
 
           <View>
-            <Text className="text-xs text-gray-600 mb-1 font-medium">
+            <Text className="text-xs text-slate-600 mb-1 font-medium">
               Tanggal Mulai Penyinaran (YYYY-MM-DD):
             </Text>
             <TextInput
               value={tanggalPenyinaran}
               onChangeText={setTanggalPenyinaran}
-              className="border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 text-sm text-gray-900"
+              className="border-[1.5px] border-slate-400 rounded-lg px-4 py-2.5 bg-white text-sm text-slate-900"
               placeholder="2026-10-26"
             />
           </View>
 
           <View className="flex-row gap-3">
             <View className="flex-1">
-              <Text className="text-xs text-gray-600 mb-1 font-medium">
+              <Text className="text-xs text-slate-600 mb-1 font-medium">
                 Target Berbunga (hari):
               </Text>
               <TextInput
                 value={targetBunga}
                 onChangeText={setTargetBunga}
                 keyboardType="numeric"
-                className="border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 text-sm text-gray-900"
+                className="border-[1.5px] border-slate-400 rounded-lg px-4 py-2.5 bg-white text-sm text-slate-900"
                 placeholder="21"
               />
             </View>
 
             <View className="flex-1">
-              <Text className="text-xs text-gray-600 mb-1 font-medium">
+              <Text className="text-xs text-slate-600 mb-1 font-medium">
                 Target Panen Bunga (hari):
               </Text>
               <TextInput
                 value={targetPanen}
                 onChangeText={setTargetPanen}
                 keyboardType="numeric"
-                className="border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 text-sm text-gray-900"
+                className="border-[1.5px] border-slate-400 rounded-lg px-4 py-2.5 bg-white text-sm text-slate-900"
                 placeholder="50"
               />
             </View>
@@ -274,7 +277,7 @@ export default function CreateHarvestScreen() {
         </View>
 
         {/* Live Preview Card */}
-        <View className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 shadow-sm">
+        <View className="bg-white border-[1.5px] border-amber-500 rounded-lg p-4 mb-6 shadow-sm">
           <View className="flex-row items-center gap-2 mb-2">
             <Ionicons name="calculator-outline" size={18} color="#B45309" />
             <Text className="text-xs font-bold text-amber-900 uppercase">
@@ -282,21 +285,21 @@ export default function CreateHarvestScreen() {
             </Text>
           </View>
 
-          <View className="flex-row justify-between py-1 border-b border-amber-200/50">
+          <View className="flex-row justify-between py-1 border-b border-amber-200">
             <Text className="text-xs text-amber-800">Total Durasi Siklus:</Text>
             <Text className="text-xs font-bold text-amber-900">{totalHariEstimasi} Hari</Text>
           </View>
           <View className="flex-row justify-between py-1 pt-2">
             <Text className="text-xs text-amber-800">Estimasi Tanggal Panen:</Text>
-            <Text className="text-xs font-bold text-green-800">{calculatedEstimatedDate}</Text>
+            <Text className="text-xs font-bold text-emerald-800">{calculatedEstimatedDate}</Text>
           </View>
         </View>
 
         {/* Submit Button */}
-        <Pressable
+        <PressableOpacity
           onPress={handleSubmit}
           disabled={createMutation.isPending}
-          className="bg-green-700 py-3.5 rounded-xl items-center justify-center shadow-sm active:bg-green-800"
+          className="bg-emerald-700 py-3.5 rounded-lg items-center justify-center shadow-sm active:bg-emerald-800"
         >
           {createMutation.isPending ? (
             <ActivityIndicator color="#FFFFFF" size="small" />
@@ -305,7 +308,7 @@ export default function CreateHarvestScreen() {
               Mulai Siklus Penyinaran
             </Text>
           )}
-        </Pressable>
+        </PressableOpacity>
       </ScrollView>
     </>
   );

@@ -83,25 +83,20 @@ export const ActivityList = memo(function ActivityList({
           </Text>
         </View>
       ) : logs.length === 0 ? (
-        <View className="items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white p-6 my-2">
-          <View className="h-12 w-12 items-center justify-center rounded-full bg-emerald-50 mb-2">
-            <Ionicons name="qr-code-outline" size={24} color="#059669" />
+        <View
+          key="activity-empty-container"
+          className="items-center justify-center rounded-lg bg-white p-6 my-2"
+          style={{ borderStyle: "dashed", borderWidth: 1, borderColor: "#CBD5E1" }}
+        >
+          <View className="h-12 w-12 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400 mb-2">
+            <Ionicons name="qr-code-outline" size={24} color="#047857" />
           </View>
           <Text className="text-center text-sm font-bold text-slate-900">
             Belum Ada Riwayat Pemindaian
           </Text>
           <Text className="mt-1 text-center text-xs text-slate-600 max-w-xs">
-            Setiap aktivitas scan QR node sensor akan tercatat secara otomatis di sini.
+            Setiap aktivitas scan QR node sensor akan tercatat secara otomatis di sini. Gunakan tombol Scan pada menu navigasi bawah untuk mulai memindai.
           </Text>
-          <PressableOpacity
-            onPress={() => router.push("/scan")}
-            className="mt-4 flex-row items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2"
-          >
-            <Ionicons name="scan-outline" size={14} color="#ffffff" />
-            <Text className="text-xs font-bold text-white">
-              Pindai QR Node Sekarang
-            </Text>
-          </PressableOpacity>
         </View>
       ) : (
         logs.slice(0, 6).map((log) => (

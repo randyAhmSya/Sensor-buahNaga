@@ -4,7 +4,7 @@ import {
   type MonitoringNode,
   type NodeStatus,
 } from "@/constant/monitoring";
-import type { MonitoringData } from "@/service/monitoringService";
+import type { MonitoringData, NodeSummaryStats } from "@/service/monitoringService";
 
 export function formatTanggalGrup(date: Date): string {
   const sekarang = new Date();
@@ -26,7 +26,7 @@ export function formatTanggalGrup(date: Date): string {
 }
 
 export function formatJamWib(dateStr?: string | null): string {
-  if (!dateStr) return "-";
+  if (!dateStr) return "Belum ada data";
   try {
     const d = new Date(dateStr);
     return (
@@ -57,8 +57,33 @@ export function mapToMonitoringData(
     return {
       groups: [],
       filters: FILTER_OPTIONS,
+      summary: { total: 0, online: 0, offline: 0, belumTerlihat: 0 },
     };
   }
+
+  let onlineCount = 0;
+  let offlineCount = 0;
+  let belumTerlihatCount = 0;
+
+  for (const item of rawItems) {
+    if (item.status_koneksi === "online" || item.status_koneksi === "terhubung") {
+      onlineCount++;
+    } else if (
+      item.status_koneksi === "belum_pernah_terlihat" ||
+      (!item.terakhir_terlihat && item.status_koneksi !== "online")
+    ) {
+      belumTerlihatCount++;
+    } else {
+      offlineCount++;
+    }
+  }
+
+  const summary: NodeSummaryStats = {
+    total: rawItems.length,
+    online: onlineCount,
+    offline: offlineCount,
+    belumTerlihat: belumTerlihatCount,
+  };
 
   const monitoringNodes: Array<{ node: MonitoringNode; timestamp: number }> =
     rawItems.map((item) => {
@@ -85,7 +110,7 @@ export function mapToMonitoringData(
           id: item.id_sensor || item.kode_perangkat,
           code: item.kode_perangkat,
           location: `${item.kebunNama}${item.blokNama ? ` - ${item.blokNama}` : ""}`,
-          time: formatJamWib(item.waktuCatat),
+          time: formatJamWib(item.terakhir_terlihat),
           temperatureC: item.suhu,
           lightLux: item.lux,
           status: nodeStatus,
@@ -119,5 +144,6 @@ export function mapToMonitoringData(
   return {
     groups,
     filters: FILTER_OPTIONS,
+    summary,
   };
 }

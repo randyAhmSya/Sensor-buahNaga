@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,15 +10,18 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useNotifications,
   useUnreadNotificationCount,
   useMarkAsReadMutation,
   useMarkAllAsReadMutation,
 } from '@/hooks/useNotifications';
+import { QUERY_KEYS } from '@/constant/queryKeys';
 import type { NotifikasiItem } from '@/types/notification';
 
 export default function NotificationScreen() {
+  const queryClient = useQueryClient();
   const [filterUnreadOnly, setFilterUnreadOnly] = useState(false);
 
   const {
@@ -31,16 +34,32 @@ export default function NotificationScreen() {
     per_page: 30,
   });
 
-  const { data: unreadCount = 0, refetch: refetchUnreadCount } = useUnreadNotificationCount();
+  const { data: cachedUnreadCount = 0 } = useUnreadNotificationCount();
   const markAsReadMutation = useMarkAsReadMutation();
   const markAllAsReadMutation = useMarkAllAsReadMutation();
 
   const notifications = useMemo(() => result?.items ?? [], [result]);
-  const hasUnread = (unreadCount ?? 0) > 0;
+
+  // Sinkronisasi unread count langsung dari list notifikasi ke query cache agar tidak fetch ganda
+  useEffect(() => {
+    if (result?.items && !filterUnreadOnly) {
+      const count = result.items.filter((item) => !item.dibaca_pada).length;
+      queryClient.setQueryData(QUERY_KEYS.notifications.unreadCount, count);
+    }
+  }, [result, filterUnreadOnly, queryClient]);
+
+  const unreadCount = useMemo(() => {
+    if (result?.items && !filterUnreadOnly) {
+      return result.items.filter((item) => !item.dibaca_pada).length;
+    }
+    return cachedUnreadCount;
+  }, [result, filterUnreadOnly, cachedUnreadCount]);
+
+  const hasUnread = unreadCount > 0;
 
   const handleRefresh = useCallback(async () => {
-    await Promise.allSettled([refetch(), refetchUnreadCount()]);
-  }, [refetch, refetchUnreadCount]);
+    await refetch();
+  }, [refetch]);
 
   const handleMarkAsRead = (item: NotifikasiItem) => {
     if (!item.dibaca_pada) {
@@ -84,7 +103,7 @@ export default function NotificationScreen() {
       <View className="flex-row items-center justify-between border-b border-slate-200 bg-white px-4 py-3.5 pt-12">
         <Pressable
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center rounded-xl bg-slate-100 border border-slate-200"
+          className="h-9 w-9 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400"
         >
           <Ionicons name="arrow-back" size={20} color="#0F172A" />
         </Pressable>
@@ -114,14 +133,14 @@ export default function NotificationScreen() {
       <View className="flex-row border-b border-slate-200 bg-white px-4 py-2 gap-2">
         <Pressable
           onPress={() => setFilterUnreadOnly(false)}
-          className={`rounded-xl px-3 py-1.5 ${
+          className={`rounded-lg px-3 py-1.5 ${
             !filterUnreadOnly
               ? 'bg-emerald-700'
-              : 'bg-slate-100 border border-slate-200'
+              : 'bg-white border border-slate-300'
           }`}
         >
           <Text
-            className={`text-xs font-semibold ${
+            className={`text-xs font-bold ${
               !filterUnreadOnly ? 'text-white' : 'text-slate-700'
             }`}
           >
@@ -131,10 +150,10 @@ export default function NotificationScreen() {
 
         <Pressable
           onPress={() => setFilterUnreadOnly(true)}
-          className={`flex-row items-center gap-1.5 rounded-xl px-3 py-1.5 ${
+          className={`flex-row items-center gap-1.5 rounded-lg px-3 py-1.5 ${
             filterUnreadOnly
               ? 'bg-emerald-700'
-              : 'bg-slate-100 border border-slate-200'
+              : 'bg-white border border-slate-300'
           }`}
         >
           <Text
@@ -195,11 +214,11 @@ export default function NotificationScreen() {
             return (
               <Pressable
                 onPress={() => handleMarkAsRead(item)}
-                className={`flex-row items-start gap-3 border-b border-slate-200 p-4 ${
-                  isUnread ? 'bg-emerald-50' : 'bg-white'
+                className={`flex-row items-start gap-3 border-b border-slate-200 p-4 bg-white ${
+                  isUnread ? 'border-l-4 border-l-[#047857]' : ''
                 }`}
               >
-                <View className="mt-0.5 h-9 w-9 items-center justify-center rounded-xl bg-slate-100 border border-slate-200">
+                <View className="mt-0.5 h-9 w-9 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400">
                   {renderIcon(item.tipe)}
                 </View>
 

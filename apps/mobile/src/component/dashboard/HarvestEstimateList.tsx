@@ -3,6 +3,7 @@ import { Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import type { HarvestEstimate } from '@/constant/dashboard';
+import { StatusBadge } from '@/component/ui/StatusBadge';
 import { HarvestEstimateCard } from './HarvestEstimateCard';
 
 interface HarvestEstimateListProps {
@@ -21,14 +22,12 @@ export const HarvestEstimateList = memo(function HarvestEstimateList({
       <View className="mb-3 flex-row items-center justify-between">
         <View className="flex-row items-center gap-2">
           <Text className="text-lg font-bold text-slate-900">Estimasi Panen</Text>
-          <View className="bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
-            <Text className="text-xs font-bold text-emerald-800">{items.length}</Text>
-          </View>
+          <StatusBadge tone="neutral" label={String(items.length)} size="sm" />
         </View>
 
         <Pressable
           onPress={() => router.push('/harvest/create')}
-          className="flex-row items-center gap-1 rounded-xl bg-emerald-700 px-3 py-1.5 active:bg-emerald-800"
+          className="flex-row items-center gap-1 rounded-lg bg-emerald-700 px-3 py-1.5 active:bg-emerald-800"
         >
           <Ionicons name="add" size={16} color="#FFFFFF" />
           <Text className="text-xs font-bold text-white">Mulai Siklus</Text>
@@ -36,7 +35,7 @@ export const HarvestEstimateList = memo(function HarvestEstimateList({
       </View>
 
       {items.length === 0 ? (
-        <View className="items-center justify-center rounded-2xl bg-white p-6 border border-slate-200">
+        <View className="items-center justify-center rounded-lg bg-white p-6 border border-slate-200">
           <Ionicons name="leaf-outline" size={36} color="#059669" />
           <Text className="mt-2 text-sm font-bold text-slate-800">
             Belum Ada Siklus Panen Aktif
@@ -46,7 +45,7 @@ export const HarvestEstimateList = memo(function HarvestEstimateList({
           </Text>
           <Pressable
             onPress={() => router.push('/harvest/create')}
-            className="rounded-xl bg-emerald-700 px-4 py-2"
+            className="rounded-lg bg-emerald-700 px-4 py-2"
           >
             <Text className="text-xs font-bold text-white">+ Mulai Siklus Sekarang</Text>
           </Pressable>

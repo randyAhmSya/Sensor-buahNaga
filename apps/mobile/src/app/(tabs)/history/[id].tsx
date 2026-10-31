@@ -25,7 +25,7 @@ export default function HistoryDetailScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top", "left", "right"]}>
+      <SafeAreaView className="flex-1 bg-gray-50" style={{ flex: 1 }} edges={["top", "left", "right"]}>
         {/* Header */}
         <View className="flex-row items-center justify-between border-b border-gray-200 bg-white px-4 py-3.5">
           <Pressable
@@ -45,14 +45,15 @@ export default function HistoryDetailScreen() {
         {/* Content */}
         <ScrollView
           className="flex-1 px-4 py-6"
+          style={{ flex: 1 }}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 40 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
         >
           {/* Card Info Node */}
-          <View className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <View className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <View className="flex-row items-center gap-3">
-              <View className="h-12 w-12 items-center justify-center rounded-xl bg-green-50">
-                <Ionicons name="time-outline" size={26} color="#15803d" />
+              <View className="h-12 w-12 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400">
+                <Ionicons name="time-outline" size={26} color="#047857" />
               </View>
               <View className="flex-1">
                 <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -64,7 +65,7 @@ export default function HistoryDetailScreen() {
               </View>
             </View>
 
-            <View className="mt-4 border-t border-gray-100 pt-3">
+            <View className="mt-4 border-t border-slate-100 pt-3">
               <Text className="text-sm text-gray-600 leading-relaxed">
                 Log telemetri historis (pencahayaan lux, konsumsi daya watt, dan pembacaan suhu) untuk node ini akan dimuat di sini.
               </Text>
@@ -77,7 +78,7 @@ export default function HistoryDetailScreen() {
               Riwayat Aktivitas Pemindaian Node
             </Text>
             {nodeLogs.length === 0 ? (
-              <View className="items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white p-6">
+              <View className="items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white p-6">
                 <Ionicons name="document-text-outline" size={36} color="#9ca3af" />
                 <Text className="mt-2 text-center text-sm font-medium text-gray-600">
                   Belum ada log pemindaian untuk node ini

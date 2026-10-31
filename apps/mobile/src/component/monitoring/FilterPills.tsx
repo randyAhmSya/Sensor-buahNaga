@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { ScrollView, Text } from "react-native";
-import { TAB_COLORS } from "@/constant/Tabs";
 import { PressableOpacity } from "@/component/ui/PressableOpacity";
+import { colors, radius } from "@/theme/tokens";
 import type { FilterOption } from "@/constant/monitoring";
 
 interface FilterPillsProps {
@@ -34,9 +34,6 @@ export function FilterPills({
   );
 }
 
-// Beda sama ActionPill di QuickActions.tsx: yang ini single-select (cuma 1
-// yang aktif dalam satu waktu, di-drive dari `activeKey` orang tua), bukan
-// tombol aksi lepas -- makanya sengaja gak digabung jadi 1 komponen sama itu.
 const FilterPill = memo(function FilterPill({
   option,
   isActive,
@@ -50,12 +47,21 @@ const FilterPill = memo(function FilterPill({
     <PressableOpacity
       onPress={onPress}
       activeOpacity={0.85}
-      className="rounded-full px-4 py-2"
-      style={{ backgroundColor: isActive ? TAB_COLORS.active : "#F3F4F6" }}
+      style={{
+        borderRadius: radius.tag,
+        backgroundColor: isActive ? colors.status.success.bg : "#FFFFFF",
+        borderColor: isActive ? colors.status.success.bg : "#CBD5E1",
+        borderWidth: 1,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+      }}
     >
       <Text
-        className="text-sm font-medium"
-        style={{ color: isActive ? "#FFFFFF" : "#374151" }}
+        style={{
+          color: isActive ? colors.status.success.text : "#1E293B",
+          fontWeight: "700",
+          fontSize: 13,
+        }}
       >
         {option.label}
       </Text>
