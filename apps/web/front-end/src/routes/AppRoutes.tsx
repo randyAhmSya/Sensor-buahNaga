@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, type FC, type ReactNode } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { PublicLayout } from '../layouts/PublicLayout/PublicLayout'
 import { PetaniLayout } from '../layouts/PetaniLayout/PetaniLayout'
@@ -7,6 +7,18 @@ import { SuperAdminLayout } from '../layouts/SuperAdminLayout/SuperAdminLayout'
 import { RoleGuard } from './guards/RoleGuard'
 import { USER_ROLES } from '../config/constants'
 import { PageLoadingSpinner } from '../components/common/PageLoadingSpinner'
+import { useSaasMode } from '@/context/SaasContext'
+
+const SaasRouteGuard: FC<{ children: ReactNode; redirectTo: string }> = ({
+  children,
+  redirectTo,
+}) => {
+  const { isSaasEnabled } = useSaasMode()
+  if (!isSaasEnabled) {
+    return <Navigate to={redirectTo} replace />
+  }
+  return <>{children}</>
+}
 
 // Lazy-loaded Feature Pages for optimized code splitting
 const LandingPage = lazy(() => import('@/features/landing/pages/LandingPage').then((m) => ({ default: m.LandingPage })))
@@ -78,8 +90,22 @@ export function AppRoutes() {
           <Route path="tenant/:tenantId/inspeksi" element={<TenantInspectionPage />} />
           <Route path="tenants" element={<Navigate to="/admin/tenant" replace />} />
           <Route path="users" element={<SuperAdminUsersPage />} />
-          <Route path="paket" element={<SubscriptionPackagesPage />} />
-          <Route path="langganan" element={<SubscriptionsPage />} />
+          <Route
+            path="paket"
+            element={
+              <SaasRouteGuard redirectTo="/admin/dashboard">
+                <SubscriptionPackagesPage />
+              </SaasRouteGuard>
+            }
+          />
+          <Route
+            path="langganan"
+            element={
+              <SaasRouteGuard redirectTo="/admin/dashboard">
+                <SubscriptionsPage />
+              </SaasRouteGuard>
+            }
+          />
           <Route path="subscriptions" element={<Navigate to="/admin/langganan" replace />} />
           <Route path="log-aktivitas" element={<AdminAuditLogsPage />} />
           <Route path="access-requests" element={<AccessRequestsPage />} />
@@ -126,7 +152,14 @@ export function AppRoutes() {
           <Route path="harvests/new" element={<CreateHarvestCyclePage />} />
           <Route path="qrcodes" element={<QRCodeManagementPage />} />
           <Route path="qr" element={<QrGeneratorPage />} />
-          <Route path="langganan" element={<PetaniSubscriptionPage />} />
+          <Route
+            path="langganan"
+            element={
+              <SaasRouteGuard redirectTo="/kebun/dashboard">
+                <PetaniSubscriptionPage />
+              </SaasRouteGuard>
+            }
+          />
           <Route path="akses-tenant" element={<FarmerAccessRequestsPage />} />
         </Route>
 

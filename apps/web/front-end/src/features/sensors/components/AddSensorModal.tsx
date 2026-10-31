@@ -4,9 +4,7 @@ import {
   Plus,
   Check,
   Copy,
-  Printer,
-  Download,
-  QrCode,
+  Layers,
   Wifi,
   AlertTriangle,
   CheckCircle2,
@@ -19,6 +17,7 @@ import { Button } from '@/components/ui/Button'
 import { gatewayService } from '@/services/gatewayService'
 import { nodeService } from '@/services/nodeService'
 import { sensorKeys, blockKeys, farmKeys } from '@/services/queryKeys'
+import { useSaasMode } from '@/context/SaasContext'
 import type { FarmItem } from '@/types/farm.types'
 import type { GatewayBackend } from '@/types/gateway.types'
 import type { CreateNodePayload } from '@/types/node.types'
@@ -92,6 +91,7 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const { isSaasEnabled } = useSaasMode()
   const queryClient = useQueryClient()
   const [farms, setFarms] = useState<FarmItem[]>(initialFarms || [])
   const [gateways, setGateways] = useState<GatewayBackend[]>([])
@@ -459,8 +459,12 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
             msg = String(responseData.message)
           }
         } else if (status === 403) {
-          msg = 'Batas kuota perangkat sensor pada paket langganan Anda telah tercapai.'
-          setIsSubscriptionError(true)
+          msg = isSaasEnabled
+            ? 'Batas kuota perangkat sensor pada paket langganan Anda telah tercapai.'
+            : 'Anda tidak memiliki hak akses untuk menambahkan perangkat sensor pada blok ini.'
+          if (isSaasEnabled) {
+            setIsSubscriptionError(true)
+          }
         } else if (status === 404) {
           msg = 'Blok atau Gateway tidak ditemukan di server.'
         } else if (errObj.message) {
@@ -493,10 +497,6 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
 
   const isBusy = isSubmitting || externalSubmitting
 
-  const qrImageUrl = successData?.qrCodeText
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(successData.qrCodeText)}`
-    : ''
-
   return (
     <>
       <Modal
@@ -505,7 +505,7 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
         title={successData ? 'Node Sensor & Gateway Berhasil Dibuat' : 'Tambah Node Sensor Baru'}
         description={
           successData
-            ? 'Perangkat IoT telah terdaftar di sistem. Lakukan pairing ESP32 dan pasang stiker QR pada tiang fisik.'
+            ? 'Perangkat IoT telah terdaftar di sistem. Lakukan pairing ESP32 untuk menghubungkan node ke jaringan.'
             : 'Daftarkan perangkat node IoT baru untuk memantau intensitas cahaya lux dan kondisi lingkungan blok lahan.'
         }
         maxWidth="lg"
@@ -582,51 +582,6 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
               </div>
             )}
 
-            {/* Bagian Stiker QR Perangkat */}
-            {successData.qrCodeText && (
-              <div className="bg-white border border-slate-200 rounded-lg p-4 flex flex-col sm:flex-row items-center gap-4">
-                <div className="p-2 border-2 border-slate-200 rounded-lg shrink-0 bg-white">
-                  <img
-                    src={qrImageUrl}
-                    alt={successData.qrCodeText}
-                    className="w-28 h-28 object-contain"
-                  />
-                </div>
-                <div className="space-y-2 flex-1 text-center sm:text-left">
-                  <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-bold text-slate-800">
-                    <QrCode className="w-4 h-4 text-emerald-700 shrink-0" />
-                    <span>Stiker QR Perangkat</span>
-                  </div>
-                  <p className="font-mono text-xs font-bold text-slate-900 select-all">
-                    {successData.qrCodeText}
-                  </p>
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
-                    Cetak atau unduh label QR ini untuk ditempelkan pada tiang fisik node sensor.
-                  </p>
-                  <div className="flex items-center justify-center sm:justify-start gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => window.print()}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 cursor-pointer"
-                    >
-                      <Printer className="w-3.5 h-3.5" />
-                      <span>Cetak Label</span>
-                    </button>
-                    <a
-                      href={qrImageUrl}
-                      download={`${successData.qrCodeText}.png`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-2xs cursor-pointer"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Unduh Gambar</span>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Tombol Selesai */}
             <div className="flex items-center justify-end pt-3 border-t border-slate-100">
               <Button
@@ -646,7 +601,7 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
             {error && (
               <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold space-y-1">
                 <p>{error}</p>
-                {isSubscriptionError && (
+                {isSubscriptionError && isSaasEnabled && (
                   <div className="pt-1">
                     <Link
                       to="/kebun/langganan"
@@ -668,6 +623,9 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
                 Langkah 1: Penempatan Blok Lahan <span className="text-rose-600 font-bold ml-0.5">*</span>
               </label>
               <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                  <Layers className="w-4 h-4" />
+                </div>
                 <select
                   id="select-blok-lahan"
                   value={selectedBlockId}
@@ -676,7 +634,7 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
                     if (error) setError(null)
                   }}
                   required
-                  className="block w-full appearance-none rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer pr-10"
+                  className="block w-full appearance-none rounded-lg border border-slate-300 bg-white pl-10 pr-10 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer"
                 >
                   <option value="">Pilih Blok Lahan</option>
                   {farms.map((farm) => (
@@ -746,16 +704,19 @@ const AddSensorModalContent: FC<AddSensorModalContentProps> = ({
               >
                 Langkah 3: Tipe Sensor <span className="text-rose-600 font-bold ml-0.5">*</span>
               </label>
-              <select
-                id="select-tipe-sensor"
-                name="tipe_sensor"
-                value={tipeSensor}
-                onChange={(e) => setTipeSensor(e.target.value)}
-                required
-                className="block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer pr-8"
-              >
-                <option value="cahaya_lux">Sensor Intensitas Cahaya (Lux)</option>
-              </select>
+              <div className="relative">
+                <select
+                  id="select-tipe-sensor"
+                  name="tipe_sensor"
+                  value={tipeSensor}
+                  onChange={(e) => setTipeSensor(e.target.value)}
+                  required
+                  className="block w-full appearance-none rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer pr-10"
+                >
+                  <option value="cahaya_lux">Sensor Intensitas Cahaya (Lux)</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
             </div>
 
             {/* LANGKAH 4: KONFIGURASI GATEWAY IOT TERPADU */}

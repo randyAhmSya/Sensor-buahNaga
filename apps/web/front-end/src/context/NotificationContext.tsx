@@ -201,7 +201,7 @@ export const NotificationProvider: FC<{ children: ReactNode }> = ({ children }) 
       {typeof document !== 'undefined' &&
         createPortal(
           <div
-            className="fixed top-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none max-w-sm w-full px-4 sm:px-0"
+            className="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none max-w-sm w-full px-4 sm:px-0"
             aria-live="polite"
             aria-relevant="additions text"
           >
@@ -279,7 +279,7 @@ const ToastItem: FC<ToastItemProps> = ({ item, onDismiss, onMouseEnter, onMouseL
       aria-atomic="true"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={`pointer-events-auto flex items-start gap-3 w-full rounded-2xl border p-4 shadow-lg transition-all duration-200 ease-out ${currentVisual.card}`}
+      className={`pointer-events-auto flex items-start gap-3 w-full rounded-2xl border p-4 shadow-xl transition-all duration-200 ease-out ${currentVisual.card}`}
     >
       {/* Ikon Status Lingkaran Padat dengan Simbol Putih */}
       <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${currentVisual.iconBg} shadow-xs`}>

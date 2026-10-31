@@ -147,41 +147,51 @@ export const SensorNodeCard: FC<SensorNodeCardProps> = ({
         {/* Baris 2: Judul Kode Perangkat & Info Lokasi */}
         <div className="mb-4">
           <h3
-            className="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors truncate"
+            className="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors break-words"
             title={sensor.nodeCode}
           >
             {sensor.nodeCode}
           </h3>
-          <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-1.5">
-            <span className="truncate max-w-[130px]" title={sensor.farmName}>{sensor.farmName}</span>
-            <span className="text-slate-300">•</span>
-            <span className="font-semibold text-slate-700 truncate max-w-[110px]" title={sensor.blockName}>{sensor.blockName}</span>
-            {sensor.gatewayCode && (
+          {/* Lokasi Kebun & Blok (Baris 1) */}
+          <div className="text-xs text-slate-500 mt-1 flex items-center gap-1.5 flex-wrap">
+            <span className="font-medium text-slate-600" title={sensor.farmName}>
+              {sensor.farmName}
+            </span>
+            {Boolean(sensor.blockName?.trim()) && (
               <>
-                <span className="text-slate-300">•</span>
-                <span className="inline-flex items-center gap-1.5 text-slate-500 whitespace-nowrap">
-                  <span>GW: <strong className="text-slate-700 font-semibold">{sensor.gatewayCode}</strong></span>
-                  {sensor.gatewayStatus && (
-                    <span
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold border-2 ${
-                        sensor.gatewayStatus.toLowerCase() === 'belum_terhubung'
-                          ? 'bg-white text-slate-700 border-slate-300'
-                          : isOnline
-                          ? 'bg-white text-emerald-800 border-emerald-600'
-                          : isNeverSeen
-                          ? 'bg-white text-slate-700 border-slate-300'
-                          : 'bg-white text-rose-800 border-rose-500'
-                      }`}
-                    >
-                      {sensor.gatewayStatus.toLowerCase() === 'belum_terhubung'
-                        ? 'Belum Terhubung'
-                        : displayStatus}
-                    </span>
-                  )}
+                <span className="text-slate-300 select-none">•</span>
+                <span className="font-semibold text-slate-700" title={sensor.blockName}>
+                  {sensor.blockName}
                 </span>
               </>
             )}
           </div>
+
+          {/* Informasi Gateway (Baris 2) */}
+          {Boolean(sensor.gatewayCode?.trim()) && (
+            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500 flex-wrap">
+              <span className="text-slate-500">
+                GW: <strong className="text-slate-700 font-semibold">{sensor.gatewayCode}</strong>
+              </span>
+              {Boolean(sensor.gatewayStatus?.trim()) && (
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold border-2 ${
+                    sensor.gatewayStatus?.toLowerCase() === 'belum_terhubung'
+                      ? 'bg-white text-slate-700 border-slate-300'
+                      : isOnline
+                      ? 'bg-white text-emerald-800 border-emerald-600'
+                      : isNeverSeen
+                      ? 'bg-white text-slate-700 border-slate-300'
+                      : 'bg-white text-rose-800 border-rose-500'
+                  }`}
+                >
+                  {sensor.gatewayStatus?.toLowerCase() === 'belum_terhubung'
+                    ? 'Belum Terhubung'
+                    : displayStatus}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Metrik Sensor: Lux & Suhu dengan Angka Kontras Tinggi */}
@@ -211,7 +221,7 @@ export const SensorNodeCard: FC<SensorNodeCardProps> = ({
       <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
         <span className="font-semibold text-slate-600">Status: {displayStatus}</span>
         <span className="font-medium">
-          Terakhir sinkron: {isNeverSeen || !sensor.lastSeen || sensor.lastSeen === 'Baru saja' ? 'Belum ada data' : sensor.lastSeen}
+          Terakhir sinkron: {isNeverSeen || !sensor.lastSeen || sensor.lastSeen === 'Baru saja' || rawStatus === 'belum_pernah_terlihat' ? 'Belum ada data' : sensor.lastSeen}
         </span>
       </div>
 

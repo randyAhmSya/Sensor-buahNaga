@@ -11,11 +11,6 @@ import type { BlokStatusLampuResponse } from '@/types/block.types'
 import type { EditSensorFormData } from '../components/EditSensorModal'
 import { useNotify } from '@/context/NotificationContext'
 
-export interface SensorToast {
-  type: 'success' | 'error'
-  message: string
-}
-
 export const useSensorMonitoring = () => {
   const params = useParams<{ sensorId?: string; id?: string }>()
   const routeSensorId = params.sensorId ?? params.id
@@ -26,9 +21,6 @@ export const useSensorMonitoring = () => {
   const [selectedFarm, setSelectedFarm] = useState('Semua Kebun')
   const [selectedStatus, setSelectedStatus] = useState('Semua Status')
   const [isActionLoading, setIsActionLoading] = useState(false)
-  const [toast, setToast] = useState<SensorToast | null>(null)
-
-  const clearToast = useCallback(() => setToast(null), [])
 
   // 1. Shared Query Farms With Blocks (Daftar kebun beserta blok riil untuk dropdown modal)
   const { data: farms = [] } = useFarmsWithBlocksQuery()
@@ -114,22 +106,61 @@ export const useSensorMonitoring = () => {
     refetchIntervalInBackground: false,
   })
 
-  // Dropdown Opsi Kebun
+  // Dropdown Opsi Kebun (Deduplikasi ketat)
   const farmOptions = useMemo(() => {
-    const list = farms.map((f) => f.name).filter(Boolean)
-    return ['Semua Kebun', ...list]
+    const list = Array.from(new Set(farms.map((f) => f.name?.trim()).filter(Boolean)))
+    return ['Semua Kebun', ...list.filter((name) => name !== 'Semua Kebun')]
   }, [farms])
+
+  // Sensor dengan Pemetaan Nama Kebun Riil
+  const sensorsWithRealFarm = useMemo<SensorNodeItem[]>(() => {
+    const blockIdToFarmName = new Map<string, string>()
+    const blockNameToFarmName = new Map<string, string>()
+    const farmIdToName = new Map<string, string>()
+
+    farms.forEach((f) => {
+      if (f.id) farmIdToName.set(String(f.id), f.name)
+      if (f.id_kebun) farmIdToName.set(String(f.id_kebun), f.name)
+      f.blocks?.forEach((b) => {
+        if (b.id) blockIdToFarmName.set(String(b.id), f.name)
+        if (b.id_blok) blockIdToFarmName.set(String(b.id_blok), f.name)
+        if (b.name) blockNameToFarmName.set(b.name.trim().toLowerCase(), f.name)
+      })
+    })
+
+    const primaryFarmName = farms[0]?.name
+
+    return sensors.map((sensor) => {
+      const matchedByBlockId = sensor.blockId ? blockIdToFarmName.get(String(sensor.blockId)) : undefined
+      const matchedByFarmId = sensor.farmId ? farmIdToName.get(String(sensor.farmId)) : undefined
+      const matchedByBlockName = sensor.blockName ? blockNameToFarmName.get(sensor.blockName.trim().toLowerCase()) : undefined
+      const hasValidCustomName = sensor.farmName && sensor.farmName !== 'Kebun Buah Naga'
+
+      const resolvedFarmName =
+        matchedByBlockId ||
+        matchedByFarmId ||
+        matchedByBlockName ||
+        (hasValidCustomName ? sensor.farmName : undefined) ||
+        primaryFarmName ||
+        'Kebun Buah Naga'
+
+      return {
+        ...sensor,
+        farmName: resolvedFarmName,
+      }
+    })
+  }, [sensors, farms])
 
   // Ringkasan Metrik
   const summaryMetrics = useMemo<SensorSummaryMetrics>(() => {
-    const totalNodes = sensors.length
-    const onlineNodes = sensors.filter(
+    const totalNodes = sensorsWithRealFarm.length
+    const onlineNodes = sensorsWithRealFarm.filter(
       (s) => s.status?.toLowerCase() === 'online'
     ).length
-    const offlineNodes = sensors.filter(
+    const offlineNodes = sensorsWithRealFarm.filter(
       (s) => s.status?.toLowerCase() === 'offline'
     ).length
-    const neverSeenNodes = sensors.filter(
+    const neverSeenNodes = sensorsWithRealFarm.filter(
       (s) => s.status === 'belum_pernah_terlihat'
     ).length
 
@@ -139,11 +170,11 @@ export const useSensorMonitoring = () => {
       offlineNodes,
       neverSeenNodes,
     }
-  }, [sensors])
+  }, [sensorsWithRealFarm])
 
   // Filter Sensors
   const filteredSensors = useMemo(() => {
-    return sensors.filter((sensor) => {
+    return sensorsWithRealFarm.filter((sensor) => {
       const farmName = sensor.farmName || ''
       const blockName = sensor.blockName || ''
       const tipeSensor = sensor.tipeSensor || ''
@@ -171,7 +202,7 @@ export const useSensorMonitoring = () => {
 
       return matchSearch && matchFarm && matchStatus
     })
-  }, [sensors, searchTerm, selectedFarm, selectedStatus])
+  }, [sensorsWithRealFarm, searchTerm, selectedFarm, selectedStatus])
 
   // Aksi Tambah Sensor
   const createSensor = useCallback(
@@ -189,7 +220,7 @@ export const useSensorMonitoring = () => {
           queryClient.invalidateQueries({ queryKey: farmKeys.withBlocks(), refetchType: 'all' }),
         ])
 
-        notify.success('Node berhasil didaftarkan', `Perangkat ${payload.kode_perangkat} siap digunakan di blok lahan.`)
+        notify.success('Registrasi Berhasil', `Node sensor ${payload.kode_perangkat} berhasil didaftarkan.`)
         return res
       } catch (err: unknown) {
         notify.error('Gagal mendaftarkan node', (err as Error)?.message || 'Terjadi kesalahan saat menyimpan perangkat di server.')
@@ -264,7 +295,7 @@ export const useSensorMonitoring = () => {
 
   return {
     summaryMetrics,
-    sensors,
+    sensors: sensorsWithRealFarm,
     filteredSensors,
     farms,
     farmOptions,
@@ -276,8 +307,6 @@ export const useSensorMonitoring = () => {
     setSelectedStatus,
     isLoading: isSensorsLoading,
     isActionLoading,
-    toast,
-    clearToast,
     refetch,
     createSensor,
     editSensor,

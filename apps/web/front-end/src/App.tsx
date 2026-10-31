@@ -5,6 +5,7 @@ import { queryClient } from './lib/queryClient'
 import { AppRoutes } from './routes/AppRoutes'
 import { ScrollToTop } from './components/common/ScrollToTop'
 import { NotificationProvider } from './context/NotificationContext'
+import { SaasProvider } from './context/SaasContext'
 import { useAuthStore, AUTH_STORAGE_KEYS } from './store/useAuthStore'
 
 function SessionBootstrap() {
@@ -27,13 +28,15 @@ function SessionBootstrap() {
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <NotificationProvider>
-        <BrowserRouter>
-          <SessionBootstrap />
-          <ScrollToTop />
-          <AppRoutes />
-        </BrowserRouter>
-      </NotificationProvider>
+      <SaasProvider>
+        <NotificationProvider>
+          <BrowserRouter>
+            <SessionBootstrap />
+            <ScrollToTop />
+            <AppRoutes />
+          </BrowserRouter>
+        </NotificationProvider>
+      </SaasProvider>
     </QueryClientProvider>
   )
 }

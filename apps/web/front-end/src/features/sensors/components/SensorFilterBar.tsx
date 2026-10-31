@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { useMemo, type FC } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { DebouncedSearchInput } from '@/components/common/DebouncedSearchInput';
 
@@ -21,7 +21,12 @@ export const SensorFilterBar: FC<SensorFilterBarProps> = ({
   onStatusChange,
   farmOptions = [],
 }) => {
-  const uniqueFarms = ['Semua Kebun', ...Array.from(new Set(farmOptions))];
+  const uniqueFarms = useMemo(() => {
+    const validFarmNames = farmOptions
+      .map((f) => f?.trim())
+      .filter((f): f is string => Boolean(f) && f !== 'Semua Kebun');
+    return ['Semua Kebun', ...Array.from(new Set(validFarmNames))];
+  }, [farmOptions]);
 
   return (
     <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5">
@@ -47,7 +52,7 @@ export const SensorFilterBar: FC<SensorFilterBarProps> = ({
             className="w-full appearance-none pl-3.5 pr-9 py-2.5 min-h-[44px] bg-white border border-slate-200/90 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-none focus:border-emerald-600 cursor-pointer shadow-2xs transition-colors"
           >
             {uniqueFarms.map((farm) => (
-              <option key={farm} value={farm}>
+              <option key={`farm-opt-${farm}`} value={farm}>
                 {farm}
               </option>
             ))}
@@ -62,10 +67,10 @@ export const SensorFilterBar: FC<SensorFilterBarProps> = ({
             onChange={(e) => onStatusChange(e.target.value)}
             className="w-full appearance-none pl-3.5 pr-9 py-2.5 min-h-[44px] bg-white border border-slate-200/90 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-none focus:border-emerald-600 cursor-pointer shadow-2xs transition-colors"
           >
-            <option value="Semua Status">Semua Status</option>
-            <option value="online">Online</option>
-            <option value="offline">Offline</option>
-            <option value="belum_pernah_terlihat">Belum Pernah Terhubung</option>
+            <option key="status-semua" value="Semua Status">Semua Status</option>
+            <option key="status-online" value="online">Online</option>
+            <option key="status-offline" value="offline">Offline</option>
+            <option key="status-never" value="belum_pernah_terlihat">Belum Pernah Terhubung</option>
           </select>
           <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
