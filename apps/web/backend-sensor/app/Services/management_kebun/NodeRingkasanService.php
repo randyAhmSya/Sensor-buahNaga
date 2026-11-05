@@ -17,7 +17,8 @@ use Illuminate\Support\Facades\DB;
  * angka lama seolah-olah real-time.
  *
  * Catatan kWh: estimasi. Tiap pembacaan dianggap mewakili daya sampai pembacaan
- * berikutnya, dengan batas celah (config lampu.energi_celah_maks_detik, default 600 detik)
+ * berikutnya, dengan batas celah (config lampu.energi_celah_maks_detik, default 900 detik = 15 menit,
+ * sama dengan LogEnergyService::getTotalKwhBySensor)
  * supaya node yang mati tidak dihitung terus memakai daya terakhirnya.
  */
 class NodeRingkasanService
@@ -58,10 +59,16 @@ class NodeRingkasanService
         $kebun = $blok?->kebun;
         $gateway = $node->gateway;
 
+        $jumlahLampu = (int) ($node->jumlah_lampu ?? 1);
+        $wattPerLampu = $node->watt_per_lampu !== null ? (float) $node->watt_per_lampu : null;
+
         return [
             'id_sensor'         => $node->id_sensor,
             'kode_perangkat'    => $node->kode_perangkat,
             'tipe_sensor'       => $node->tipe_sensor,
+            'jumlah_lampu'      => $jumlahLampu,
+            'watt_per_lampu'    => $wattPerLampu,
+            'watt_terpasang'    => $wattPerLampu !== null ? round($jumlahLampu * $wattPerLampu, 2) : null,
             'status'            => $status,
             'status_online'     => $online,
             'terakhir_terlihat' => $terlihat?->toIso8601String(),

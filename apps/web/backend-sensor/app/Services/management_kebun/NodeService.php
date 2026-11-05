@@ -11,7 +11,7 @@ class NodeService
 {
     public function getAllNodesByKebun(string $kebunId)
     {
-        return NodeSensor::with(['blok', 'gateway'])->whereHas('blok', function ($query) use ($kebunId) {
+        return NodeSensor::with(['blok.kebun', 'gateway', 'qr'])->whereHas('blok', function ($query) use ($kebunId) {
             $query->where('kebun_id', $kebunId);
         })->get();
     }

@@ -25,6 +25,8 @@ class NodeSensor extends Model
         'kode_pairing',
         'token_perangkat',
         'tipe_sensor',
+        'jumlah_lampu',
+        'watt_per_lampu',
         'status_koneksi',
         'terakhir_terlihat',
     ];

@@ -11,3 +11,4 @@ Artisan::command('inspire', function () {
 
 //langganan habis
 Schedule::command(CekLanggananAkanHabis::class)->dailyAt('08:00');
+Schedule::command('lampu:pangkas-data')->dailyAt('03:00')->timezone('Asia/Jakarta')->withoutOverlapping();

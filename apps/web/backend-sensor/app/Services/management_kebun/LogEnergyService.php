@@ -25,12 +25,13 @@ class LogEnergyService
      */
     public function getTotalKwhBySensor(string $sensorId): float
    {
+    $arsip = app(\App\Services\management_kebun\RetensiDataService::class)->kwhRingkasan($sensorId);
        $readings = LogEnergy::where('sensor_id', $sensorId)
            ->orderBy('dicatat_pada', 'asc')
            ->get();
 
        if ($readings->isEmpty()) {
-           return 0;
+           return round($arsip, 3);
        }
 
        $totalKwh = 0;
@@ -45,6 +46,6 @@ class LogEnergyService
            $totalKwh += ($current->konsumsi_watt * $detik / 3600) / 1000;
        }
 
-       return round($totalKwh, 3);
+       return round($totalKwh + $arsip, 3);
    }
 }
