@@ -84,4 +84,7 @@ return [
         'validate_csrf_token' => ValidateCsrfToken::class,
     ],
 
+    'masa_token_menit'    => (int) env('SANCTUM_MASA_TOKEN_MENIT', 1440),
+    'maks_token_per_user' => (int) env('SANCTUM_MAKS_TOKEN_PER_USER', 2),
+
 ];

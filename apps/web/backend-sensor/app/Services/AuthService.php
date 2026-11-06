@@ -39,8 +39,14 @@ class AuthService
 
     public function createNewToken(User $user)
     {
-        $user->tokens()->delete();
-        $token = $user->createToken('auth_token')->plainTextToken;
-        return $token;
+        $maks = max(1, (int) config('sanctum.maks_token_per_user', 2));
+        $simpan = $user->tokens()->latest('id')->limit($maks - 1)->pluck('id');
+        $user->tokens()->whereNotIn('id', $simpan)->delete();
+
+        return $user->createToken(
+            'auth_token',
+            ['*'],
+            now()->addMinutes((int) config('sanctum.masa_token_menit', 1440))
+        )->plainTextToken;
     }
 }
