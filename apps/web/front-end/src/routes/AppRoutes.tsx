@@ -50,6 +50,8 @@ const BlockDetailPage = lazy(() => import('@/features/blocks/pages/BlockDetailPa
 const CreateBlockPage = lazy(() => import('@/features/blocks/pages/CreateBlockPage').then((m) => ({ default: m.CreateBlockPage })))
 const EditBlockPage = lazy(() => import('@/features/blocks/pages/EditBlockPage').then((m) => ({ default: m.EditBlockPage })))
 const SensorMonitoringPage = lazy(() => import('@/features/sensors/pages/SensorMonitoringPage').then((m) => ({ default: m.SensorMonitoringPage })))
+const CreateSensorNodePage = lazy(() => import('@/features/sensors/pages/CreateSensorNodePage').then((m) => ({ default: m.CreateSensorNodePage })))
+const SensorIotConfigPage = lazy(() => import('@/features/sensors/pages/SensorIotConfigPage').then((m) => ({ default: m.SensorIotConfigPage })))
 const LightingSchedulePage = lazy(() => import('@/features/schedules/pages/LightingSchedulePage').then((m) => ({ default: m.LightingSchedulePage })))
 const CreateSchedulePage = lazy(() => import('@/features/schedules/pages/CreateSchedulePage').then((m) => ({ default: m.CreateSchedulePage })))
 const EditSchedulePage = lazy(() => import('@/features/schedules/pages/EditSchedulePage').then((m) => ({ default: m.EditSchedulePage })))
@@ -141,6 +143,8 @@ export function AppRoutes() {
           <Route path="farms/:farmId" element={<FarmDetailPage />} />
           <Route path="farms/:id" element={<FarmDetailPage />} />
           <Route path="sensors" element={<SensorMonitoringPage />} />
+          <Route path="sensors/create" element={<CreateSensorNodePage />} />
+          <Route path="sensors/:sensorId/iot-config" element={<SensorIotConfigPage />} />
           <Route path="sensors/:sensorId" element={<SensorMonitoringPage />} />
           <Route path="schedules" element={<LightingSchedulePage />} />
           <Route path="schedules/new" element={<CreateSchedulePage />} />

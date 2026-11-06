@@ -98,6 +98,8 @@ export const BlockDetailPage: React.FC = () => {
             temperature={data.temperature}
             gateway={data.gateway}
             lastSeen={data.lastSeen}
+            wattTerpasang={statusLampu?.watt_terpasang}
+            jumlahLampu={statusLampu?.jumlah_lampu}
           />
           <BlockLampStatusCard
             statusLampu={statusLampu}

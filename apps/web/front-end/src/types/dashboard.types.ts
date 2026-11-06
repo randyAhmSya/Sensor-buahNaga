@@ -18,6 +18,10 @@ export interface PetaniDashboardRingkasan {
   node_online: number;
   node_offline: number;
   node_belum_terlihat: number;
+  jumlah_lampu?: number;
+  lampu_online?: number;
+  lampu_offline?: number;
+  watt_terpasang?: number | null;
   siklus_berjalan: number;
   batas_offline_detik: number;
 }
@@ -43,6 +47,9 @@ export interface PetaniDashboardNode {
   status: NodeSensorDashboardStatus;
   status_online: boolean;
   terakhir_terlihat: string | null;
+  jumlah_lampu?: number;
+  watt_per_lampu?: number | null;
+  watt_terpasang?: number | null;
 }
 
 export interface PetaniDashboardSiklusAktif {
@@ -66,6 +73,7 @@ export interface PetaniDashboardBlok {
   luas_area: number;
   url_foto: string | null;
   jumlah_node: number;
+  jumlah_lampu?: number;
   node: PetaniDashboardNode[];
   siklus_aktif: PetaniDashboardSiklusAktif | null;
   jadwal: PetaniDashboardJadwalBlok;

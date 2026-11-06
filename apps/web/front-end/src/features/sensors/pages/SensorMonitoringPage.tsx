@@ -1,16 +1,17 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useSensorMonitoring } from '../hooks/useSensorMonitoring'
 import { SensorSummaryCards } from '../components/SensorSummaryCards'
 import { SensorFilterBar } from '../components/SensorFilterBar'
 import { SensorNodeCard } from '../components/SensorNodeCard'
-import { AddSensorModal } from '../components/AddSensorModal'
 import { EditSensorModal } from '../components/EditSensorModal'
 import { DeleteSensorModal } from '../components/DeleteSensorModal'
 import type { SensorNodeItem } from '@/types/sensor.types'
 
 export const SensorMonitoringPage: React.FC = () => {
+  const navigate = useNavigate()
   const {
     summaryMetrics,
     sensors,
@@ -25,12 +26,10 @@ export const SensorMonitoringPage: React.FC = () => {
     setSelectedStatus,
     isLoading,
     isActionLoading,
-    createSensor,
     editSensor,
     deleteSensor,
   } = useSensorMonitoring()
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [selectedSensorToEdit, setSelectedSensorToEdit] = useState<SensorNodeItem | null>(null)
   const [selectedSensorToDelete, setSelectedSensorToDelete] = useState<SensorNodeItem | null>(null)
 
@@ -51,7 +50,7 @@ export const SensorMonitoringPage: React.FC = () => {
           variant="primary"
           size="md"
           leftIcon={<Plus className="w-4 h-4 shrink-0" />}
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => navigate('/kebun/sensors/create')}
           className="w-full sm:w-auto min-h-[44px] bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-2.5 px-4 rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-2 active:scale-98"
         >
           <span>Tambah Node</span>
@@ -111,17 +110,6 @@ export const SensorMonitoringPage: React.FC = () => {
         )}
       </div>
 
-      {/* Modal Tambah Node Baru */}
-      {isAddModalOpen && (
-        <AddSensorModal
-          isOpen={isAddModalOpen}
-          isSubmitting={isActionLoading}
-          farms={farms}
-          sensors={sensors}
-          onClose={() => setIsAddModalOpen(false)}
-          onSubmit={createSensor}
-        />
-      )}
 
       {/* Modal Edit Sensor */}
       {Boolean(selectedSensorToEdit) && (

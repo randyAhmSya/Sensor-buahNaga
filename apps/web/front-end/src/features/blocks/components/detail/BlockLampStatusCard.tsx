@@ -1,6 +1,7 @@
 import React from 'react';
-import { Lightbulb, Wifi, WifiOff, Clock, ShieldCheck } from 'lucide-react';
+import { Lightbulb, Wifi, WifiOff, Clock, ShieldCheck, Zap } from 'lucide-react';
 import type { BlokStatusLampuResponse } from '@/types/block.types';
+import { formatWattTerpasang } from '../../utils/lampWattMapper';
 
 interface BlockLampStatusCardProps {
   statusLampu: BlokStatusLampuResponse | null;
@@ -43,7 +44,14 @@ export const BlockLampStatusCard: React.FC<BlockLampStatusCardProps> = ({
     );
   }
 
-  const { jumlah_lampu, jumlah_online, jumlah_offline, batas_offline_detik, nodes } = statusLampu;
+  const {
+    jumlah_lampu,
+    jumlah_online,
+    jumlah_offline,
+    watt_terpasang,
+    batas_offline_detik,
+    nodes,
+  } = statusLampu;
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs flex flex-col justify-between space-y-5">
@@ -54,10 +62,16 @@ export const BlockLampStatusCard: React.FC<BlockLampStatusCardProps> = ({
             <Lightbulb className="w-4 h-4 text-slate-700 shrink-0" />
             <span className="text-xs font-bold text-slate-800 tracking-wide">Status Lampu Blok</span>
           </div>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border-2 border-slate-200 bg-white text-slate-700">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
-            Batas: {batas_offline_detik}s
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border border-slate-200 bg-slate-50 text-slate-700">
+              <Zap className="w-3 h-3 text-amber-600" />
+              {formatWattTerpasang(watt_terpasang)}
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border-2 border-slate-200 bg-white text-slate-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+              Batas: {batas_offline_detik}s
+            </span>
+          </div>
         </div>
 
         {/* Ringkasan Jumlah dengan Kartu Solid */}
@@ -113,14 +127,20 @@ export const BlockLampStatusCard: React.FC<BlockLampStatusCardProps> = ({
                   : 'Belum ada data';
 
                 return (
-                  <div key={node.id_sensor} className="py-2 flex items-center justify-between">
+                  <div key={node.id_sensor} className="py-2 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full ${nodeDotClass}`} />
                       <span className="font-mono font-bold text-slate-900">
                         {node.kode_perangkat}
                       </span>
+                      <span className="text-[10px] text-slate-500 font-semibold bg-slate-100 px-1.5 py-0.5 rounded">
+                        {node.jumlah_lampu ?? 1} lampu
+                      </span>
                     </div>
-                    <div className="flex items-center gap-3 text-slate-600 text-[11px]">
+                    <div className="flex items-center gap-2 text-slate-600 text-[11px]">
+                      <span className="text-[10px] font-semibold text-slate-600" title="Beban Daya Node">
+                        {formatWattTerpasang(node.watt_terpasang)}
+                      </span>
                       <span className="flex items-center gap-1 font-medium">
                         <Clock className="w-3 h-3 text-slate-500" />
                         {lastSeenText}

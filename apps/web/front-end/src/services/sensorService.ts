@@ -22,6 +22,8 @@ export const mapNodeToSensorItem = (node: NodeSensorBackend, fallbackFarmName?: 
     gatewayId: node.gateway_id || node.gateway?.id_gateway || null,
     gatewayCode: node.gateway?.kode_perangkat || null,
     gatewayStatus: node.gateway?.status_koneksi || null,
+    kodePairing: (node.gateway as unknown as { kode_pairing?: string | null })?.kode_pairing || node.kode_pairing || null,
+    tokenGateway: (node.gateway as unknown as { token_gateway?: string | null })?.token_gateway || node.token_perangkat || null,
     tipeSensor: node.tipe_sensor || 'lux_suhu',
     status: isOnline ? 'Aktif' : 'Nonaktif',
     luxLevel: isOnline ? 120 : 0,
@@ -31,6 +33,13 @@ export const mapNodeToSensorItem = (node: NodeSensorBackend, fallbackFarmName?: 
       : 'Belum ada data',
     sparklineData: isOnline ? [85, 90, 110, 115, 120, 118, 120] : [0, 0, 0, 0, 0, 0, 0],
     qrCode: node.qr?.teks_kode_qr || (node as unknown as { kode_qr?: { kode_qr?: string } })?.kode_qr?.kode_qr || '',
+    jumlah_lampu: node.jumlah_lampu ?? 1,
+    watt_per_lampu: node.watt_per_lampu ?? null,
+    watt_terpasang:
+      node.watt_terpasang ??
+      (node.watt_per_lampu !== null && node.watt_per_lampu !== undefined
+        ? Math.round((node.jumlah_lampu ?? 1) * node.watt_per_lampu * 100) / 100
+        : null),
   };
 };
 

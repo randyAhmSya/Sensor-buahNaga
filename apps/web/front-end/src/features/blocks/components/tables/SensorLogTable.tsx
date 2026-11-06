@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { FileSpreadsheet, Download, Filter } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import type { SensorLogItem } from '@/types/block.types'
@@ -9,7 +9,7 @@ interface SensorLogTableProps {
 }
 
 export const SensorLogTable: React.FC<SensorLogTableProps> = ({ logs, onRangeFilterChange }) => {
-  const [rangeFilter, setRangeFilter] = useState('1 Jam Terakhir')
+  const [rangeFilter, setRangeFilter] = useState('Semua Log Terambil')
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value
@@ -17,9 +17,23 @@ export const SensorLogTable: React.FC<SensorLogTableProps> = ({ logs, onRangeFil
     onRangeFilterChange?.(val)
   }
 
+  const filteredLogs = useMemo(() => {
+    if (rangeFilter === 'Semua Log Terambil') return logs
+    const now = Date.now()
+    const hoursLimit = rangeFilter === '1 Jam Terakhir' ? 1 : 24
+    const cutoff = now - hoursLimit * 60 * 60 * 1000
+
+    const res = logs.filter((l) => {
+      if (!l.timestamp) return true
+      const t = new Date(l.timestamp).getTime()
+      return !isNaN(t) ? t >= cutoff : true
+    })
+    return res.length > 0 ? res : logs
+  }, [logs, rangeFilter])
+
   const handleExportCsv = () => {
     const headers = ['ID', 'Waktu', 'Lux', 'Suhu', 'Kelembapan', 'Baterai', 'Sinyal', 'Gateway']
-    const rows = logs.map((l) => [
+    const rows = filteredLogs.map((l) => [
       l.id,
       `"${l.timestamp}"`,
       `"${l.lux}"`,
@@ -44,8 +58,13 @@ export const SensorLogTable: React.FC<SensorLogTableProps> = ({ logs, onRangeFil
     <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2">
-          <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
-          <h3 className="text-base font-bold text-slate-900">Log Sensor Mendalam</h3>
+          <FileSpreadsheet className="w-4 h-4 text-emerald-700 shrink-0" />
+          <div>
+            <h3 className="text-base font-bold text-slate-900">Log Sensor Mendalam</h3>
+            <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+              Data mentah disimpan 30 hari
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -55,9 +74,9 @@ export const SensorLogTable: React.FC<SensorLogTableProps> = ({ logs, onRangeFil
               onChange={handleFilterChange}
               className="appearance-none pl-8 pr-7 py-2 text-xs font-semibold bg-white border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:border-emerald-600 cursor-pointer shadow-2xs"
             >
-              <option>1 Jam Terakhir</option>
+              <option>Semua Log Terambil</option>
               <option>24 Jam Terakhir</option>
-              <option>7 Hari Terakhir</option>
+              <option>1 Jam Terakhir</option>
             </select>
             <Filter className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
@@ -89,14 +108,14 @@ export const SensorLogTable: React.FC<SensorLogTableProps> = ({ logs, onRangeFil
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm text-slate-800">
-            {logs.length === 0 ? (
+            {filteredLogs.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-8 text-center text-xs text-slate-400 font-medium">
                   Belum ada log telemetri sensor tercatat untuk blok ini.
                 </td>
               </tr>
             ) : (
-              logs.map((log) => (
+              filteredLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3 px-4 font-medium text-slate-900">{log.timestamp}</td>
                   <td className="py-3 px-4 font-bold text-emerald-800">{log.lux}</td>

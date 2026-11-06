@@ -198,7 +198,7 @@ export const ScanQRModal: React.FC<ScanQRModalProps> = ({ isOpen, onClose }) => 
                     <span>Kebun</span>
                   </div>
                   <p className="font-bold text-slate-800 text-sm">
-                    {result.blok?.kebun?.nama_kebun || 'Kebun Buah Naga'}
+                    {result.blok?.kebun?.nama_kebun || 'Kebun Tidak Diketahui'}
                   </p>
                   {result.blok?.kebun?.id_kebun && (
                     <p className="text-[10px] font-mono text-slate-400 truncate">
@@ -214,7 +214,7 @@ export const ScanQRModal: React.FC<ScanQRModalProps> = ({ isOpen, onClose }) => 
                     <span>Blok Lahan</span>
                   </div>
                   <p className="font-bold text-slate-800 text-sm">
-                    {result.blok?.nama_blok || 'Blok Utama'}
+                    {result.blok?.nama_blok || 'Blok Tidak Diketahui'}
                   </p>
                   {result.blok?.id_blok && (
                     <p className="text-[10px] font-mono text-slate-400 truncate">
