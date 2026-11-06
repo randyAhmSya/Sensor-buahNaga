@@ -16,6 +16,9 @@ export interface NodeSensorBackend {
   tipe_sensor: string;
   status_koneksi: NodeSensorStatus;
   terakhir_terlihat: string | null;
+  jumlah_lampu?: number;
+  watt_per_lampu?: number | null;
+  watt_terpasang?: number | null;
   created_at?: string;
   updated_at?: string;
   blok?: {
@@ -34,6 +37,10 @@ export interface NodeSensorBackend {
     id?: string;
     kode_perangkat: string;
     status_koneksi: string;
+    kode_pairing?: string | null;
+    terakhir_terlihat?: string | null;
+    created_at?: string;
+    updated_at?: string;
   } | null;
   qr?: {
     id_qr: string;
@@ -49,6 +56,8 @@ export interface CreateNodePayload {
   gateway_id: string;
   tipe_sensor: string;
   status_koneksi?: NodeSensorStatus;
+  jumlah_lampu?: number;
+  watt_per_lampu?: number | null;
 }
 
 export interface UpdateNodePayload {
@@ -56,5 +65,7 @@ export interface UpdateNodePayload {
   gateway_id?: string | null;
   tipe_sensor?: string;
   status_koneksi?: string;
+  jumlah_lampu?: number;
+  watt_per_lampu?: number | null;
 }
 

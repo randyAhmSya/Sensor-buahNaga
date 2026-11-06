@@ -106,6 +106,13 @@ export const nodeService = {
       status_koneksi: payload.status_koneksi || 'offline',
     };
 
+    if (payload.jumlah_lampu !== undefined && payload.jumlah_lampu !== null) {
+      body.jumlah_lampu = payload.jumlah_lampu;
+    }
+    if (payload.watt_per_lampu !== undefined) {
+      body.watt_per_lampu = payload.watt_per_lampu;
+    }
+
     // Hard-guard: Hapus key terlarang yang dapat memicu error validasi atau 500 di backend
     delete body.qr_id;
     delete body.kode_pairing;
@@ -137,6 +144,12 @@ export const nodeService = {
     }
     if (payload.status_koneksi !== undefined) {
       body.status_koneksi = payload.status_koneksi.trim();
+    }
+    if (payload.jumlah_lampu !== undefined && payload.jumlah_lampu !== null) {
+      body.jumlah_lampu = payload.jumlah_lampu;
+    }
+    if (payload.watt_per_lampu !== undefined) {
+      body.watt_per_lampu = payload.watt_per_lampu;
     }
 
     // Hard-guard: Jangan pernah mengirim blok_id, qr_id, kode_pairing, token_perangkat pada PUT

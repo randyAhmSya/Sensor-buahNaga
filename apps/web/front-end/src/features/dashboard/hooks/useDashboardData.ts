@@ -41,6 +41,10 @@ export interface DashboardData {
   totalNodes: number;
   onlineNodes: number;
   offlineNodes: number;
+  totalLamps?: number;
+  onlineLamps?: number;
+  offlineLamps?: number;
+  installedWatt?: number | null;
   runningHarvestCycles: number;
   metricCards: DashboardCardMetricItem[];
   recentActivities: TelemetryNodeRow[];
@@ -352,6 +356,10 @@ export function useDashboardData(): DashboardData {
   const totalNodes = dashboard?.ringkasan.jumlah_node ?? 0;
   const onlineNodes = dashboard?.ringkasan.node_online ?? 0;
   const offlineNodes = dashboard?.ringkasan.node_offline ?? 0;
+  const totalLamps = dashboard?.ringkasan.jumlah_lampu ?? 0;
+  const onlineLamps = dashboard?.ringkasan.lampu_online ?? 0;
+  const offlineLamps = dashboard?.ringkasan.lampu_offline ?? 0;
+  const installedWatt = dashboard?.ringkasan.watt_terpasang ?? null;
   const runningHarvestCycles = dashboard?.ringkasan.siklus_berjalan ?? 0;
 
   const metricCards: DashboardCardMetricItem[] = useMemo(() => [
@@ -374,20 +382,20 @@ export function useDashboardData(): DashboardData {
       badgeVariant: 'emerald',
     },
     {
-      title: 'Node Lampu IoT',
-      value: onlineNodes,
+      title: 'Lampu Penerangan IoT',
+      value: onlineLamps,
       unit: 'Online',
       unitColor: 'text-emerald-600',
       icon: Router,
       iconColor: 'text-emerald-700',
       badgeText:
-        offlineNodes > 0
-          ? `${offlineNodes} Offline (Total ${totalNodes})`
-          : totalNodes > 0
-            ? `Total ${totalNodes} Node`
+        offlineLamps > 0
+          ? `${offlineLamps} Offline (Total ${totalLamps} Lampu)`
+          : totalLamps > 0
+            ? `Total ${totalLamps} Lampu`
             : '0 Terpasang',
       badgeVariant:
-        offlineNodes > 0 ? 'rose' : onlineNodes > 0 ? 'emerald' : 'slate',
+        offlineLamps > 0 ? 'rose' : onlineLamps > 0 ? 'emerald' : 'slate',
     },
     {
       title: 'Siklus Panen Berjalan',
@@ -398,7 +406,7 @@ export function useDashboardData(): DashboardData {
       badgeText: runningHarvestCycles > 0 ? 'Berjalan' : undefined,
       badgeVariant: 'emerald',
     },
-  ], [totalFarms, totalBlocks, totalNodes, onlineNodes, offlineNodes, runningHarvestCycles]);
+  ], [totalFarms, totalBlocks, totalLamps, onlineLamps, offlineLamps, runningHarvestCycles]);
 
   // 13. Peringatan & Notifikasi (Alerts)
   const alertItems: DashboardAlertItem[] = useMemo(() => {
@@ -508,6 +516,10 @@ export function useDashboardData(): DashboardData {
     totalNodes,
     onlineNodes,
     offlineNodes,
+    totalLamps,
+    onlineLamps,
+    offlineLamps,
+    installedWatt,
     runningHarvestCycles,
     metricCards,
     recentActivities,

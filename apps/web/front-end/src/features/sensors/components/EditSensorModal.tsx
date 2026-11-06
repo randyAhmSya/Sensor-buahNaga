@@ -14,6 +14,8 @@ export interface EditSensorFormData {
   gatewayId?: string | null
   tipeSensor: string
   status: SensorStatus
+  jumlahLampu?: number
+  wattPerLampu?: number | null
 }
 
 interface EditSensorModalProps {
@@ -47,7 +49,13 @@ const EditSensorFormContent: FC<EditSensorFormContentProps> = ({
     gatewayId: sensor.gatewayId || null,
     status: sensor.status,
     tipeSensor: sensor.tipeSensor || 'cahaya',
+    jumlahLampu: sensor.jumlah_lampu ?? 1,
+    wattPerLampu: sensor.watt_per_lampu ?? null,
   })
+  const [jumlahLampuInput, setJumlahLampuInput] = useState<number | string>(sensor.jumlah_lampu ?? 1)
+  const [wattPerLampuInput, setWattPerLampuInput] = useState<string>(
+    sensor.watt_per_lampu !== null && sensor.watt_per_lampu !== undefined ? String(sensor.watt_per_lampu) : ''
+  )
   const [qrCodeText, setQrCodeText] = useState<string>(sensor.qrCode || '')
   const [isGeneratingQr, setIsGeneratingQr] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -145,11 +153,46 @@ const EditSensorFormContent: FC<EditSensorFormContentProps> = ({
       return
     }
 
+    const parsedJumlah = parseInt(String(jumlahLampuInput), 10)
+    const effectiveJumlah = !isNaN(parsedJumlah) && parsedJumlah >= 1 ? parsedJumlah : 1
+
+    const trimmedWatt = wattPerLampuInput.trim()
+    const parsedWatt = trimmedWatt === '' ? null : parseFloat(trimmedWatt)
+
+    if (parsedWatt !== null && (isNaN(parsedWatt) || parsedWatt < 0 || parsedWatt > 5000)) {
+      setError('Daya per lampu harus berupa angka antara 0 hingga 5000 Watt.')
+      return
+    }
+
+    const submitPayload: EditSensorFormData = {
+      ...formData,
+      jumlahLampu: effectiveJumlah,
+      wattPerLampu: parsedWatt,
+    }
+
     try {
-      await onSubmit(sensor.id, formData)
+      await onSubmit(sensor.id, submitPayload)
       onClose()
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Gagal memperbarui data sensor.')
+      let msg = 'Gagal memperbarui data sensor.'
+      if (err && typeof err === 'object') {
+        const errObj = err as Record<string, unknown>
+        const responseData = (errObj.response as Record<string, unknown>)?.data as Record<string, unknown>
+        const errors = (responseData?.errors || errObj.errors) as Record<string, string[]> | undefined
+
+        if (errors?.jumlah_lampu) {
+          msg = 'Jumlah Lampu: ' + errors.jumlah_lampu.join(', ')
+        } else if (errors?.watt_per_lampu) {
+          msg = 'Daya per Lampu: ' + errors.watt_per_lampu.join(', ')
+        } else if (errors?.kode_perangkat) {
+          msg = 'Kode Perangkat: ' + errors.kode_perangkat.join(', ')
+        } else if (responseData?.message) {
+          msg = String(responseData.message)
+        } else if (errObj.message) {
+          msg = String(errObj.message)
+        }
+      }
+      setError(msg)
     }
   }
 
@@ -311,6 +354,60 @@ const EditSensorFormContent: FC<EditSensorFormContentProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Jumlah Lampu & Daya per Lampu */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+        <div className="space-y-1.5">
+          <label htmlFor="edit-input-jumlah-lampu" className="block text-sm font-semibold text-slate-800">
+            Jumlah Lampu <span className="text-rose-600 font-bold ml-0.5">*</span>
+          </label>
+          <input
+            id="edit-input-jumlah-lampu"
+            type="number"
+            min={1}
+            max={10000}
+            value={jumlahLampuInput}
+            onChange={(e) => {
+              setJumlahLampuInput(e.target.value)
+              if (error) setError(null)
+            }}
+            required
+            className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 shadow-2xs"
+          />
+          <p className="text-[11px] text-slate-500">Jumlah fisik lampu yang dikendalikan.</p>
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="edit-input-watt-per-lampu" className="block text-sm font-semibold text-slate-800">
+            Daya per Lampu (Watt)
+          </label>
+          <input
+            id="edit-input-watt-per-lampu"
+            type="number"
+            step="any"
+            min={0}
+            max={5000}
+            value={wattPerLampuInput}
+            onChange={(e) => {
+              setWattPerLampuInput(e.target.value)
+              if (error) setError(null)
+            }}
+            placeholder="Contoh: 15 (opsional)"
+            className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 shadow-2xs"
+          />
+          <p className="text-[11px] text-slate-500">Kosongkan jika belum diketahui.</p>
+        </div>
+      </div>
+
+      {/* Ringkasan Estimasi Beban Daya */}
+      {wattPerLampuInput.trim() !== '' && !isNaN(parseFloat(wattPerLampuInput)) && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between text-xs">
+          <span className="font-semibold text-emerald-900">Estimasi Beban Daya Total:</span>
+          <span className="font-bold text-emerald-800">
+            {Math.round((parseInt(String(jumlahLampuInput), 10) || 1) * parseFloat(wattPerLampuInput) * 100) / 100} W
+          </span>
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">

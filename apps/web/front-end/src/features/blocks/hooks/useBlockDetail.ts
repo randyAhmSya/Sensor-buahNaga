@@ -124,6 +124,8 @@ export const useBlockDetail = (farmId: string, blockId: string) => {
             updatedResult.lastSeen = matchedNode.terakhir_terlihat || 'Belum ada data'
           }
         }
+        updatedResult.jumlah_lampu = resLampu.jumlah_lampu
+        updatedResult.watt_terpasang = resLampu.watt_terpasang
       }
 
       return {

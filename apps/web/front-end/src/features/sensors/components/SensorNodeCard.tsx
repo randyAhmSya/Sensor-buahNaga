@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, type FC } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sun, Thermometer, MoreVertical, Pencil, Trash2, QrCode } from 'lucide-react';
+import { Sun, Thermometer, MoreVertical, Pencil, Trash2, QrCode, Terminal, Zap } from 'lucide-react';
 import type { SensorNodeItem } from '@/types/sensor.types';
 import { RegenerateQrConfirmModal } from './RegenerateQrConfirmModal';
+import { formatWattTerpasang } from '@/features/blocks/utils/lampWattMapper';
 
 interface SensorNodeCardProps {
   sensor: SensorNodeItem;
@@ -102,7 +103,7 @@ export const SensorNodeCard: FC<SensorNodeCardProps> = ({
             </button>
 
             {isMenuOpen && (
-              <div className="absolute right-0 mt-1 w-36 bg-white rounded-xl border border-slate-200 shadow-lg py-1.5 z-30 animate-in fade-in duration-100">
+              <div className="absolute right-0 mt-1 w-44 bg-white rounded-xl border border-slate-200 shadow-lg py-1.5 z-30 animate-in fade-in duration-100">
                 <button
                   type="button"
                   onClick={(e) => {
@@ -114,6 +115,20 @@ export const SensorNodeCard: FC<SensorNodeCardProps> = ({
                 >
                   <Pencil className="w-4 h-4 text-slate-400" />
                   <span>Edit Sensor</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMenuOpen(false);
+                    navigate(`/kebun/sensors/${sensor.id}/iot-config`, {
+                      state: { sensor },
+                    });
+                  }}
+                  className="w-full px-3.5 py-2.5 min-h-[40px] text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-emerald-700 flex items-center gap-2.5 cursor-pointer"
+                >
+                  <Terminal className="w-4 h-4 text-slate-400" />
+                  <span>Konfigurasi IoT</span>
                 </button>
                 <button
                   type="button"
@@ -194,6 +209,17 @@ export const SensorNodeCard: FC<SensorNodeCardProps> = ({
           )}
         </div>
 
+        {/* Rincian Beban Daya & Jumlah Lampu */}
+        <div className="bg-slate-50 border border-slate-100/90 rounded-xl px-3 py-2 mb-3.5 flex items-center justify-between text-xs">
+          <span className="text-slate-600 font-medium">
+            Lampu: <strong className="text-slate-900 font-semibold">{sensor.jumlah_lampu ?? 1} unit</strong>
+          </span>
+          <span className="inline-flex items-center gap-1 font-semibold text-slate-700 text-[11px]">
+            <Zap className="w-3 h-3 text-amber-600 shrink-0" />
+            {formatWattTerpasang(sensor.watt_terpasang)}
+          </span>
+        </div>
+
         {/* Metrik Sensor: Lux & Suhu dengan Angka Kontras Tinggi */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="bg-slate-50 border border-slate-100/90 rounded-xl p-3">
@@ -234,6 +260,8 @@ export const SensorNodeCard: FC<SensorNodeCardProps> = ({
           nodeCode={sensor.nodeCode}
         />
       )}
+
+
     </div>
   );
 };

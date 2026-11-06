@@ -31,6 +31,21 @@ export const nodeSensorSchema = z.object({
       .min(1, 'Wajib dipilih')
   ).default('lux_suhu'),
   status_koneksi: z.enum(['aktif', 'nonaktif']).default('aktif'),
+  jumlah_lampu: z.coerce
+    .number()
+    .int('Jumlah lampu harus berupa bilangan bulat')
+    .min(1, 'Jumlah lampu minimal 1')
+    .max(10000, 'Jumlah lampu maksimal 10000')
+    .default(1),
+  watt_per_lampu: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined ? null : Number(val)),
+    z
+      .number({ message: 'Watt per lampu harus berupa angka' })
+      .min(0, 'Watt per lampu minimal 0')
+      .max(5000, 'Watt per lampu maksimal 5000')
+      .nullable()
+      .optional()
+  ),
 })
 
 export const nodeSensorFormSchema = nodeSensorSchema

@@ -1,5 +1,6 @@
 import React from 'react'
-import { Sun, Thermometer, Radio, Clock, Cpu } from 'lucide-react'
+import { Sun, Thermometer, Radio, Clock, Cpu, Zap } from 'lucide-react'
+import { formatWattTerpasang } from '../../utils/lampWattMapper'
 
 interface DeviceStatusCardProps {
   deviceId: string
@@ -8,6 +9,8 @@ interface DeviceStatusCardProps {
   temperature: string
   gateway: string
   lastSeen: string
+  wattTerpasang?: number | null
+  jumlahLampu?: number
 }
 
 export const DeviceStatusCard: React.FC<DeviceStatusCardProps> = ({
@@ -17,6 +20,8 @@ export const DeviceStatusCard: React.FC<DeviceStatusCardProps> = ({
   temperature,
   gateway,
   lastSeen,
+  wattTerpasang,
+  jumlahLampu,
 }) => {
   const isUninstalled = !deviceId || deviceId === 'Belum Terpasang'
   const normalizedStatus = (deviceStatus || '').toLowerCase()
@@ -123,16 +128,16 @@ export const DeviceStatusCard: React.FC<DeviceStatusCardProps> = ({
         </div>
       </div>
 
-      {/* Mini-grid Suhu & Gateway */}
+      {/* Mini-grid Suhu, Gateway & Beban Daya */}
       <div className="space-y-4 pt-4 border-t border-slate-100">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 space-y-1">
             <div className="flex items-center gap-1.5 text-slate-500 text-xs">
               <Thermometer className="w-3.5 h-3.5 text-slate-500" />
               <span>Suhu Udara</span>
             </div>
             {isTemperatureAvailable ? (
-              <p className="text-lg font-bold text-slate-900">
+              <p className="text-sm font-bold text-slate-900">
                 {temperature.includes('°C') ? temperature : `${temperature} °C`}
               </p>
             ) : (
@@ -150,6 +155,21 @@ export const DeviceStatusCard: React.FC<DeviceStatusCardProps> = ({
             <p className="text-xs font-bold text-slate-800 truncate" title={gateway}>
               {gateway}
             </p>
+          </div>
+
+          <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 space-y-1">
+            <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+              <Zap className="w-3.5 h-3.5 text-amber-600" />
+              <span>Beban Daya</span>
+            </div>
+            <p className="text-xs font-bold text-slate-800" title={formatWattTerpasang(wattTerpasang)}>
+              {formatWattTerpasang(wattTerpasang)}
+            </p>
+            {wattTerpasang !== null && wattTerpasang !== undefined && (
+              <p className="text-[10px] text-slate-500 font-medium">
+                {jumlahLampu ?? 1} unit lampu
+              </p>
+            )}
           </div>
         </div>
 

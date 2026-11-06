@@ -242,6 +242,8 @@ export const useSensorMonitoring = () => {
           gateway_id: data.gatewayId || null,
           status_koneksi: data.status.toLowerCase(),
           tipe_sensor: data.tipeSensor,
+          jumlah_lampu: data.jumlahLampu,
+          watt_per_lampu: data.wattPerLampu,
         })
 
         await Promise.all([
