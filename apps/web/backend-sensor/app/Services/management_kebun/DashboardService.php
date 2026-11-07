@@ -78,11 +78,21 @@ class DashboardService
                 'luas_area'    => $blok->luas_area,
                 'url_foto'     => $blok->url_foto,
                 'jumlah_node'  => $nodes->count(),
+                'jumlah_lampu' => (int) $nodes->sum('jumlah_lampu'),
                 'node'         => $nodes,
                 'siklus_aktif' => $siklusPerBlok->get($blok->id_blok),
                 'jadwal'       => $this->jadwalBerlaku($sensorId, $overrideBySensor, $defaultKebun),
             ];
         })->values();
+
+        $semuaNode = $daftarBlok->flatMap(fn (array $b) => $b['node']);
+        $lampuTotal = (int) $semuaNode->sum('jumlah_lampu');
+        $lampuOnline = (int) $semuaNode->where('status_online', true)->sum('jumlah_lampu');
+        // Total watt hanya ditampilkan bila SEMUA node punya data watt; kalau tidak, null
+        // (jangan menampilkan angka yang kurang dari sebenarnya).
+        $wattTerpasang = ($semuaNode->isEmpty() || $semuaNode->contains(fn (array $n) => $n['watt_per_lampu'] === null))
+            ? null
+            : round((float) $semuaNode->sum('watt_terpasang'), 2);
 
         return [
             'kebun' => [
@@ -97,6 +107,10 @@ class DashboardService
                 'node_online'           => $hitung['online'],
                 'node_offline'          => $hitung['offline'],
                 'node_belum_terlihat'   => $hitung['belum_pernah_terlihat'],
+                'jumlah_lampu'          => $lampuTotal,
+                'lampu_online'          => $lampuOnline,
+                'lampu_offline'         => $lampuTotal - $lampuOnline,
+                'watt_terpasang'        => $wattTerpasang,
                 'siklus_berjalan'       => $siklusPerBlok->count(),
                 'batas_offline_detik'   => $batasDetik,
                 'bacaan_terbaru'        => $this->bacaanTerbaruKebun($daftarBlok),
@@ -158,12 +172,19 @@ class DashboardService
             ? 'online'
             : ($terlihat === null ? 'belum_pernah_terlihat' : 'offline');
 
+        // Satu node mengendalikan beberapa lampu; default 1 untuk node lama.
+        $jumlahLampu = (int) ($node->jumlah_lampu ?? 1);
+        $wattPerLampu = $node->watt_per_lampu !== null ? (float) $node->watt_per_lampu : null;
+
         return [
             'id_sensor'         => $node->id_sensor,
             'kode_perangkat'    => $node->kode_perangkat,
             'status'            => $status,
             'status_online'     => $online,
             'terakhir_terlihat' => $terlihat?->toIso8601String(),
+            'jumlah_lampu'      => $jumlahLampu,
+            'watt_per_lampu'    => $wattPerLampu,
+            'watt_terpasang'    => $wattPerLampu !== null ? round($jumlahLampu * $wattPerLampu, 2) : null,
             'bacaan_terakhir'   => $bacaan,
         ];
     }

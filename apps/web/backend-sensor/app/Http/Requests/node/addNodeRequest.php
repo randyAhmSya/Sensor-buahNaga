@@ -29,6 +29,8 @@ class addNodeRequest extends FormRequest
             'kode_perangkat' => 'required|string|unique:node_sensors,kode_perangkat',
             'kode_pairing' => 'nullable|string|unique:node_sensors,kode_pairing',
             'token_perangkat' => 'nullable|string|unique:node_sensors,token_perangkat',
+            'jumlah_lampu' => 'sometimes|integer|min:1|max:10000',
+            'watt_per_lampu' => 'nullable|numeric|min:0|max:5000',
             'tipe_sensor' => 'required|string',
             'status_koneksi' => 'required|string',
         ];
