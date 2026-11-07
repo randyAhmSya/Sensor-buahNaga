@@ -58,6 +58,7 @@ Route::middleware(['auth:sanctum', EnsureTenantAktif::class, EnsureLanggananAkti
     Route::get('node/{id}/ringkasan', [NodeRingkasanController::class, 'show']);
     Route::apiResource('node', NodeController::class);
     Route::apiResource('gateway', GatewayController::class);
+    Route::post('gateway/{id}/reset-pairing', [GatewayController::class, 'resetPairing'])->whereUuid('id');
     Route::get('qr/logs', [KodeQrController::class, 'logs']);
     Route::apiResource('qr', KodeQrController::class)->except(['destroy']);
     Route::post('qr/scan', [KodeQrController::class, 'scan']);
