@@ -89,5 +89,38 @@ describe('iotConfigYamlMapper - Pembentuk Konfigurasi YAML IoT', () => {
     assert.equal(resolvePetaniBaseUrl('http://localhost:8000/api/petani/'), 'http://localhost:8000/api/petani');
     assert.equal(resolvePetaniBaseUrl('https://api.agrolight.id'), 'https://api.agrolight.id/petani');
   });
+
+  it('5. Transisi konfigurasi YAML sebelum vs sesudah reset pairing gateway', () => {
+    const configSebelumReset: SensorDeviceConfigData = {
+      nama: 'Blok A',
+      sensor_id: '6f2a8932-d1d7-4ea2-9443-4c9c1e15e8b1',
+      kode_node: 'ESP32-01',
+      kode_gateway: 'GTW-ESP32-01',
+      kode_pairing: null, // Sudah dipasangkan
+      base_url: 'http://localhost:8000/api/petani',
+    };
+
+    assert.equal(
+      getGatewayPairingState(configSebelumReset.kode_gateway, configSebelumReset.kode_pairing),
+      'sudah_dipasangkan'
+    );
+    const yamlSebelum = generateItemDeviceYaml(configSebelumReset);
+    assert.match(yamlSebelum, /Gateway sudah dipasangkan/);
+    assert.doesNotMatch(yamlSebelum, /PAIR-/);
+
+    // Setelah reset berhasil, kode_pairing baru diterbitkan oleh backend
+    const configSesudahReset: SensorDeviceConfigData = {
+      ...configSebelumReset,
+      kode_pairing: 'PAIR-RESET99', // Kode pairing baru hasil reset
+    };
+
+    assert.equal(
+      getGatewayPairingState(configSesudahReset.kode_gateway, configSesudahReset.kode_pairing),
+      'menunggu_pairing'
+    );
+    const yamlSesudah = generateItemDeviceYaml(configSesudahReset);
+    assert.match(yamlSesudah, /kode_pairing: "PAIR-RESET99"/);
+    assert.doesNotMatch(yamlSesudah, /Gateway sudah dipasangkan/);
+  });
 });
 

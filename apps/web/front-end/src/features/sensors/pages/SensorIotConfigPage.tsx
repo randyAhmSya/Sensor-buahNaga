@@ -1,13 +1,15 @@
 import { useState, useEffect, type FC } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { ArrowLeft, Cpu, Copy, Check, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Cpu, Copy, Check, AlertCircle, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { nodeService } from '@/services/nodeService';
 import { gatewayService } from '@/services/gatewayService';
 import { useFarmsWithBlocksQuery } from '@/hooks/queries/useFarmsQuery';
 import { SensorDeviceConfigView, type SensorDeviceConfigData } from '../components/SensorDeviceConfigView';
 import type { SensorNodeItem } from '@/types/sensor.types';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { formatWattTerpasang } from '@/features/blocks/utils/lampWattMapper';
+import { mapResetPairingError } from '../utils/resetPairingErrorMapper';
 
 export const SensorIotConfigPage: FC = () => {
   const { sensorId } = useParams<{ sensorId: string }>();
@@ -25,6 +27,13 @@ export const SensorIotConfigPage: FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(!isStateMatching);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isCopiedId, setIsCopiedId] = useState<boolean>(false);
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState<boolean>(false);
+  const [isResetting, setIsResetting] = useState<boolean>(false);
+  const [resetDialogError, setResetDialogError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{
+    type: 'success' | 'warning' | 'error';
+    message: string;
+  } | null>(null);
 
   // Ambil data kebun dan blok untuk resolusi nama jika diakses via direct URL / refresh
   const { data: farmsWithBlocks } = useFarmsWithBlocksQuery({
@@ -100,7 +109,11 @@ export const SensorIotConfigPage: FC = () => {
             temperature: 0,
             lastSeen: nodeDetail.terakhir_terlihat || 'Belum ada data',
             sparklineData: [],
-            gatewayId: nodeDetail.gateway_id || undefined,
+            gatewayId:
+              nodeDetail.gateway?.id_gateway ||
+              nodeDetail.gateway?.id ||
+              nodeDetail.gateway_id ||
+              undefined,
             gatewayCode: nodeDetail.gateway?.kode_perangkat || undefined,
             gatewayStatus: nodeDetail.gateway?.status_koneksi || undefined,
             kodePairing: pairing || null,
@@ -181,6 +194,96 @@ export const SensorIotConfigPage: FC = () => {
   const isNeverSeen = rawStatus === 'belum_pernah_terlihat';
   const statusDisplay = isOnline ? 'Online' : isNeverSeen ? 'Belum pernah terhubung' : 'Offline';
 
+  const handleConfirmReset = async () => {
+    let targetGatewayId = sensor?.gatewayId;
+
+    if (!targetGatewayId && sensorId) {
+      try {
+        const fresh = await nodeService.getById(sensorId.trim());
+        targetGatewayId =
+          fresh?.gateway?.id_gateway ||
+          fresh?.gateway?.id ||
+          fresh?.gateway_id ||
+          undefined;
+      } catch {
+        // fallback diam
+      }
+    }
+
+    if (!targetGatewayId) {
+      setResetDialogError('Gateway tidak ditemukan pada perangkat ini.');
+      return;
+    }
+
+    setIsResetting(true);
+    setResetDialogError(null);
+
+    try {
+      const res = await gatewayService.resetPairing(targetGatewayId);
+      const newPairingCode = res?.data?.kode_pairing || '';
+
+      // Tutup dialog saat reset sukses
+      setIsResetDialogOpen(false);
+
+      // Jalankan refetch nyata dari backend
+      try {
+        const targetId = sensorId || sensor?.id;
+        if (targetId) {
+          const updatedNode = await nodeService.getById(targetId.trim());
+          if (updatedNode) {
+            const finalPairing =
+              updatedNode.gateway?.kode_pairing ||
+              updatedNode.kode_pairing ||
+              newPairingCode;
+
+            setResolvedPairingCode(finalPairing);
+            setSensor((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    gatewayId:
+                      updatedNode.gateway?.id_gateway ||
+                      updatedNode.gateway?.id ||
+                      updatedNode.gateway_id ||
+                      prev.gatewayId,
+                    gatewayCode: updatedNode.gateway?.kode_perangkat || prev.gatewayCode,
+                    gatewayStatus: updatedNode.gateway?.status_koneksi || prev.gatewayStatus,
+                    kodePairing: finalPairing || null,
+                    pairingCode: finalPairing || null,
+                  }
+                : prev
+            );
+          } else if (newPairingCode) {
+            setResolvedPairingCode(newPairingCode);
+          }
+        } else if (newPairingCode) {
+          setResolvedPairingCode(newPairingCode);
+        }
+
+        setFeedback({
+          type: 'success',
+          message:
+            'Pairing gateway berhasil direset. Silakan periksa kode pairing baru pada template konfigurasi YAML.',
+        });
+      } catch {
+        // Bila reset sukses tetapi refetch gagal
+        if (newPairingCode) {
+          setResolvedPairingCode(newPairingCode);
+        }
+        setFeedback({
+          type: 'warning',
+          message:
+            'Pairing gateway berhasil direset. Gagal memuat ulang data terbaru dari server, silakan muat ulang halaman.',
+        });
+      }
+    } catch (err: unknown) {
+      const mappedMsg = mapResetPairingError(err);
+      setResetDialogError(mappedMsg);
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   // Penyiapan data konfigurasi IoT yang jujur tanpa nilai karangan
   const configData: SensorDeviceConfigData = {
     nama: sensor?.blockName || 'Blok Lahan',
@@ -250,6 +353,48 @@ export const SensorIotConfigPage: FC = () => {
       {/* Konten Utama Saat Sensor Siap */}
       {!isLoading && sensor && (
         <>
+          {/* Banner Notifikasi Aksi Reset Pairing */}
+          {feedback && (
+            <div
+              role="alert"
+              className={`p-4 rounded-xl border flex items-start justify-between gap-3 shadow-2xs ${
+                feedback.type === 'success'
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-950'
+                  : feedback.type === 'warning'
+                  ? 'bg-amber-50 border-amber-200 text-amber-950'
+                  : 'bg-rose-50 border-rose-200 text-rose-950'
+              }`}
+            >
+              <div className="flex items-start gap-2.5">
+                {feedback.type === 'success' ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+                )}
+                <div className="space-y-0.5">
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    {feedback.type === 'success'
+                      ? 'Berhasil'
+                      : feedback.type === 'warning'
+                      ? 'Peringatan'
+                      : 'Terjadi Kesalahan'}
+                  </div>
+                  <p className="text-xs sm:text-sm font-medium leading-relaxed">
+                    {feedback.message}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFeedback(null)}
+                className="text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer shrink-0 p-1"
+                aria-label="Tutup notifikasi"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           {/* Header Identitas Perangkat */}
           <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -319,8 +464,67 @@ export const SensorIotConfigPage: FC = () => {
               data={configData}
               layoutMode="grid"
               showDownloadButton={true}
+              onResetPairing={() => {
+                setResetDialogError(null);
+                setIsResetDialogOpen(true);
+              }}
+              isResetting={isResetting}
             />
           </div>
+
+          {/* Dialog Konfirmasi Reset Pairing */}
+          <Modal
+            isOpen={isResetDialogOpen}
+            onClose={() => {
+              if (!isResetting) {
+                setIsResetDialogOpen(false);
+                setResetDialogError(null);
+              }
+            }}
+            title="Reset Pairing Gateway"
+            maxWidth="md"
+          >
+            <div className="space-y-4">
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
+                Token lama akan tidak berlaku. Perangkat harus dipairing ulang memakai kode pairing baru. Lanjutkan?
+              </p>
+
+              {resetDialogError && (
+                <div
+                  role="alert"
+                  className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2"
+                >
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span className="font-medium">{resetDialogError}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="md"
+                  onClick={() => {
+                    setIsResetDialogOpen(false);
+                    setResetDialogError(null);
+                  }}
+                  disabled={isResetting}
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="button"
+                  variant="danger"
+                  size="md"
+                  onClick={handleConfirmReset}
+                  isLoading={isResetting}
+                  disabled={isResetting}
+                >
+                  Reset
+                </Button>
+              </div>
+            </div>
+          </Modal>
         </>
       )}
     </div>

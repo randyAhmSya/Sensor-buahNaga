@@ -1,5 +1,6 @@
 import { useState, useId, type FC } from 'react';
-import { Copy, Check, Terminal, FileCode, Server, Cpu, Download } from 'lucide-react';
+import { Copy, Check, Terminal, FileCode, Server, Cpu, Download, RotateCcw } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import {
   generateFullIotYaml,
   generateItemDeviceYaml,
@@ -14,12 +15,16 @@ interface SensorDeviceConfigViewProps {
   data: SensorDeviceConfigData;
   layoutMode?: 'stacked' | 'grid';
   showDownloadButton?: boolean;
+  onResetPairing?: () => void;
+  isResetting?: boolean;
 }
 
 export const SensorDeviceConfigView: FC<SensorDeviceConfigViewProps> = ({
   data,
   layoutMode = 'stacked',
   showDownloadButton = false,
+  onResetPairing,
+  isResetting = false,
 }) => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [yamlCopiedMode, setYamlCopiedMode] = useState<'full' | 'item' | null>(null);
@@ -178,11 +183,26 @@ export const SensorDeviceConfigView: FC<SensorDeviceConfigViewProps> = ({
     <div className="space-y-4">
       {/* Parameter Perangkat */}
       <div className="space-y-2.5">
-        <div className="flex items-center gap-2">
-          <Cpu className="w-4 h-4 text-emerald-700 shrink-0" />
-          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-            1. Parameter Perangkat Node & Pairing
-          </h4>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Cpu className="w-4 h-4 text-emerald-700 shrink-0" />
+            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              1. Parameter Perangkat Node & Pairing
+            </h4>
+          </div>
+          {onResetPairing && hasGateway && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onResetPairing}
+              disabled={isResetting}
+              leftIcon={<RotateCcw className="w-3.5 h-3.5 text-slate-600" />}
+              className="text-xs font-semibold cursor-pointer"
+            >
+              Reset Pairing
+            </Button>
+          )}
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 shadow-2xs overflow-hidden">

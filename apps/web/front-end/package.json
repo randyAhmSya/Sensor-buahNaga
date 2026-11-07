@@ -9,7 +9,7 @@
     "test:qr": "node --experimental-strip-types --test src/features/qrcodes/utils/qrStickerMapper.test.ts",
     "test:watt": "node --experimental-strip-types --test src/features/blocks/utils/lampWattMapper.test.ts",
     "test:iot": "node --experimental-strip-types --test src/features/sensors/utils/iotConfigYamlMapper.test.ts",
-    "test": "node --experimental-strip-types --test src/features/qrcodes/utils/qrStickerMapper.test.ts src/features/blocks/utils/lampWattMapper.test.ts src/features/sensors/utils/iotConfigYamlMapper.test.ts",
+    "test": "node --experimental-strip-types --test src/features/qrcodes/utils/qrStickerMapper.test.ts src/features/blocks/utils/lampWattMapper.test.ts src/features/sensors/utils/iotConfigYamlMapper.test.ts src/features/sensors/utils/resetPairingErrorMapper.test.ts src/services/gatewayService.test.ts",
     "lint": "oxlint",
     "preview": "vite preview"
   },
