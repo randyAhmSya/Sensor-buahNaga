@@ -1,4 +1,4 @@
-import { apiClient } from './api';
+import { apiClient } from './api.ts';
 import type { ApiResponse } from '@/types/api.types';
 import type { GatewayBackend, CreateGatewayPayload, UpdateGatewayPayload } from '@/types/gateway.types';
 
@@ -110,5 +110,21 @@ export const gatewayService = {
 
   delete: async (id: string): Promise<ApiResponse<null>> => {
     return await apiClient.delete<ApiResponse<null>>(`/petani/gateway/${id}`);
+  },
+
+  /**
+   * Reset pairing gateway untuk membatalkan token lama dan menerbitkan kode pairing baru
+   * Endpoint: POST /api/petani/gateway/{id_gateway}/reset-pairing
+   */
+  resetGatewayPairing: async (idGateway: string): Promise<ApiResponse<GatewayBackend>> => {
+    const cleanId = (idGateway || '').trim();
+    if (!cleanId) {
+      throw new Error('ID gateway tidak valid');
+    }
+    return await apiClient.post<ApiResponse<GatewayBackend>>(`/petani/gateway/${cleanId}/reset-pairing`);
+  },
+
+  resetPairing: async (idGateway: string): Promise<ApiResponse<GatewayBackend>> => {
+    return await gatewayService.resetGatewayPairing(idGateway);
   },
 };

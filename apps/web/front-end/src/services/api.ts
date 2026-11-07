@@ -1,5 +1,9 @@
 import type { QueryParams } from '@/types/api.types';
-import { useAuthStore, AUTH_STORAGE_KEYS } from '@/store/useAuthStore';
+
+export const AUTH_STORAGE_KEYS = {
+  TOKEN: 'agro_auth_token',
+  USER: 'agro_auth_user',
+} as const;
 
 /**
  * Base API Client with Interceptors, Token Auth & Robust Error Handling
@@ -63,16 +67,26 @@ let isRedirectingToLogin = false;
  * 3. Mengarahkan ke halaman login tanpa redirect loop
  */
 export const handleUnauthorizedSession = (): void => {
-  useAuthStore.getState().logout();
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem(AUTH_STORAGE_KEYS.TOKEN);
+      localStorage.removeItem(AUTH_STORAGE_KEYS.USER);
+      sessionStorage.removeItem(AUTH_STORAGE_KEYS.TOKEN);
+      sessionStorage.removeItem(AUTH_STORAGE_KEYS.USER);
+      import('../store/useAuthStore.ts').then((mod) => {
+        mod.useAuthStore.getState().logout();
+      }).catch(() => {});
+    } catch {
+      // fallback jika storage ditolak
+    }
 
-  if (typeof window === 'undefined') return;
+    const currentPath = window.location.pathname;
+    const isAuthPage = currentPath.includes('/login') || currentPath.includes('/register');
 
-  const currentPath = window.location.pathname;
-  const isAuthPage = currentPath.includes('/login') || currentPath.includes('/register');
-
-  if (!isAuthPage && !isRedirectingToLogin) {
-    isRedirectingToLogin = true;
-    window.location.replace('/login');
+    if (!isAuthPage && !isRedirectingToLogin) {
+      isRedirectingToLogin = true;
+      window.location.replace('/login');
+    }
   }
 };
 
@@ -221,17 +235,4 @@ export class ApiClient {
 }
 
 export const apiClient = new ApiClient();
-
-export { farmService } from './farmService';
-export { blockService } from './blockService';
-export { harvestService } from './harvestService';
-export { sensorService } from './sensorService';
-export { gatewayService } from './gatewayService';
-export { qrCodeService } from './qrService';
-export { tenantService } from './tenantService';
-export { authService } from './authService';
-export { scheduleService } from './scheduleService';
-export { telemetryService } from './telemetryService';
-export { energyService } from './energyService';
-export { petaniSubscriptionService } from './petaniSubscriptionService';
 
