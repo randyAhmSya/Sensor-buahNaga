@@ -87,4 +87,49 @@ class GatewayPairingService
             file_put_contents($aclFile, $aclEntry, FILE_APPEND);
         }
     }
+    public function resetPairing(gateway $gw): gateway
+    {
+        $this->cabutKredensialMqtt($gw->kode_perangkat);
+
+        $gw->update([
+            'token_gateway'     => null,
+            'kode_pairing'      => $this->buatKodePairingBaru(),
+            'status_koneksi'    => 'belum_terhubung',
+            'terakhir_terlihat' => null,
+        ]);
+
+        return $gw->refresh();
+    }
+
+    protected function buatKodePairingBaru(): string
+    {
+        do {
+            $kode = 'PAIR-' . strtoupper(Str::random(6));
+        } while (gateway::where('kode_pairing', $kode)->exists());
+
+        return $kode;
+    }
+
+    protected function cabutKredensialMqtt(string $kodePerangkat): void
+    {
+        $passwdBin  = env('MOSQUITTO_PASSWD_BIN');
+        $passwdFile = env('MOSQUITTO_PASSWD_FILE');
+
+        if (!$passwdBin || !$passwdFile) {
+            return; // broker tidak memakai password file, tidak ada yang dicabut
+        }
+
+        $cmd = sprintf(
+            '%s -D %s %s',
+            escapeshellarg($passwdBin),
+            escapeshellarg($passwdFile),
+            escapeshellarg($kodePerangkat)
+        );
+
+        exec($cmd, $output, $exitCode);
+
+        if ($exitCode !== 0) {
+            Log::warning("Gagal cabut kredensial MQTT {$kodePerangkat}: " . implode("\n", $output));
+        }
+    }
 }

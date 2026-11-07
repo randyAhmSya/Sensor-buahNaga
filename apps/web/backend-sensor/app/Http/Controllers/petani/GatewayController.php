@@ -136,4 +136,22 @@ class GatewayController extends Controller
             'token_gateway' => $result['token_gateway'],
         ], 'Gateway berhasil dipasangkan.');
     }
+        public function resetPairing(string $id): JsonResponse
+    {
+        $gateway = $this->gatewayService->getGatewayById($id);
+        if (!$gateway) {
+            return $this->errorResponse(self::PESAN_GATEWAY_TIDAK_DITEMUKAN, 404);
+        }
+
+        $blok = Blok::find($gateway->blok_id);
+        $kebun = Kebun::find($blok->kebun_id);
+
+        if (Gate::denies('update', $kebun)) {
+            return $this->errorResponse(self::PESAN_AKSES_DITOLAK, 403);
+        }
+
+        $hasil = $this->pairingService->resetPairing($gateway);
+
+        return $this->successResponse($hasil, 'Pairing gateway direset. Pasangkan ulang perangkat dengan kode pairing baru.');
+    }
 }
