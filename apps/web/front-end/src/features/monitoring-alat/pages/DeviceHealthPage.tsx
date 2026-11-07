@@ -53,44 +53,44 @@ export function DeviceHealthPage() {
       </div>
 
       {/* Stats Summary Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs flex items-center gap-3.5">
-          <div className="p-3 rounded-lg bg-emerald-50 text-emerald-600">
-            <Cpu className="h-5 w-5" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Node Alat</span>
+            <Cpu className="w-4 h-4 text-slate-400 shrink-0" strokeWidth={1.75} />
           </div>
-          <div>
-            <p className="text-xs text-slate-500 font-medium">Total Node Alat</p>
-            <p className="text-xl font-bold text-slate-900">{devices.length} Unit</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs flex items-center gap-3.5">
-          <div className="p-3 rounded-lg bg-emerald-100 text-emerald-700">
-            <Wifi className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-xs text-slate-500 font-medium">Online & Optimal</p>
-            <p className="text-xl font-bold text-emerald-700">{onlineCount} Node</p>
+          <div className="text-2xl font-bold text-slate-900 tracking-tight">
+            {devices.length} <span className="text-sm font-normal text-slate-500">Unit</span>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs flex items-center gap-3.5">
-          <div className="p-3 rounded-lg bg-amber-50 text-amber-600">
-            <Activity className="h-5 w-5" />
+        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Online & Optimal</span>
+            <Wifi className="w-4 h-4 text-slate-400 shrink-0" strokeWidth={1.75} />
           </div>
-          <div>
-            <p className="text-xs text-slate-500 font-medium">Degradasi Sinyal</p>
-            <p className="text-xl font-bold text-amber-700">{degradedCount} Node</p>
+          <div className="text-2xl font-bold text-slate-900 tracking-tight">
+            {onlineCount} <span className="text-sm font-normal text-emerald-700">Node</span>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs flex items-center gap-3.5">
-          <div className="p-3 rounded-lg bg-rose-50 text-rose-600">
-            <ShieldAlert className="h-5 w-5" />
+        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Degradasi Sinyal</span>
+            <Activity className="w-4 h-4 text-slate-400 shrink-0" strokeWidth={1.75} />
           </div>
-          <div>
-            <p className="text-xs text-slate-500 font-medium">Offline / Butuh Servis</p>
-            <p className="text-xl font-bold text-rose-700">{offlineCount} Node</p>
+          <div className="text-2xl font-bold text-slate-900 tracking-tight">
+            {degradedCount} <span className="text-sm font-normal text-slate-500">Node</span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Offline / Butuh Servis</span>
+            <ShieldAlert className="w-4 h-4 text-slate-400 shrink-0" strokeWidth={1.75} />
+          </div>
+          <div className="text-2xl font-bold text-slate-900 tracking-tight">
+            {offlineCount} <span className="text-sm font-normal text-slate-500">Node</span>
           </div>
         </div>
       </div>

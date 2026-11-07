@@ -31,7 +31,7 @@ export const BlockMediaSection: FC<BlockMediaSectionProps> = ({
           </h3>
         </div>
 
-        <div className="w-full h-48 border-2 border-dashed border-slate-200 hover:border-emerald-600 rounded-2xl flex flex-col items-center justify-center bg-slate-50/50 hover:bg-emerald-50/20 transition-all cursor-pointer relative overflow-hidden group">
+        <div className="w-full h-48 border-2 border-dashed border-slate-300 hover:border-emerald-600 rounded-2xl flex flex-col items-center justify-center bg-slate-50 hover:bg-white transition-all cursor-pointer relative overflow-hidden group">
           {imagePreview || formData.imageUrl ? (
             <img
               src={imagePreview || formData.imageUrl || ''}
@@ -78,12 +78,12 @@ export const BlockMediaSection: FC<BlockMediaSectionProps> = ({
                 key={statusOption}
                 type="button"
                 onClick={() => onStatusChange(statusOption)}
-                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
                   formData.status === statusOption
                     ? statusOption === 'Online'
-                      ? 'border-emerald-600 bg-emerald-50/50 text-emerald-800 shadow-2xs'
-                      : 'border-slate-400 bg-slate-100 text-slate-800'
-                    : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                      ? 'border-2 border-emerald-600 bg-white text-emerald-800 shadow-2xs'
+                      : 'border-2 border-slate-400 bg-slate-100 text-slate-800'
+                    : 'border-2 border-slate-200 bg-white text-slate-500 hover:border-slate-300'
                 }`}
               >
                 <span

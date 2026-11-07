@@ -22,6 +22,13 @@ class EnsureLanggananAktif
             ], 403);
         }
 
+        // Saklar: kalau langganan tidak diwajibkan (LANGGANAN_WAJIB=false), semua tenant
+        // yang valid boleh memakai fitur tanpa cek status/kadaluarsa. Logika langganan
+        // di bawah tetap utuh dan aktif lagi begitu LANGGANAN_WAJIB=true.
+        if (!config('langganan.wajib', true)) {
+            return $next($request);
+        }
+
         $status = $this->langgananService->getStatus($tenantId)->statusEfektif();
 
         if ($status === 'kadaluarsa') {

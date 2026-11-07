@@ -22,15 +22,24 @@ export const mapNodeToSensorItem = (node: NodeSensorBackend, fallbackFarmName?: 
     gatewayId: node.gateway_id || node.gateway?.id_gateway || null,
     gatewayCode: node.gateway?.kode_perangkat || null,
     gatewayStatus: node.gateway?.status_koneksi || null,
+    kodePairing: (node.gateway as unknown as { kode_pairing?: string | null })?.kode_pairing || node.kode_pairing || null,
+    tokenGateway: (node.gateway as unknown as { token_gateway?: string | null })?.token_gateway || node.token_perangkat || null,
     tipeSensor: node.tipe_sensor || 'lux_suhu',
     status: isOnline ? 'Aktif' : 'Nonaktif',
     luxLevel: isOnline ? 120 : 0,
     temperature: 28.5,
     lastSeen: node.terakhir_terlihat
       ? new Date(node.terakhir_terlihat).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-      : 'Baru saja',
+      : 'Belum ada data',
     sparklineData: isOnline ? [85, 90, 110, 115, 120, 118, 120] : [0, 0, 0, 0, 0, 0, 0],
     qrCode: node.qr?.teks_kode_qr || (node as unknown as { kode_qr?: { kode_qr?: string } })?.kode_qr?.kode_qr || '',
+    jumlah_lampu: node.jumlah_lampu ?? 1,
+    watt_per_lampu: node.watt_per_lampu ?? null,
+    watt_terpasang:
+      node.watt_terpasang ??
+      (node.watt_per_lampu !== null && node.watt_per_lampu !== undefined
+        ? Math.round((node.jumlah_lampu ?? 1) * node.watt_per_lampu * 100) / 100
+        : null),
   };
 };
 
@@ -50,11 +59,14 @@ export const sensorService = {
   getAll: async (kebunId?: string): Promise<SensorNodeItem[]> => {
     try {
       let targetKebunId = kebunId && kebunId !== 'Semua Kebun' ? kebunId.trim() : undefined;
+      let resolvedFarmName: string | undefined = undefined;
+
       // Jika kebun_id belum disediakan, ambil ID kebun pertama yang valid dari GET /api/petani/kebun
       if (!targetKebunId) {
         const farms = await farmService.getAll();
         if (farms.length > 0) {
           targetKebunId = farms[0].id;
+          resolvedFarmName = farms[0].name;
         }
       }
 
@@ -64,7 +76,7 @@ export const sensorService = {
 
       const rawNodes = await nodeService.getAll(targetKebunId);
       if (rawNodes && rawNodes.length > 0) {
-        return rawNodes.map((node) => mapNodeToSensorItem(node));
+        return rawNodes.map((node) => mapNodeToSensorItem(node, resolvedFarmName));
       }
       return [];
     } catch {

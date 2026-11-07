@@ -111,18 +111,35 @@ export interface AdminTenantItem {
   terdaftar_pada?: string;
 }
 
-export type TransactionStatus = 'menunggu_verifikasi' | 'berhasil' | 'ditolak';
+export type TransactionStatus =
+  | 'menunggu_verifikasi'
+  | 'berhasil'
+  | 'diverifikasi'
+  | 'ditolak'
+  | 'menunggu_pembayaran';
+
+export interface AdminTransactionTenantRelation {
+  tenant_id?: string | number;
+  nama_tenant?: string;
+  nama?: string;
+  email?: string;
+}
 
 export interface AdminTransactionItem {
   id: string | number;
+  id_transaksi?: string;
   nama_tenant: string;
   nama_paket: string;
   tambahan_hari: number;
   harga: number;
   metode_pembayaran: string;
   tanggal_pengajuan: string;
+  created_at?: string;
   status: TransactionStatus;
+  status_pembayaran?: TransactionStatus;
+  alasan_penolakan?: string | null;
   bukti_transfer_url?: string;
+  tenant?: AdminTransactionTenantRelation;
 }
 
 export interface AdminAuditLogAdminRelation {

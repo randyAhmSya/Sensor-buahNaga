@@ -66,7 +66,7 @@ export function Checkbox({
         {(label || description) && (
           <div className="flex flex-col">
             {label && <span className="text-sm font-semibold text-slate-800">{label}</span>}
-            {description && <span className="text-xs text-slate-500 mt-0.5">{description}</span>}
+            {description && <span className="text-xs text-slate-600 mt-0.5">{description}</span>}
           </div>
         )}
       </label>

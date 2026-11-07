@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Maximize2, Layers } from 'lucide-react'
+import { Calendar, Maximize2 } from 'lucide-react'
 import type { BlockItem } from '@/types/block.types'
+import { DEFAULT_FARM_TEMPLATE_IMAGE } from '@/config/constants'
 
 interface BlockDetailCardProps {
   block: BlockItem
@@ -10,9 +11,13 @@ interface BlockDetailCardProps {
 
 export const BlockDetailCard: React.FC<BlockDetailCardProps> = ({ block, farmId = '' }) => {
   const navigate = useNavigate()
-  const isOnline = block.status === 'Online'
   const [imgError, setImgError] = useState(false)
-  const showFallback = !block.imageUrl || imgError
+  const [templateError, setTemplateError] = useState(false)
+
+  const hasCustomImage = Boolean(block.imageUrl && block.imageUrl.trim() && !imgError)
+  const displayImageUrl = hasCustomImage
+    ? block.imageUrl
+    : (!templateError ? DEFAULT_FARM_TEMPLATE_IMAGE : null)
 
   const blockId = block.id_blok ?? block.id
   const targetUrl = farmId
@@ -25,32 +30,43 @@ export const BlockDetailCard: React.FC<BlockDetailCardProps> = ({ block, farmId 
       className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:border-emerald-500 hover:shadow-md transition-all duration-200 group cursor-pointer flex flex-col"
     >
       <div className="h-44 w-full overflow-hidden relative border-b border-slate-100 bg-slate-100">
-        {showFallback ? (
-          <div className="w-full h-full bg-gradient-to-br from-emerald-50 via-teal-50 to-slate-100 flex flex-col items-center justify-center p-4">
-            <div className="w-12 h-12 rounded-xl bg-white/80 border border-emerald-100 shadow-2xs flex items-center justify-center text-emerald-700 mb-2 group-hover:scale-110 transition-transform">
-              <Layers className="w-6 h-6" />
-            </div>
-            <span className="text-xs font-bold text-slate-700">{block.name}</span>
-          </div>
-        ) : (
+        {displayImageUrl ? (
           <img
-            src={block.imageUrl}
+            src={displayImageUrl}
             alt={block.name}
-            onError={() => setImgError(true)}
+            loading="lazy"
+            decoding="async"
+            onError={() => {
+              if (hasCustomImage) {
+                setImgError(true)
+              } else {
+                setTemplateError(true)
+              }
+            }}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-emerald-800 via-teal-800 to-slate-900 flex items-center justify-center text-white p-4">
+            <span className="text-sm font-bold text-slate-100">{block.name}</span>
+          </div>
         )}
         <div className="absolute top-3 right-3">
           <span
             className={`px-2.5 py-1 rounded-full text-xs font-bold border shadow-2xs flex items-center gap-1.5 ${
-              isOnline
+              block.status === 'Online'
                 ? 'bg-white border-emerald-600 text-emerald-700'
+                : block.status === 'Offline'
+                ? 'bg-white border-rose-300 text-rose-700'
                 : 'bg-white border-slate-300 text-slate-600'
             }`}
           >
             <span
               className={`w-1.5 h-1.5 rounded-full ${
-                isOnline ? 'bg-emerald-500' : 'bg-slate-400'
+                block.status === 'Online'
+                  ? 'bg-emerald-500'
+                  : block.status === 'Offline'
+                  ? 'bg-rose-500'
+                  : 'bg-slate-400'
               }`}
             />
             {block.status}

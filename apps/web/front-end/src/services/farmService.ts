@@ -1,4 +1,4 @@
-import { apiClient } from './api';
+import { apiClient, ApiError } from './api';
 import type { ApiResponse } from '@/types/api.types';
 import type { KebunBackend } from '@/types/kebun.types';
 import type { FarmItem } from '@/types/farm.types';
@@ -58,6 +58,15 @@ export const mapKebunToFarmItem = (kebun: KebunBackend, blocks: BlockItem[] = []
 
 export const farmService = {
   getAll: async (tenantId?: string): Promise<FarmItem[]> => {
+    // Jika sedang di halaman langganan petani, jangan request daftar kebun
+    if (
+      !tenantId &&
+      typeof window !== 'undefined' &&
+      window.location.pathname.includes('/kebun/langganan')
+    ) {
+      return [];
+    }
+
     try {
       const endpoint = tenantId ? `/admin/kebun` : `/petani/kebun`;
       const params = tenantId ? { tenant_id: tenantId } : undefined;
@@ -65,17 +74,75 @@ export const farmService = {
       const resKebun = await apiClient.get<ApiResponse<KebunBackend[]>>(endpoint, { params });
 
       if (resKebun && Array.isArray(resKebun.data) && resKebun.data.length > 0) {
-        const farmsWithBlocks = await Promise.all(
-          resKebun.data.map(async (kebun) => {
-            const blocks = await blockService.getBlocksByFarmId(kebun.id_kebun).catch(() => []);
-            return mapKebunToFarmItem(kebun, blocks);
-          })
-        );
-        return farmsWithBlocks;
+        return resKebun.data.map((kebun) => mapKebunToFarmItem(kebun, []));
       }
       return [];
-    } catch {
-      // Tidak ada fallback ke mock data; return array kosong
+    } catch (error: unknown) {
+      // Tangani error 402 Payment Required secara anggun
+      if (
+        (error instanceof ApiError && error.status === 402) ||
+        (error && typeof error === 'object' && (error as { status?: number }).status === 402)
+      ) {
+        if (
+          typeof window !== 'undefined' &&
+          !window.location.pathname.includes('/kebun/langganan')
+        ) {
+          window.location.href = '/kebun/langganan';
+        }
+        return [];
+      }
+
+      // Error lainnya: return array kosong
+      return [];
+    }
+  },
+
+  /**
+   * Mengambil daftar kebun beserta blok riilnya untuk modul operasional
+   * (Form Tambah/Edit Sensor, Siklus Panen, dan Estimasi Panen)
+   */
+  getAllWithBlocks: async (tenantId?: string): Promise<FarmItem[]> => {
+    if (
+      !tenantId &&
+      typeof window !== 'undefined' &&
+      window.location.pathname.includes('/kebun/langganan')
+    ) {
+      return [];
+    }
+
+    try {
+      const endpoint = tenantId ? `/admin/kebun` : `/petani/kebun`;
+      const params = tenantId ? { tenant_id: tenantId } : undefined;
+
+      const resKebun = await apiClient.get<ApiResponse<KebunBackend[]>>(endpoint, { params });
+
+      if (!resKebun || !Array.isArray(resKebun.data) || resKebun.data.length === 0) {
+        return [];
+      }
+
+      const kebunList = resKebun.data;
+      const farmsWithBlocks = await Promise.all(
+        kebunList.map(async (kebun) => {
+          const farmId = getEntityId(kebun);
+          const blocks = await blockService.getBlocksByFarmId(farmId).catch(() => []);
+          return mapKebunToFarmItem(kebun, blocks);
+        })
+      );
+
+      return farmsWithBlocks;
+    } catch (error: unknown) {
+      if (
+        (error instanceof ApiError && error.status === 402) ||
+        (error && typeof error === 'object' && (error as { status?: number }).status === 402)
+      ) {
+        if (
+          typeof window !== 'undefined' &&
+          !window.location.pathname.includes('/kebun/langganan')
+        ) {
+          window.location.href = '/kebun/langganan';
+        }
+        return [];
+      }
       return [];
     }
   },

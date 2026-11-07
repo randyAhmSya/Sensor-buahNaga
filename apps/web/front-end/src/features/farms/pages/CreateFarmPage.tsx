@@ -38,31 +38,33 @@ export const CreateFarmPage: React.FC<CreateFarmPageProps> = ({ onAddFarm }) => 
   )
 
   return (
-    <FormPageLayout
-      breadcrumbs={breadcrumbs}
-      title="Tambah Kebun Baru"
-      backUrl="/kebun/farms"
-      backLabel="Kembali ke Daftar Kebun"
-      onSubmit={handleSubmit}
-      submitLabel="Simpan Kebun"
-      isSubmitting={isSubmitting}
-      leftContent={
-        <CreateFarmInfoSection
-          formData={formData}
-          errors={errors}
-          onChange={handleTextChange}
-        />
-      }
-      rightContent={
-        <CreateFarmMediaSection
-          formData={formData}
-          errors={errors}
-          imagePreview={imagePreview}
-          onImageFileChange={handleImageFile}
-          onStatusChange={setStatus}
-        />
-      }
-    />
+    <div className="space-y-6">
+      <FormPageLayout
+        breadcrumbs={breadcrumbs}
+        title="Tambah Kebun Baru"
+        backUrl="/kebun/farms"
+        backLabel="Kembali ke Daftar Kebun"
+        onSubmit={handleSubmit}
+        submitLabel="Simpan Kebun"
+        isSubmitting={isSubmitting}
+        leftContent={
+          <CreateFarmInfoSection
+            formData={formData}
+            errors={errors}
+            onChange={handleTextChange}
+          />
+        }
+        rightContent={
+          <CreateFarmMediaSection
+            formData={formData}
+            errors={errors}
+            imagePreview={imagePreview}
+            onImageFileChange={handleImageFile}
+            onStatusChange={setStatus}
+          />
+        }
+      />
+    </div>
   )
 }
 

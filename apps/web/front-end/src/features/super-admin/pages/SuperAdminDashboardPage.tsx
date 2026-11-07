@@ -19,8 +19,10 @@ import { useAdminDashboard } from '@/hooks/useAdmin'
 import { formatRupiah, formatDateTime } from '@/utils/formatters'
 import { Button } from '@/components/ui/Button'
 import { resolveAdminName } from '@/types/admin.types'
+import { useSaasMode } from '@/context/SaasContext'
 
 export const SuperAdminDashboardPage: FC = () => {
+  const { isSaasEnabled } = useSaasMode()
   const { data, isPending, isError, error, refetch, isFetching } = useAdminDashboard()
 
   if (isPending) {
@@ -190,86 +192,91 @@ export const SuperAdminDashboardPage: FC = () => {
           </div>
         </div>
 
-        {/* 3. Langganan Paket Card */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:shadow-xs transition-shadow space-y-3.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 tracking-wide uppercase">Status Langganan</span>
-            <CreditCard className="w-4 h-4 text-slate-400 shrink-0" strokeWidth={1.75} />
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-slate-900 tracking-tight">{langganan?.total ?? 0}</div>
-            <p className="text-[11px] text-slate-400 mt-0.5">Total portofolio paket berjalan</p>
-          </div>
-          <div className="pt-2 border-t border-slate-100 grid grid-cols-3 gap-1 text-[11px]">
-            <div>
-              <span className="text-slate-400 block">Aktif</span>
-              <strong className="text-emerald-700 font-semibold">{langganan?.aktif ?? 0}</strong>
+        {/* 3. Langganan Paket Card, 4. Keuangan & Pendapatan Card, 5. Transaksi Masuk Status Card */}
+        {isSaasEnabled && (
+          <>
+            {/* 3. Langganan Paket Card */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:shadow-xs transition-shadow space-y-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-500 tracking-wide uppercase">Status Langganan</span>
+                <CreditCard className="w-4 h-4 text-slate-400 shrink-0" strokeWidth={1.75} />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-slate-900 tracking-tight">{langganan?.total ?? 0}</div>
+                <p className="text-[11px] text-slate-400 mt-0.5">Total portofolio paket berjalan</p>
+              </div>
+              <div className="pt-2 border-t border-slate-100 grid grid-cols-3 gap-1 text-[11px]">
+                <div>
+                  <span className="text-slate-400 block">Aktif</span>
+                  <strong className="text-emerald-700 font-semibold">{langganan?.aktif ?? 0}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Tenggang</span>
+                  <strong className="text-slate-700 font-semibold">{langganan?.tenggang ?? 0}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Kadaluarsa</span>
+                  <strong className="text-slate-500 font-semibold">{langganan?.kadaluarsa ?? 0}</strong>
+                </div>
+              </div>
             </div>
-            <div>
-              <span className="text-slate-400 block">Tenggang</span>
-              <strong className="text-slate-700 font-semibold">{langganan?.tenggang ?? 0}</strong>
-            </div>
-            <div>
-              <span className="text-slate-400 block">Kadaluarsa</span>
-              <strong className="text-slate-500 font-semibold">{langganan?.kadaluarsa ?? 0}</strong>
-            </div>
-          </div>
-        </div>
 
-        {/* 4. Keuangan & Pendapatan Card */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:shadow-xs transition-shadow space-y-3.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 tracking-wide uppercase">Total Pendapatan</span>
-            <Banknote className="w-4 h-4 text-slate-400 shrink-0" strokeWidth={1.75} />
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-slate-900 tracking-tight">
-              {formatRupiah(totalIncome)}
+            {/* 4. Keuangan & Pendapatan Card */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:shadow-xs transition-shadow space-y-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-500 tracking-wide uppercase">Total Pendapatan</span>
+                <Banknote className="w-4 h-4 text-slate-400 shrink-0" strokeWidth={1.75} />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-slate-900 tracking-tight">
+                  {formatRupiah(totalIncome)}
+                </div>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Akumulasi pembayaran yang telah diverifikasi
+                </p>
+              </div>
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span className="text-slate-500">
+                  Total Transaksi: <strong className="text-slate-900">{totalTx}</strong>
+                </span>
+                <Link to="/admin/langganan" className="text-xs text-emerald-600 font-semibold hover:underline">
+                  Kelola &rarr;
+                </Link>
+              </div>
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              Akumulasi pembayaran yang telah diverifikasi
-            </p>
-          </div>
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-slate-500">
-              Total Transaksi: <strong className="text-slate-900">{totalTx}</strong>
-            </span>
-            <Link to="/admin/langganan" className="text-xs text-emerald-600 font-semibold hover:underline">
-              Kelola &rarr;
-            </Link>
-          </div>
-        </div>
 
-        {/* 5. Transaksi Masuk Status Card */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:shadow-xs transition-shadow space-y-3.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 tracking-wide uppercase">Arus Transaksi</span>
-            <Activity className="w-4 h-4 text-slate-400 shrink-0" strokeWidth={1.75} />
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-center">
-              <span className="text-[10px] font-semibold text-slate-500 block">Menunggu</span>
-              <span className="text-base font-bold text-slate-800 mt-0.5 block">
-                {txMenunggu}
-              </span>
+            {/* 5. Transaksi Masuk Status Card */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:shadow-xs transition-shadow space-y-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-500 tracking-wide uppercase">Arus Transaksi</span>
+                <Activity className="w-4 h-4 text-slate-400 shrink-0" strokeWidth={1.75} />
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-center">
+                  <span className="text-[10px] font-semibold text-slate-500 block">Menunggu</span>
+                  <span className="text-base font-bold text-slate-800 mt-0.5 block">
+                    {txMenunggu}
+                  </span>
+                </div>
+                <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-center">
+                  <span className="text-[10px] font-semibold text-slate-500 block">Diverifikasi</span>
+                  <span className="text-base font-bold text-slate-800 mt-0.5 block">
+                    {txDiverifikasi}
+                  </span>
+                </div>
+                <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-center">
+                  <span className="text-[10px] font-semibold text-slate-500 block">Ditolak</span>
+                  <span className="text-base font-bold text-slate-700 mt-0.5 block">
+                    {txDitolak}
+                  </span>
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-400 pt-1 border-t border-slate-100">
+                Perlu tindakan segera pada transaksi menunggu verifikasi.
+              </p>
             </div>
-            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-center">
-              <span className="text-[10px] font-semibold text-slate-500 block">Diverifikasi</span>
-              <span className="text-base font-bold text-slate-800 mt-0.5 block">
-                {txDiverifikasi}
-              </span>
-            </div>
-            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-center">
-              <span className="text-[10px] font-semibold text-slate-500 block">Ditolak</span>
-              <span className="text-base font-bold text-slate-700 mt-0.5 block">
-                {txDitolak}
-              </span>
-            </div>
-          </div>
-          <p className="text-[11px] text-slate-400 pt-1 border-t border-slate-100">
-            Perlu tindakan segera pada transaksi menunggu verifikasi.
-          </p>
-        </div>
+          </>
+        )}
 
         {/* 6. Infrastruktur IoT Card */}
         <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:shadow-xs transition-shadow space-y-3.5">

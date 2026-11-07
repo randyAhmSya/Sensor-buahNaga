@@ -51,10 +51,10 @@ export function TextareaField({
       {label && (
         <label
           htmlFor={textareaId}
-          className="block text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1.5"
+          className="block text-sm font-semibold text-slate-800 mb-1.5"
         >
           {label}
-          {rest.required && <span className="text-rose-600 font-bold ml-0.5">*</span>}
+          {rest.required && <span className="text-red-500 font-bold ml-1">*</span>}
         </label>
       )}
 

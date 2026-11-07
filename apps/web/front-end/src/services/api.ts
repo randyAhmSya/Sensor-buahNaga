@@ -1,5 +1,10 @@
 import type { QueryParams } from '@/types/api.types';
 
+export const AUTH_STORAGE_KEYS = {
+  TOKEN: 'agro_auth_token',
+  USER: 'agro_auth_user',
+} as const;
+
 /**
  * Base API Client with Interceptors, Token Auth & Robust Error Handling
  * Specially tailored for Laravel Sanctum REST API backend.
@@ -52,6 +57,38 @@ export const isApiSuccess = (res: unknown): boolean => {
 
 type RequestInterceptor = (config: ApiRequestOptions) => ApiRequestOptions | Promise<ApiRequestOptions>;
 type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
+
+let isRedirectingToLogin = false;
+
+/**
+ * Penanganan sesi 401 Unauthorized terpusat:
+ * 1. Mereset state auth Zustand (user, token, isAuthenticated)
+ * 2. Membersihkan seluruh storage autentikasi
+ * 3. Mengarahkan ke halaman login tanpa redirect loop
+ */
+export const handleUnauthorizedSession = (): void => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem(AUTH_STORAGE_KEYS.TOKEN);
+      localStorage.removeItem(AUTH_STORAGE_KEYS.USER);
+      sessionStorage.removeItem(AUTH_STORAGE_KEYS.TOKEN);
+      sessionStorage.removeItem(AUTH_STORAGE_KEYS.USER);
+      import('../store/useAuthStore.ts').then((mod) => {
+        mod.useAuthStore.getState().logout();
+      }).catch(() => {});
+    } catch {
+      // fallback jika storage ditolak
+    }
+
+    const currentPath = window.location.pathname;
+    const isAuthPage = currentPath.includes('/login') || currentPath.includes('/register');
+
+    if (!isAuthPage && !isRedirectingToLogin) {
+      isRedirectingToLogin = true;
+      window.location.replace('/login');
+    }
+  }
+};
 
 export class ApiClient {
   private baseUrl: string;
@@ -107,7 +144,7 @@ export class ApiClient {
       headers['Content-Type'] = 'application/json';
     }
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('agro_auth_token') : null;
+    const token = typeof window !== 'undefined' ? localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN) : null;
     if (token && !headers['Authorization']) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -136,16 +173,13 @@ export class ApiClient {
           errorData = await response.text();
         }
 
-        if (response.status === 401 && typeof window !== 'undefined') {
-          // Token expired or invalid
-          localStorage.removeItem('agro_auth_token');
-          localStorage.removeItem('agro_auth_user');
-          if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
-            window.location.href = '/login';
-          }
+        if (response.status === 401) {
+          handleUnauthorizedSession();
         }
 
-        const fallbackMsg = `Permintaan gagal dengan status ${response.status}`;
+        const fallbackMsg = response.status === 403
+          ? 'Anda tidak memiliki hak akses untuk tindakan ini.'
+          : `Permintaan gagal dengan status ${response.status}`;
         throw new ApiError(fallbackMsg, response.status, errorData);
       }
 
@@ -156,6 +190,9 @@ export class ApiClient {
       if (error instanceof ApiError) throw error;
       if (error instanceof DOMException && error.name === 'AbortError') {
         throw new ApiError('Koneksi timeout, server tidak merespons tepat waktu', 408);
+      }
+      if (error instanceof TypeError && error.message.toLowerCase().includes('fetch')) {
+        throw new ApiError('Server backend tidak dapat dihubungi. Pastikan server backend sedang aktif.', 503);
       }
       throw new ApiError((error as Error)?.message || 'Koneksi ke server gagal', 500);
     }
@@ -198,17 +235,4 @@ export class ApiClient {
 }
 
 export const apiClient = new ApiClient();
-
-export { farmService } from './farmService';
-export { blockService } from './blockService';
-export { harvestService } from './harvestService';
-export { sensorService } from './sensorService';
-export { gatewayService } from './gatewayService';
-export { qrCodeService } from './qrService';
-export { tenantService } from './tenantService';
-export { authService } from './authService';
-export { scheduleService } from './scheduleService';
-export { telemetryService } from './telemetryService';
-export { energyService } from './energyService';
-export { petaniSubscriptionService } from './petaniSubscriptionService';
 

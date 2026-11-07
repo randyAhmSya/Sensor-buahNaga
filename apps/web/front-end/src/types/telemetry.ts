@@ -17,7 +17,7 @@ export interface TelemetryNodeRow {
   luxValue: string
   powerConsumption: string
   recordedTime: string
-  status: 'Optimal' | 'Low Light' | 'Offline'
+  status: 'Optimal' | 'Low Light' | 'Offline' | 'Online' | 'Belum pernah terhubung'
 }
 
 export interface DashboardMetricItem {

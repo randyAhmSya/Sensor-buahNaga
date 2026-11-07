@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Calendar, Sparkles, ChevronDown, Clock } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { X, Calendar, ChevronDown, Clock, Sprout } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatDate } from '@/utils/formatters';
 import { harvestService } from '@/services/harvestService';
+import { harvestKeys, blockKeys } from '@/services/queryKeys';
+import { useNotify } from '@/context/NotificationContext';
 import type { HarvestCycle } from '../types/harvest.types';
 
 export interface BlockOptionItem {
@@ -26,13 +29,14 @@ export const CreateHarvestCycleModal: React.FC<CreateHarvestCycleModalProps> = (
   blocks,
   defaultBlockId,
 }) => {
+  const queryClient = useQueryClient();
+  const notify = useNotify();
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   const [selectedBlockId, setSelectedBlockId] = useState<string>('');
   const [lightingDate, setLightingDate] = useState<string>(todayStr);
   const [bloomingTargetDays, setBloomingTargetDays] = useState<number>(20);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -43,7 +47,6 @@ export const CreateHarvestCycleModal: React.FC<CreateHarvestCycleModalProps> = (
       }
       setLightingDate(todayStr);
       setBloomingTargetDays(20);
-      setErrorMsg(null);
       setIsSubmitting(false);
     }
   }, [isOpen, defaultBlockId, blocks, todayStr]);
@@ -63,20 +66,19 @@ export const CreateHarvestCycleModal: React.FC<CreateHarvestCycleModalProps> = (
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBlockId) {
-      setErrorMsg('Pilih blok lahan aktif terlebih dahulu');
+      notify.error('Validasi Gagal', 'Pilih blok lahan aktif terlebih dahulu');
       return;
     }
     if (!lightingDate) {
-      setErrorMsg('Tanggal mulai penyinaran wajib diisi');
+      notify.error('Validasi Gagal', 'Tanggal mulai penyinaran wajib diisi');
       return;
     }
     if (!bloomingTargetDays || bloomingTargetDays < 1) {
-      setErrorMsg('Target hari berbunga minimal 1 hari');
+      notify.error('Validasi Gagal', 'Target hari berbunga minimal 1 hari');
       return;
     }
 
     setIsSubmitting(true);
-    setErrorMsg(null);
 
     try {
       const selectedBlock = blocks.find((b) => b.id === selectedBlockId);
@@ -86,6 +88,12 @@ export const CreateHarvestCycleModal: React.FC<CreateHarvestCycleModalProps> = (
         target_hari_berbunga: Number(bloomingTargetDays),
       });
 
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: harvestKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: blockKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+      ]);
+
       // Tambahkan nama blok & kebun jika belum terisi dari backend
       const enriched: HarvestCycle = {
         ...created,
@@ -93,11 +101,12 @@ export const CreateHarvestCycleModal: React.FC<CreateHarvestCycleModalProps> = (
         farmName: created.farmName || selectedBlock?.farmName || 'Kebun Buah Naga',
       };
 
+      notify.success('Siklus Dimulai', 'Siklus panen fotoperiode berhasil diinisiasi.');
       onSuccess(enriched);
       onClose();
     } catch (err: unknown) {
       const msg = (err as Error)?.message || 'Gagal memulai siklus panen baru. Periksa koneksi ke server.';
-      setErrorMsg(msg);
+      notify.error('Gagal Memulai Siklus', msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -109,8 +118,8 @@ export const CreateHarvestCycleModal: React.FC<CreateHarvestCycleModalProps> = (
         {/* Modal Header */}
         <div className="p-6 pb-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800 flex items-center justify-center shrink-0">
+              <Sprout className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-slate-900">Mulai Siklus Panen Baru</h3>
@@ -128,11 +137,6 @@ export const CreateHarvestCycleModal: React.FC<CreateHarvestCycleModalProps> = (
 
         {/* Modal Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {errorMsg && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-700">
-              {errorMsg}
-            </div>
-          )}
 
           {/* Pilih Blok Lahan Aktif */}
           <div className="space-y-1.5">
@@ -199,7 +203,7 @@ export const CreateHarvestCycleModal: React.FC<CreateHarvestCycleModalProps> = (
           </div>
 
           {/* Proyeksi Estimasi Panen Otomatis */}
-          <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 space-y-1.5">
+          <div className="bg-emerald-50 border border-emerald-300 rounded-lg p-3.5 space-y-1.5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-emerald-900 flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-emerald-700" />

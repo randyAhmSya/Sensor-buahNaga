@@ -9,21 +9,20 @@ import { EditFarmModal } from '../components/EditFarmModal'
 import { BlockCard } from '@/features/blocks/components/cards/BlockCard'
 import { BlockTelemetryPreviewModal } from '@/features/blocks/components/cards/BlockTelemetryPreviewModal'
 import { useFarmFilter } from '../hooks/useFarmFilter'
-import { Toast } from '@/components/feedback/Toast'
+import { useNotify } from '@/context/NotificationContext'
 import type { FarmItem } from '@/types/farm.types'
 import type { BlockItem } from '@/types/block.types'
 
 export const FarmsManagementPage: React.FC = () => {
   const navigate = useNavigate()
+  const notify = useNotify()
   const {
+    farms,
     filteredFarms,
     selectedFarmId,
     setSelectedFarmId,
     selectedFarm,
     isLoading,
-    toast,
-    setToast,
-    clearToast,
     deleteFarm,
     updateFarmInState,
   } = useFarmFilter()
@@ -43,31 +42,11 @@ export const FarmsManagementPage: React.FC = () => {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="max-w-7xl mx-auto py-16 text-center">
-        <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-sm font-semibold text-slate-500">Memuat data kebun...</p>
-      </div>
-    )
-  }
-
   const hasFarms = filteredFarms.length > 0
+  const isInitialLoading = isLoading && farms.length === 0
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
-      {/* Toast Notifikasi Feedback Sukses / Error */}
-      {toast && (
-        <div className="fixed top-6 right-6 z-50">
-          <Toast
-            type={toast.type}
-            title={toast.title}
-            message={toast.message}
-            onClose={clearToast}
-          />
-        </div>
-      )}
-
       {/* Section 1: Header Kebun */}
       <section className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
@@ -91,8 +70,24 @@ export const FarmsManagementPage: React.FC = () => {
           </Button>
         </div>
 
-        {/* Grid Kartu Kebun atau Empty State Kebun */}
-        {hasFarms ? (
+        {/* Grid Kartu Kebun, Skeleton Loading, atau Empty State Kebun */}
+        {isInitialLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((idx) => (
+              <div
+                key={idx}
+                className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs animate-pulse"
+              >
+                <div className="h-44 bg-slate-200 w-full" />
+                <div className="p-5 space-y-3">
+                  <div className="h-4 bg-slate-200 rounded w-3/4" />
+                  <div className="h-3 bg-slate-100 rounded w-1/2" />
+                  <div className="h-8 bg-slate-100 rounded-xl mt-4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : hasFarms ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredFarms.map((farm) => (
               <FarmCard
@@ -159,7 +154,11 @@ export const FarmsManagementPage: React.FC = () => {
                 <BlockCard
                   key={block.id}
                   block={block}
-                  onClick={() => navigate(`/kebun/farms/${selectedFarm.id}`)}
+                  farmId={selectedFarm.id}
+                  onClick={() => {
+                    const blockId = block.id_blok ?? block.id
+                    navigate(`/kebun/farms/${selectedFarm.id}/blocks/${blockId}`)
+                  }}
                 />
               ))}
             </div>
@@ -213,11 +212,10 @@ export const FarmsManagementPage: React.FC = () => {
         onClose={() => setFarmToEdit(null)}
         onSuccess={(updatedFarm) => {
           updateFarmInState(updatedFarm)
-          setToast({
-            type: 'success',
-            title: 'Perubahan Disimpan',
-            message: `Data kebun "${updatedFarm.name}" berhasil diperbarui.`,
-          })
+          notify.success(
+            'Perubahan Disimpan',
+            `Data kebun "${updatedFarm.name}" berhasil diperbarui.`
+          )
         }}
       />
     </div>

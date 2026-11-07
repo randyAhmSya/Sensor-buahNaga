@@ -5,9 +5,11 @@ import { sanitizeInput } from '@/utils/sanitize'
 import { loginSchema } from '../schemas/authSchemas'
 import { authService } from '@/services/authService'
 import { ApiError } from '@/services/api'
+import { useNotify } from '@/context/NotificationContext'
 
 export function useLoginForm() {
   const navigate = useNavigate()
+  const notify = useNotify()
   const login = useAuthStore((state) => state.login)
 
   const [formData, setFormData] = useState({
@@ -96,8 +98,10 @@ export function useLoginForm() {
           }
         }
       } catch (err: unknown) {
+        let msg = 'Terjadi kesalahan saat masuk.'
         if (err instanceof ApiError) {
-          setGeneralError(err.pesan || 'Email atau password salah.')
+          msg = err.pesan || 'Email atau password salah.'
+          setGeneralError(msg)
           if (err.errors) {
             const fieldErrs: Record<string, string> = {}
             for (const [key, msgs] of Object.entries(err.errors)) {
@@ -106,13 +110,15 @@ export function useLoginForm() {
             setErrors(fieldErrs)
           }
         } else {
-          setGeneralError((err as Error)?.message || 'Terjadi kesalahan saat masuk.')
+          msg = (err as Error)?.message || 'Terjadi kesalahan saat masuk.'
+          setGeneralError(msg)
         }
+        notify.error('Gagal Masuk', msg)
       } finally {
         setIsSubmitting(false)
       }
     },
-    [formData, login, navigate]
+    [formData, login, navigate, notify]
   )
 
   return {

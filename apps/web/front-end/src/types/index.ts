@@ -30,8 +30,10 @@ export interface AuthState {
   user: UserProfile | null
   token: string | null
   isAuthenticated: boolean
+  isCheckingSession?: boolean
   login: (user: UserProfile, token: string) => void
   logout: () => void
+  validateSession: () => Promise<boolean>
 }
 
 // Re-export or alias for UI backwards-compatibility / convenience

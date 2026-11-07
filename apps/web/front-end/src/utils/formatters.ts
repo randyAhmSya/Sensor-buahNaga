@@ -15,9 +15,24 @@ export function formatPercentage(value: number): string {
 }
 
 export function formatDate(dateString?: string | null): string {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  if (isNaN(date.getTime())) return dateString
+  return formatIndoDate(dateString, '-')
+}
+
+/**
+ * Format tanggal ramah petani menggunakan standar bahasa Indonesia (contoh: 16 Okt 2026).
+ * Mengabaikan ISO timestamp dan mengembalikan fallback strip netral jika data tidak tersedia.
+ */
+export function formatIndoDate(dateString?: string | null, fallback = '-'): string {
+  if (!dateString) return fallback
+  const trimmed = dateString.trim()
+  if (!trimmed || trimmed === '-' || trimmed === '--' || trimmed === 'null' || trimmed === 'undefined') {
+    return fallback
+  }
+  if (trimmed.toLowerCase().startsWith('belum')) {
+    return trimmed
+  }
+  const date = new Date(trimmed)
+  if (isNaN(date.getTime())) return fallback
   return new Intl.DateTimeFormat('id-ID', {
     day: 'numeric',
     month: 'short',

@@ -86,7 +86,7 @@ export const BlockInfoSection: FC<BlockInfoSectionProps> = ({
             htmlFor="select-nodeSensor"
             className="block text-sm font-semibold text-slate-800 mb-1.5"
           >
-            Node Sensor IoT <span className="text-xs font-normal text-slate-500 ml-1">(Opsional)</span>
+            Node Sensor IoT <span className="text-xs font-medium text-slate-600 ml-1">(Opsional)</span>
           </label>
           <div className="relative rounded-xl shadow-xs">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">

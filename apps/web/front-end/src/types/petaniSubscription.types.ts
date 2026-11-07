@@ -17,7 +17,12 @@ export interface StatusLanggananPetani {
   dalam_masa_tenggang: boolean;
 }
 
-export type PetaniPaymentStatus = 'menunggu_verifikasi' | 'berhasil' | 'ditolak';
+export type PetaniPaymentStatus =
+  | 'menunggu_verifikasi'
+  | 'menunggu_pembayaran'
+  | 'berhasil'
+  | 'diverifikasi'
+  | 'ditolak';
 
 export interface TransaksiPetaniItem {
   id_transaksi?: string;
@@ -39,3 +44,13 @@ export interface AjukanPembelianPayload {
   paket_langganan_id: string;
   bukti_transfer: File;
 }
+
+export interface BeliOnlinePayload {
+  paket_langganan_id: string;
+}
+
+export interface BeliOnlineResponse {
+  id_transaksi: string;
+  snap_token: string;
+}
+

@@ -29,17 +29,17 @@ export const DeleteQRModal: React.FC<DeleteQRModalProps> = ({
   const nodeName = item.nodeSensorName || 'Node Sensor';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="bg-white rounded-xl border border-slate-300 shadow-xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-150">
         <div className="p-6 pb-4 flex items-start justify-between">
-          <div className="w-12 h-12 rounded-2xl border border-rose-200 bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 shadow-2xs">
-            <AlertTriangle className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-lg border border-rose-300 bg-rose-50 text-rose-700 flex items-center justify-center shrink-0">
+            <AlertTriangle className="w-5 h-5" />
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer disabled:opacity-50 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer disabled:opacity-50 transition-colors"
             aria-label="Tutup dialog"
           >
             <X className="w-5 h-5" />

@@ -155,7 +155,7 @@ const QuickAddGatewayModalContent: FC<QuickAddGatewayModalProps> = ({
   return (
     <>
       <Modal
-        isOpen={isOpen && !pairingData}
+        isOpen={isOpen && !pairingData && !isScannerOpen}
         onClose={onClose}
         title="Tambah Gateway Baru"
         description="Daftarkan perangkat gateway IoT untuk menjembatani komunikasi node sensor ke cloud server."

@@ -11,27 +11,15 @@ import { useAdminTenants, useAdminAccessHistoryQuery } from '@/hooks/useAdmin'
 import type { AdminTenantItem } from '@/types/admin.types'
 import { formatDate } from '@/utils/formatters'
 import { Button } from '@/components/ui/Button'
-import { Toast, type ToastType } from '@/components/feedback/Toast'
 import { DebouncedSearchInput } from '@/components/common/DebouncedSearchInput'
+import { useNotify } from '@/context/NotificationContext'
 import { TenantAccessModal } from '../components/TenantAccessModal'
 import { TenantToggleStatusModal } from '../components/TenantToggleStatusModal'
 
 export const SuperAdminTenantsPage: FC = () => {
+  const notify = useNotify()
   const [currentPage, setCurrentPage] = useState(1)
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
-
-  // Toast feedback state
-  const [toastState, setToastState] = useState<{
-    isVisible: boolean
-    type: ToastType
-    title: string
-    message: string
-  }>({
-    isVisible: false,
-    type: 'success',
-    title: '',
-    message: '',
-  })
 
   // Modal State for Minta Akses Kebun
   const [accessModal, setAccessModal] = useState<{
@@ -60,13 +48,8 @@ export const SuperAdminTenantsPage: FC = () => {
   const { data, isPending, isError, error, refetch, isFetching } = useAdminTenants(currentPage)
   const { data: accessHistory = [] } = useAdminAccessHistoryQuery()
 
-  const showToast = (title: string, message: string, type: ToastType = 'success') => {
-    setToastState({
-      isVisible: true,
-      type,
-      title,
-      message,
-    })
+  const showToast = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
+    notify[type](title, message)
   }
 
   const meta = data?.meta || {
@@ -96,19 +79,6 @@ export const SuperAdminTenantsPage: FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Toast Notification */}
-      {toastState.isVisible && (
-        <div className="fixed top-5 right-5 z-50">
-          <Toast
-            type={toastState.type}
-            title={toastState.title}
-            message={toastState.message}
-            isVisible={toastState.isVisible}
-            onClose={() => setToastState((prev) => ({ ...prev, isVisible: false }))}
-          />
-        </div>
-      )}
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

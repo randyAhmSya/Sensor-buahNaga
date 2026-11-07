@@ -5,7 +5,6 @@ import { FormPageLayout } from '@/components/layout/FormPageLayout'
 import { useEditFarmPage } from '../hooks/useEditFarmPage'
 import { CreateFarmInfoSection } from '../components/CreateFarmInfoSection'
 import { CreateFarmMediaSection } from '../components/CreateFarmMediaSection'
-import { Toast } from '@/components/feedback/Toast'
 
 export const EditFarmPage: React.FC = () => {
   const {
@@ -15,8 +14,6 @@ export const EditFarmPage: React.FC = () => {
     imagePreview,
     isLoading,
     isSubmitting,
-    toast,
-    setToast,
     handleTextChange,
     setStatus,
     handleImageFile,
@@ -56,18 +53,6 @@ export const EditFarmPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Toast Notifikasi Feedback jika Error */}
-      {toast && (
-        <div className="fixed top-6 right-6 z-50">
-          <Toast
-            type={toast.type}
-            title={toast.title}
-            message={toast.message}
-            onClose={() => setToast(null)}
-          />
-        </div>
-      )}
-
       <FormPageLayout
         breadcrumbs={breadcrumbs}
         title={`Edit ${formData.name || 'Kebun'}`}

@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, CheckCircle2, Sprout, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { formatIndoDate } from '@/utils/formatters'
 
 interface HarvestCycleCardProps {
   harvest: {
@@ -41,7 +42,7 @@ export const HarvestCycleCard: React.FC<HarvestCycleCardProps> = ({ harvest }) =
         <div className="space-y-2 text-xs">
           <div className="flex items-center justify-between py-1 border-b border-slate-100">
             <span className="text-slate-500">Mulai Penyinaran:</span>
-            <span className="font-semibold text-slate-800">{harvest.lightingStart}</span>
+            <span className="font-semibold text-slate-800">{formatIndoDate(harvest.lightingStart)}</span>
           </div>
 
           <div className="flex items-center justify-between py-1 border-b border-slate-100">
@@ -55,7 +56,7 @@ export const HarvestCycleCard: React.FC<HarvestCycleCardProps> = ({ harvest }) =
               Estimasi Panen:
             </span>
             <span className={`font-bold text-sm ${isRunning ? 'text-emerald-700' : 'text-slate-700'}`}>
-              {harvest.harvestEstimate}
+              {formatIndoDate(harvest.harvestEstimate)}
             </span>
           </div>
         </div>

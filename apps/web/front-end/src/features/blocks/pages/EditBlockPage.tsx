@@ -40,7 +40,7 @@ export const EditBlockPage: React.FC = () => {
           nodeSensor: block.nodeSensorId || (block.deviceId !== 'Belum Terpasang' ? block.deviceId : ''),
           description: block.description || '',
           imageUrl: block.bannerUrl || '',
-          status: block.deviceStatus,
+          status: block.deviceStatus === 'Offline' ? 'Offline' : 'Online',
           area: block.area ? block.area.replace(/[^\d.]/g, '') : '',
           harvestEstimate: cleanEstimate,
         })

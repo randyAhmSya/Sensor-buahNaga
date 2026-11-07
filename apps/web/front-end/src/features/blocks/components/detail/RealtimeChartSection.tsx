@@ -2,13 +2,15 @@ import React, { useState, useMemo } from 'react'
 import { Activity } from 'lucide-react'
 import type { ReadSensor } from '@/services/telemetryService'
 
-export type TimeFilter = '24 Jam' | '7 Hari' | '30 Hari'
+export type TimeFilter = '24 Jam' | 'Semua Bacaan'
 
 interface RealtimeChartSectionProps {
   selectedRange?: TimeFilter
   onRangeChange?: (range: TimeFilter) => void
   hasTelemetry?: boolean
   isOnline?: boolean
+  nodeStatus?: string
+  lastSeen?: string
   deviceId?: string
   telemetryData?: ReadSensor[]
 }
@@ -18,6 +20,8 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
   onRangeChange,
   hasTelemetry = false,
   isOnline = false,
+  nodeStatus = '',
+  lastSeen = '',
   deviceId = 'Belum Terpasang',
   telemetryData = [],
 }) => {
@@ -32,7 +36,7 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
     }
   }
 
-  const timeRanges: TimeFilter[] = ['24 Jam', '7 Hari', '30 Hari']
+  const timeRanges: TimeFilter[] = ['24 Jam', 'Semua Bacaan']
   const isInstalled = deviceId && deviceId !== 'Belum Terpasang'
   const hasData = telemetryData.length > 0 || hasTelemetry
   const showChart = isInstalled && hasData && (isOnline || telemetryData.length > 0)
@@ -40,9 +44,18 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
   // Filter data sesuai rentang waktu jika ada timestamp
   const displayData = useMemo(() => {
     if (telemetryData.length === 0) return []
-    // Jika data banyak, bisa disesuaikan atau tampilkan semua
+    if (selectedRange === '24 Jam') {
+      const now = Date.now()
+      const oneDayAgo = now - 24 * 60 * 60 * 1000
+      const filtered = telemetryData.filter((d) => {
+        if (!d.dicatat_pada) return true
+        const t = new Date(d.dicatat_pada).getTime()
+        return !isNaN(t) ? t >= oneDayAgo : true
+      })
+      return filtered.length > 0 ? filtered : telemetryData
+    }
     return telemetryData
-  }, [telemetryData])
+  }, [telemetryData, selectedRange])
 
   // Koordinat grafik SVG dinamis
   const chartPoints = useMemo(() => {
@@ -125,13 +138,20 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
       {/* Header & Filter Range */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
         <div className="flex items-center gap-2">
-          <Activity className="w-4 h-4 text-emerald-700" />
-          <h3 className="text-base font-bold text-slate-900">Telemetri Intensitas & Suhu</h3>
-          {chartPoints && (
-            <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 ml-1">
-              {chartPoints.latestLux} lx | {chartPoints.latestTemp}°C
-            </span>
-          )}
+          <Activity className="w-4 h-4 text-emerald-700 shrink-0" />
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-slate-900">Telemetri Intensitas & Suhu</h3>
+              {chartPoints && (
+                <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-white text-emerald-800 border-2 border-emerald-600 ml-1">
+                  {chartPoints.latestLux} lx | {chartPoints.latestTemp}°C
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+              Data mentah disimpan 30 hari
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
@@ -159,11 +179,19 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
             <Activity className="w-6 h-6" />
           </div>
           <h4 className="text-sm font-bold text-slate-800 mb-1">
-            {!isInstalled ? 'Node Belum Dipasangkan' : 'Sensor Terhubung'}
+            {!isInstalled
+              ? 'Node Belum Dipasangkan'
+              : (nodeStatus || '').toLowerCase() === 'offline'
+              ? 'Node Offline'
+              : 'Sensor Terhubung'}
           </h4>
           <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
             {!isInstalled
               ? 'Pasangkan perangkat node sensor IoT pada blok ini untuk mulai mengukur intensitas cahaya dan suhu secara real-time.'
+              : (nodeStatus || '').toLowerCase() === 'belum_pernah_terlihat'
+              ? 'Menunggu data telemetri pertama...'
+              : (nodeStatus || '').toLowerCase() === 'offline'
+              ? `Node offline, data terakhir pada ${lastSeen && lastSeen.trim() ? lastSeen : 'Belum ada data'}`
               : 'Sensor terhubung. Menunggu data telemetri pertama...'}
           </p>
         </div>
@@ -269,9 +297,11 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
                 <span className="text-slate-600 font-medium">Suhu Udara</span>
               </div>
             </div>
-            <span className="text-slate-400 text-[11px] font-medium hidden sm:inline">
-              Data riil sensor ({displayData.length} sampel)
-            </span>
+            <div className="flex items-center gap-2 text-slate-400 text-[11px] font-medium hidden sm:flex">
+              <span>Data riil sensor ({displayData.length} sampel)</span>
+              <span>|</span>
+              <span>Retensi 30 hari</span>
+            </div>
           </div>
         </>
       )}

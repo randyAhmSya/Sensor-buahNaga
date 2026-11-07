@@ -17,6 +17,7 @@ import { useAuthStore, getRoleLabel } from '@/store/useAuthStore'
 import { USER_ROLES } from '@/config/constants'
 import { authService } from '@/services/authService'
 import { UserAvatar } from '@/components/common/UserAvatar'
+import { useSaasMode } from '@/context/SaasContext'
 
 const SIDEBAR_LINKS = [
   { label: 'Dashboard', path: '/kebun/dashboard', icon: LayoutDashboard },
@@ -40,6 +41,11 @@ export const DashboardSidebar: FC<DashboardSidebarProps> = ({
 }) => {
   const navigate = useNavigate()
   const { user: authUser, logout } = useAuthStore()
+  const { isSaasEnabled } = useSaasMode()
+
+  const visibleLinks = SIDEBAR_LINKS.filter(
+    (item) => item.path !== '/kebun/langganan' || isSaasEnabled
+  )
 
   const isSuperAdmin = authUser?.role === USER_ROLES.SUPER_ADMIN
   const userName = authUser?.name || 'Budi Santoso'
@@ -88,7 +94,7 @@ export const DashboardSidebar: FC<DashboardSidebarProps> = ({
 
       {/* Sidebar Nav */}
       <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
-        {SIDEBAR_LINKS.map((item) => {
+        {visibleLinks.map((item) => {
           const Icon = item.icon
           return (
             <NavLink

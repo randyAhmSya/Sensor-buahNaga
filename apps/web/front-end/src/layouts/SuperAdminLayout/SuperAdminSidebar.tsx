@@ -15,6 +15,7 @@ import logoAgroLight from '@/assets/logo.png'
 import { useAuthStore } from '@/store/useAuthStore'
 import { authService } from '@/services/authService'
 import { UserAvatar } from '@/components/common/UserAvatar'
+import { useSaasMode } from '@/context/SaasContext'
 
 interface SuperAdminSidebarProps {
   mobileSidebarOpen: boolean
@@ -27,6 +28,7 @@ export const SuperAdminSidebar: FC<SuperAdminSidebarProps> = ({
 }) => {
   const navigate = useNavigate()
   const { user: authUser, logout } = useAuthStore()
+  const { isSaasEnabled } = useSaasMode()
 
   const userName = authUser?.name || 'Super Admin'
   const userAvatar = authUser?.avatarUrl || null
@@ -130,21 +132,23 @@ export const SuperAdminSidebar: FC<SuperAdminSidebarProps> = ({
           </NavLink>
 
           {/* 4. Transaksi & Paket */}
-          <NavLink
-            to="/admin/langganan"
-            onClick={onClose}
-            className={({ isActive }) => `
-              flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 active:scale-[0.98]
-              ${
-                isActive
-                  ? 'bg-emerald-600 text-white font-semibold shadow-sm shadow-emerald-600/20'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
-              }
-            `}
-          >
-            <CreditCard className="w-4 h-4 shrink-0" strokeWidth={1.75} />
-            <span>Transaksi & Paket</span>
-          </NavLink>
+          {isSaasEnabled && (
+            <NavLink
+              to="/admin/langganan"
+              onClick={onClose}
+              className={({ isActive }) => `
+                flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 active:scale-[0.98]
+                ${
+                  isActive
+                    ? 'bg-emerald-600 text-white font-semibold shadow-sm shadow-emerald-600/20'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+                }
+              `}
+            >
+              <CreditCard className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+              <span>Transaksi & Paket</span>
+            </NavLink>
+          )}
 
           {/* 5. Izin Akses Tenant */}
           <NavLink

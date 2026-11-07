@@ -1,18 +1,20 @@
 import React, { useState } from 'react'
-import { CheckCircle2, AlertCircle, X, Plus } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useSensorMonitoring } from '../hooks/useSensorMonitoring'
 import { SensorSummaryCards } from '../components/SensorSummaryCards'
 import { SensorFilterBar } from '../components/SensorFilterBar'
 import { SensorNodeCard } from '../components/SensorNodeCard'
-import { AddSensorModal } from '../components/AddSensorModal'
 import { EditSensorModal } from '../components/EditSensorModal'
 import { DeleteSensorModal } from '../components/DeleteSensorModal'
 import type { SensorNodeItem } from '@/types/sensor.types'
 
 export const SensorMonitoringPage: React.FC = () => {
+  const navigate = useNavigate()
   const {
     summaryMetrics,
+    sensors,
     filteredSensors,
     farms,
     farmOptions,
@@ -24,57 +26,17 @@ export const SensorMonitoringPage: React.FC = () => {
     setSelectedStatus,
     isLoading,
     isActionLoading,
-    toast,
-    clearToast,
-    createSensor,
     editSensor,
     deleteSensor,
   } = useSensorMonitoring()
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [selectedSensorToEdit, setSelectedSensorToEdit] = useState<SensorNodeItem | null>(null)
   const [selectedSensorToDelete, setSelectedSensorToDelete] = useState<SensorNodeItem | null>(null)
 
-  if (isLoading) {
-    return (
-      <div className="max-w-7xl mx-auto py-16 text-center">
-        <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-sm font-semibold text-slate-500">Memuat telemetri sensor...</p>
-      </div>
-    )
-  }
+  const isInitialLoading = isLoading && sensors.length === 0
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Toast Notifikasi Feedback Sukses / Error */}
-      {toast && (
-        <div
-          className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 shadow-sm ${
-            toast.type === 'success'
-              ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-              : 'bg-rose-50 border-rose-300 text-rose-900'
-          }`}
-          role="alert"
-        >
-          <div className="flex items-center gap-3">
-            {toast.type === 'success' ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
-            )}
-            <p className="text-xs md:text-sm font-semibold">{toast.message}</p>
-          </div>
-          <button
-            type="button"
-            onClick={clearToast}
-            className="p-1 rounded-lg hover:bg-black/5 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-            aria-label="Tutup notifikasi"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
       {/* Header Halaman */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
@@ -88,7 +50,7 @@ export const SensorMonitoringPage: React.FC = () => {
           variant="primary"
           size="md"
           leftIcon={<Plus className="w-4 h-4 shrink-0" />}
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => navigate('/kebun/sensors/create')}
           className="w-full sm:w-auto min-h-[44px] bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-2.5 px-4 rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-2 active:scale-98"
         >
           <span>Tambah Node</span>
@@ -110,7 +72,26 @@ export const SensorMonitoringPage: React.FC = () => {
           farmOptions={farmOptions}
         />
 
-        {filteredSensors.length > 0 ? (
+        {isInitialLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((idx) => (
+              <div
+                key={idx}
+                className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 shadow-2xs animate-pulse"
+              >
+                <div className="flex justify-between items-center">
+                  <div className="h-4 bg-slate-200 rounded w-1/3" />
+                  <div className="h-6 bg-slate-200 rounded-full w-20" />
+                </div>
+                <div className="h-3 bg-slate-100 rounded w-1/2" />
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="h-10 bg-slate-100 rounded-xl" />
+                  <div className="h-10 bg-slate-100 rounded-xl" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredSensors.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredSensors.map((sensor) => (
               <SensorNodeCard
@@ -129,16 +110,6 @@ export const SensorMonitoringPage: React.FC = () => {
         )}
       </div>
 
-      {/* Modal Tambah Node Baru */}
-      {isAddModalOpen && (
-        <AddSensorModal
-          isOpen={isAddModalOpen}
-          isSubmitting={isActionLoading}
-          farms={farms}
-          onClose={() => setIsAddModalOpen(false)}
-          onSubmit={createSensor}
-        />
-      )}
 
       {/* Modal Edit Sensor */}
       {Boolean(selectedSensorToEdit) && (
@@ -167,4 +138,3 @@ export const SensorMonitoringPage: React.FC = () => {
 }
 
 export default SensorMonitoringPage
-

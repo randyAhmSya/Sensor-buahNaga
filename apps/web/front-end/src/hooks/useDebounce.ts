@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 
 /**
  * Generic debounce hook.
- * Delay default adalah 1000ms (1 detik).
+ * Delay default adalah 350ms (responsif & ramah beban komputasi).
  * Timer di-reset setiap kali nilai `value` berubah sebelum durasi `delay` tercapai.
  */
-export function useDebounce<T>(value: T, delay = 1000): T {
+export function useDebounce<T>(value: T, delay = 350): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value)
 
   useEffect(() => {

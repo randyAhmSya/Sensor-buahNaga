@@ -1,8 +1,20 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { createFarmSchema, type CreateFarmInput } from '../schemas/farm.schema'
 import type { FarmItem } from '@/types/farm.types'
 import { farmService } from '@/services/farmService'
+import { farmKeys } from '@/services/queryKeys'
+import { ApiError } from '@/services/api'
+import type { ToastType } from '@/components/feedback/Toast'
+import { compressImageFile } from '@/utils/imageCompressor'
+import { useNotify } from '@/context/NotificationContext'
+
+export interface FarmToast {
+  type: ToastType
+  title: string
+  message?: string
+}
 
 interface UseCreateFarmPageProps {
   onAddFarm?: (farm: FarmItem) => void
@@ -10,8 +22,11 @@ interface UseCreateFarmPageProps {
 
 export function useCreateFarmPage({ onAddFarm }: UseCreateFarmPageProps = {}) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const notify = useNotify()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [toast, setToast] = useState<FarmToast | null>(null)
 
   const [formData, setFormData] = useState<CreateFarmInput>({
     name: '',
@@ -40,13 +55,14 @@ export function useCreateFarmPage({ onAddFarm }: UseCreateFarmPageProps = {}) {
     }
   }
 
-  const handleImageFile = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleImageFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      setSelectedFile(file)
-      const dummyUrl = URL.createObjectURL(file)
-      setImagePreview(dummyUrl)
-      setFormData((prev) => ({ ...prev, imageUrl: dummyUrl }))
+      const optimizedFile = await compressImageFile(file)
+      setSelectedFile(optimizedFile)
+      const previewUrl = URL.createObjectURL(optimizedFile)
+      setImagePreview(previewUrl)
+      setFormData((prev) => ({ ...prev, imageUrl: previewUrl }))
       if (errors.imageUrl) {
         setErrors((prev) => ({ ...prev, imageUrl: undefined }))
       }
@@ -70,16 +86,47 @@ export function useCreateFarmPage({ onAddFarm }: UseCreateFarmPageProps = {}) {
 
     setIsSubmitting(true)
     try {
+      const fileToUpload = selectedFile ? await compressImageFile(selectedFile) : undefined
       const res = await farmService.create({
         name: formData.name,
         location: formData.location,
         status: formData.status,
-        foto: selectedFile || undefined,
+        foto: fileToUpload,
       })
+      if (res.farm) {
+        queryClient.setQueryData<FarmItem[]>(['kebun'], (old = []) => [res.farm, ...(old || [])])
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['kebun'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: farmKeys.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: farmKeys.withBlocks(), refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
+      ])
       if (onAddFarm && res.farm) {
         onAddFarm(res.farm)
       }
+      notify.success('Kebun Berhasil Dibuat', `Kebun "${formData.name}" berhasil ditambahkan.`)
       navigate('/kebun/farms')
+    } catch (err: unknown) {
+      let errorMessage = 'Terjadi kesalahan saat menambahkan kebun baru.'
+      if (err instanceof ApiError) {
+        errorMessage = err.pesan || err.message
+        if (err.errors) {
+          const backendFieldErrors: Partial<Record<keyof CreateFarmInput, string>> = {}
+          for (const [key, msgs] of Object.entries(err.errors)) {
+            if (key in formData && msgs && msgs.length > 0) {
+              backendFieldErrors[key as keyof CreateFarmInput] = msgs[0]
+            }
+          }
+          if (Object.keys(backendFieldErrors).length > 0) {
+            setErrors((prev) => ({ ...prev, ...backendFieldErrors }))
+          }
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message
+      }
+
+      notify.error('Gagal Menyimpan Kebun', errorMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -90,6 +137,8 @@ export function useCreateFarmPage({ onAddFarm }: UseCreateFarmPageProps = {}) {
     errors,
     imagePreview,
     isSubmitting,
+    toast,
+    setToast,
     handleTextChange,
     setStatus,
     handleImageFile,

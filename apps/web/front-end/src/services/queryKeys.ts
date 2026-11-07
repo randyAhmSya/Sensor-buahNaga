@@ -4,10 +4,11 @@
  */
 
 export const farmKeys = {
-  all: ['farms'] as const,
-  lists: () => [...farmKeys.all, 'list'] as const,
-  details: () => [...farmKeys.all, 'detail'] as const,
-  detail: (id: string) => [...farmKeys.details(), id] as const,
+  all: ['kebun'] as const,
+  lists: () => ['kebun'] as const,
+  withBlocks: () => ['kebun', 'with-blocks'] as const,
+  details: () => ['kebun', 'detail'] as const,
+  detail: (id: string) => ['kebun', 'detail', id] as const,
 };
 
 export const blockKeys = {
@@ -48,6 +49,7 @@ export const scheduleKeys = {
   all: ['schedules'] as const,
   lists: () => [...scheduleKeys.all, 'list'] as const,
   list: (params: { kebun_id?: string; sensor_id?: string }) => [...scheduleKeys.lists(), params] as const,
+  ringkasan: (kebunId: string) => [...scheduleKeys.all, 'ringkasan', { kebunId }] as const,
   details: () => [...scheduleKeys.all, 'detail'] as const,
   detail: (id: string) => [...scheduleKeys.details(), id] as const,
   active: (sensorId: string) => [...scheduleKeys.all, 'active', sensorId] as const,
@@ -97,6 +99,11 @@ export const notificationKeys = {
   list: (filters?: { belum_dibaca?: boolean }) => [...notificationKeys.lists(), filters || {}] as const,
 };
 
+export const dashboardKeys = {
+  all: ['dashboard'] as const,
+  detail: (kebunId: string) => ['dashboard', kebunId] as const,
+};
+
 export const queryKeys = {
   admin: {
     dashboard: ['admin', 'dashboard'] as const,
@@ -105,6 +112,7 @@ export const queryKeys = {
     logs: (page: number) => ['admin', 'logs', page] as const,
     aksesRiwayat: () => ['admin', 'akses-tenant', 'riwayat'] as const,
   },
+  dashboard: dashboardKeys,
   notifications: notificationKeys,
   node: nodeKeys,
   tenant: tenantKeys,

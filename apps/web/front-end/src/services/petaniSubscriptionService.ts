@@ -3,7 +3,9 @@ import type {
   PaketLanggananItem, 
   StatusLanggananPetani, 
   TransaksiPetaniItem,
-  AjukanPembelianPayload 
+  AjukanPembelianPayload,
+  BeliOnlinePayload,
+  BeliOnlineResponse
 } from '@/types/petaniSubscription.types';
 import type { AdminPaginationMeta } from '@/types/admin.types';
 
@@ -68,4 +70,16 @@ export const petaniSubscriptionService = {
     const res = await apiClient.post<ApiResponseWrapper<TransaksiPetaniItem>>('/petani/langganan/beli', formData);
     return res.data;
   },
+
+  /**
+   * Mengajukan pembelian paket langganan online via Midtrans Snap
+   */
+  async ajukanPembelianOnline(payload: BeliOnlinePayload): Promise<BeliOnlineResponse> {
+    const res = await apiClient.post<ApiResponseWrapper<BeliOnlineResponse>>(
+      '/petani/langganan/beli-online',
+      payload
+    );
+    return res.data;
+  },
 };
+

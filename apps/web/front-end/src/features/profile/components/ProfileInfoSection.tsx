@@ -1,14 +1,16 @@
 import { useState, useCallback, type FC, type ChangeEvent, type FormEvent } from 'react'
-import { User, Mail, Phone, CheckCircle2 } from 'lucide-react'
+import { User, Mail, Phone } from 'lucide-react'
 import { InputField } from '@/components/form/InputField'
 import { Button } from '@/components/ui/Button'
 import { sanitizeInput } from '@/utils/sanitize'
 import { profileInfoSchema } from '../schemas/profileSchemas'
 import { useAuthStore } from '@/store/useAuthStore'
 import { ProfileAvatar } from './ProfileAvatar'
+import { useNotify } from '@/context/NotificationContext'
 
 export const ProfileInfoSection: FC = () => {
   const { user: authUser } = useAuthStore()
+  const notify = useNotify()
   const [formData, setFormData] = useState({
     fullName: authUser?.name || '',
     email: authUser?.email || '',
@@ -16,7 +18,6 @@ export const ProfileInfoSection: FC = () => {
     avatarUrl: authUser?.avatarUrl || '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [saveSuccess, setSaveSuccess] = useState(false)
 
   const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -41,7 +42,6 @@ export const ProfileInfoSection: FC = () => {
     }
 
     setFormData((prev) => ({ ...prev, [name]: cleanValue }))
-    setSaveSuccess(false)
     setErrors((prev) => {
       if (fieldError) {
         return { ...prev, [name]: fieldError }
@@ -73,15 +73,14 @@ export const ProfileInfoSection: FC = () => {
           }
         }
         setErrors(fieldErrors)
-        setSaveSuccess(false)
         return
       }
 
       setErrors({})
       setFormData((prev) => ({ ...prev, ...sanitizedData }))
-      setSaveSuccess(true)
+      notify.success('Profil Diperbarui', 'Perubahan data profil berhasil disimpan.')
     },
-    [formData]
+    [formData, notify]
   )
 
   return (
@@ -97,13 +96,6 @@ export const ProfileInfoSection: FC = () => {
 
         {/* Form Biodata */}
         <form onSubmit={handleSubmit} className="flex-1 w-full space-y-4">
-          {saveSuccess && (
-            <div className="flex items-center gap-2 p-3 text-sm text-emerald-800 bg-white border border-emerald-300 rounded-xl animate-in fade-in duration-150">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Perubahan data profil berhasil disimpan!</span>
-            </div>
-          )}
-
           <InputField
             label="Nama Lengkap"
             name="fullName"

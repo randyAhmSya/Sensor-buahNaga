@@ -48,7 +48,7 @@ export const HarvestEstimationPage: React.FC = () => {
   // 1. Ambil daftar kebun & blok terdaftar
   const loadFarmsAndBlocks = useCallback(async () => {
     try {
-      const farms = await farmService.getAll();
+      const farms = await farmService.getAllWithBlocks();
       const extractedBlocks: BlockOptionItem[] = farms.flatMap((f) =>
         (f.blocks || []).map((b) => ({
           id: b.id,

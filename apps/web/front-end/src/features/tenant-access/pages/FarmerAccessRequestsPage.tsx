@@ -14,11 +14,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { tenantService } from '@/services/tenantService'
 import { tenantKeys } from '@/services/queryKeys'
 import type { PetaniTenantAccessItem } from '@/types/tenantAccess.types'
-import { Toast, type ToastType } from '@/components/feedback/Toast'
+import { useNotify } from '@/context/NotificationContext'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 
 export const FarmerAccessRequestsPage: FC = () => {
+  const notify = useNotify()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<'Semua' | 'pending' | 'disetujui' | 'ditolak_dicabut'>('Semua')
 
@@ -45,26 +46,8 @@ export const FarmerAccessRequestsPage: FC = () => {
   // Detail Modal State
   const [detailItem, setDetailItem] = useState<PetaniTenantAccessItem | null>(null)
 
-  // Toast State
-  const [toastState, setToastState] = useState<{
-    isVisible: boolean
-    type: ToastType
-    title: string
-    message: string
-  }>({
-    isVisible: false,
-    type: 'success',
-    title: '',
-    message: '',
-  })
-
-  const showToast = (title: string, message: string, type: ToastType = 'success') => {
-    setToastState({
-      isVisible: true,
-      type,
-      title,
-      message,
-    })
+  const showToast = (title: string, message: string, type: 'success' | 'warning' | 'error' | 'info' = 'success') => {
+    notify[type](title, message)
   }
 
   // 1. Fetch Requests
@@ -153,19 +136,6 @@ export const FarmerAccessRequestsPage: FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Toast Feedback */}
-      {toastState.isVisible && (
-        <div className="fixed top-5 right-5 z-50">
-          <Toast
-            type={toastState.type}
-            title={toastState.title}
-            message={toastState.message}
-            isVisible={toastState.isVisible}
-            onClose={() => setToastState((prev) => ({ ...prev, isVisible: false }))}
-          />
-        </div>
-      )}
-
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
