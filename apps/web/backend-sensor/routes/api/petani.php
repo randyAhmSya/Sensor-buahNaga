@@ -32,7 +32,6 @@ Route::patch('akses-tenant/{id}/tolak', [AksesTenantController::class, 'tolak'])
 Route::patch('akses-tenant/{id}/cabut', [AksesTenantController::class, 'cabut']);
 
 Route::post('/gateway/pair', [GatewayController::class, 'pair'])->middleware('throttle:10,1')->withoutMiddleware('auth:sanctum');
-Route::post('gateway/{id}/reset-pairing', [GatewayController::class, 'resetPairing'])->whereUuid('id');
 
 Route::prefix('langganan')->middleware(['auth:sanctum', EnsureTenantAktif::class])->group(function () {
     Route::get('paket', [LanggananController::class, 'paket']);
@@ -58,6 +57,7 @@ Route::middleware(['auth:sanctum', EnsureTenantAktif::class, EnsureLanggananAkti
     Route::get('node/{id}/ringkasan', [NodeRingkasanController::class, 'show']);
     Route::apiResource('node', NodeController::class);
     Route::apiResource('gateway', GatewayController::class);
+    Route::post('gateway/{id}/reset-pairing', [GatewayController::class, 'resetPairing'])->whereUuid('id');
     Route::get('qr/logs', [KodeQrController::class, 'logs']);
     Route::apiResource('qr', KodeQrController::class)->except(['destroy']);
     Route::post('qr/scan', [KodeQrController::class, 'scan']);
