@@ -7,8 +7,12 @@ use App\Models\LogEnergy;
 class LogEnergyService
 {
     private const MAKS_CELAH_MENIT = 15;
+    public const LIMIT_MAKS = 1000;
+
     public function getRiwayatBySensor(string $sensorId, int $limit = 100)
     {
+        $limit = max(1, min($limit, self::LIMIT_MAKS));
+
         return LogEnergy::where('sensor_id', $sensorId)
             ->orderByDesc('dicatat_pada')
             ->limit($limit)

@@ -2,7 +2,10 @@
 
 namespace App\Services\management_kebun;
 
+use App\Models\Blok;
 use App\Models\Gateway;
+use App\Models\Kebun;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class GatewayService
@@ -19,13 +22,28 @@ class GatewayService
         return Gateway::with('blok')->find($id);
     }
 
+    /**
+     * Satu kebun hanya boleh punya satu gateway.
+     *
+     * @throws \DomainException bila kebun sudah punya gateway
+     */
     public function createGateway(array $data)
     {
-        if (empty($data['kode_pairing'])) {
-            $data['kode_pairing'] = 'PAIR-' . strtoupper(Str::random(6));
-        }
+        return DB::transaction(function () use ($data) {
+            $blok = Blok::findOrFail($data['blok_id']);
 
-        return Gateway::create($data);
+            Kebun::whereKey($blok->kebun_id)->lockForUpdate()->first();
+
+            $sudahAda = Gateway::whereHas('blok', fn ($q) => $q->where('kebun_id', $blok->kebun_id))->exists();
+            if ($sudahAda) {
+                throw new \DomainException('Kebun ini sudah memiliki gateway. Satu kebun hanya boleh punya satu gateway.');
+            }
+
+            $data['status_koneksi'] = 'belum_terhubung';
+            $data['kode_pairing'] = 'PAIR-' . strtoupper(Str::random(6));
+
+            return Gateway::create($data);
+        });
     }
 
     public function updateGateway(Gateway $gateway, array $data)

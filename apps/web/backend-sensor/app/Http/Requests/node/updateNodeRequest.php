@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\node;
 
+use App\Rules\GatewaySekebunDenganBlok;
+use App\Rules\KodePerangkatAman;
+use App\Services\management_kebun\NodeService;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,10 +26,12 @@ class updateNodeRequest extends FormRequest
      */
     public function rules(): array
     {
-        $sensorId = $this->route('node');
+        // Route bisa berisi UUID, teks QR, atau kode perangkat. Samakan dengan controller.
+        $node = app(NodeService::class)->getNodeById((string) $this->route('node'));
+
         return [
-            'gateway_id' => 'sometimes|uuid|exists:gateways,id_gateway',
-            'kode_perangkat' => ['sometimes', 'string', Rule::unique('node_sensors', 'kode_perangkat')->ignore($sensorId, 'id_sensor')],
+            'gateway_id' => ['bail', 'sometimes', 'uuid', 'exists:gateways,id_gateway', new GatewaySekebunDenganBlok($node?->blok_id)],
+            'kode_perangkat' => ['sometimes', 'string', new KodePerangkatAman, Rule::unique('node_sensors', 'kode_perangkat')->ignore($node?->id_sensor, 'id_sensor')],
             'tipe_sensor' => 'sometimes|string',
             'status_koneksi' => 'sometimes|string',
         ];

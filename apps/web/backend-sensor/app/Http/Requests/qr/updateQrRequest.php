@@ -28,6 +28,7 @@ class updateQrRequest extends FormRequest
             'teks_kode_qr' => [
                 'sometimes',
                 'string',
+                'max:255',
                 Rule::unique('kode_qrs', 'teks_kode_qr')->ignore($qrId, 'id_qr')
             ],
             'status_qr'    => 'sometimes|boolean',

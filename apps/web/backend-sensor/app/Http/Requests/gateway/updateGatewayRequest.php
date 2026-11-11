@@ -4,7 +4,6 @@ namespace App\Http\Requests\gateway;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class updateGatewayRequest extends FormRequest
 {
@@ -17,17 +16,16 @@ class updateGatewayRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Atribut gateway (kode, blok, token, status) dikelola server lewat pairing
+     * dan reset pairing, bukan lewat form. Kolom nama_gateway/mac_address/status
+     * yang dulu ada di sini tidak ada di tabel, dan aturan unique pada mac_address
+     * menyebabkan error 500. Dengan rules kosong, validated() selalu kosong
+     * sehingga update tidak bisa memindahkan gateway ke blok atau tenant lain.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        $gatewayId = $this->route('gateway');
-        return [
-            'nama_gateway' => 'sometimes|string|max:100',
-            'mac_address' => ['sometimes', 'string', Rule::unique('gateways', 'mac_address')->ignore($gatewayId, 'id_gateway')],
-            'status' => 'sometimes|string',
-        ];
+        return [];
     }
 }

@@ -62,7 +62,12 @@ class GatewayController extends Controller
             return $this->errorResponse('Anda tidak memiliki izin menambah gateway di area ini.', 403);
         }
 
-        $gateway = $this->gatewayService->createGateway($request->validated());
+        try {
+            $gateway = $this->gatewayService->createGateway($request->validated());
+        } catch (\DomainException $e) {
+            return $this->errorResponse($e->getMessage(), 422);
+        }
+
         return $this->successResponse($gateway, 'Gateway berhasil didaftarkan.', 201);
     }
 
