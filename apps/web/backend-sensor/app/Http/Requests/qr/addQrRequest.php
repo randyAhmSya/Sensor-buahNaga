@@ -23,7 +23,7 @@ class addQrRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'teks_kode_qr' => 'nullable|string|unique:kode_qrs,teks_kode_qr',
+            'teks_kode_qr' => 'nullable|string|max:255|unique:kode_qrs,teks_kode_qr',
             'status_qr'    => 'nullable|boolean',
         ];
     }

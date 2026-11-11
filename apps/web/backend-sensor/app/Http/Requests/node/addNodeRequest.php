@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\node;
 
+use App\Rules\GatewaySekebunDenganBlok;
+use App\Rules\KodePerangkatAman;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -24,11 +26,9 @@ class addNodeRequest extends FormRequest
     {
         return [
             'blok_id' => 'required|uuid|exists:bloks,id_blok|unique:node_sensors,blok_id',
-            'gateway_id' => 'required|uuid|exists:gateways,id_gateway',
-            'qr_id' => 'nulllable|uuid|exists:kode_qrs,id_qr',
-            'kode_perangkat' => 'required|string|unique:node_sensors,kode_perangkat',
-            'kode_pairing' => 'nullable|string|unique:node_sensors,kode_pairing',
-            'token_perangkat' => 'nullable|string|unique:node_sensors,token_perangkat',
+            'gateway_id' => ['bail', 'required', 'uuid', 'exists:gateways,id_gateway', new GatewaySekebunDenganBlok],
+            'qr_id' => 'nullable|uuid|exists:kode_qrs,id_qr',
+            'kode_perangkat' => ['required', 'string', new KodePerangkatAman, 'unique:node_sensors,kode_perangkat'],
             'jumlah_lampu' => 'sometimes|integer|min:1|max:10000',
             'watt_per_lampu' => 'nullable|numeric|min:0|max:5000',
             'tipe_sensor' => 'required|string',

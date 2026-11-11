@@ -23,7 +23,7 @@ class scanQrRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'teks_kode_qr' => 'required|string',
+            'teks_kode_qr' => 'required|string|max:255',
             'platform'     => 'nullable|string|in:android,ios',
             'latitude'     => 'nullable|numeric',
             'longitude'    => 'nullable|numeric',

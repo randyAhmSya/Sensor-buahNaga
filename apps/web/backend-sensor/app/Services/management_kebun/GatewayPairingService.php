@@ -8,12 +8,6 @@ use Illuminate\Support\Str;
 
 class GatewayPairingService
 {
-    /**
-     * Validasi kode_perangkat + kode_pairing dari ESP32, lalu terbitkan
-     * token_gateway permanen yang dipakai sebagai kredensial MQTT,
-     * SEKALIGUS daftarkan kredensial itu ke broker Mosquitto (password
-     * file + ACL) biar gateway bisa langsung publish tanpa setup manual.
-     */
     public function pair(string $kodePerangkat, string $kodePairing): array
     {
         $gw = Gateway::where('kode_perangkat', $kodePerangkat)->first();
@@ -48,15 +42,6 @@ class GatewayPairingService
         ];
     }
 
-    /**
-     * Daftarkan username/password gateway ini ke password file Mosquitto,
-     * dan tambahkan aturan ACL supaya dia cuma bisa publish/subscribe
-     * ke topic miliknya sendiri (agrolight/{kode_perangkat}/#).
-     *
-     * Kalau MOSQUITTO_PASSWD_FILE belum diset di .env (broker belum
-     * dikonfigurasi), fungsi ini diam-diam di-skip - proses pairing HTTP
-     * tetap berhasil, cuma kredensial MQTT-nya belum terdaftar.
-     */
     protected function daftarkanKredensialMqtt(string $kodePerangkat, string $token): void
     {
         $passwdBin  = env('MOSQUITTO_PASSWD_BIN');
@@ -64,6 +49,11 @@ class GatewayPairingService
         $aclFile    = env('MOSQUITTO_ACL_FILE');
 
         if (!$passwdBin || !$passwdFile) {
+            return;
+        }
+
+        if (!\App\Rules\KodePerangkatAman::valid($kodePerangkat)) {
+            Log::warning('Kode perangkat tidak valid, kredensial MQTT tidak didaftarkan.');
             return;
         }
 
@@ -116,7 +106,7 @@ class GatewayPairingService
         $passwdFile = env('MOSQUITTO_PASSWD_FILE');
 
         if (!$passwdBin || !$passwdFile) {
-            return; // broker tidak memakai password file, tidak ada yang dicabut
+            return;
         }
 
         $cmd = sprintf(

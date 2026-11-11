@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\gateway;
 
+use App\Rules\KodePerangkatAman;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -23,8 +24,8 @@ class pairGatewayRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'kode_perangkat' => 'required|string',
-            'kode_pairing'   => 'required|string',
+            'kode_perangkat' => ['required', 'string', new KodePerangkatAman],
+            'kode_pairing'   => ['required', 'string', new KodePerangkatAman],
         ];
     }
 }

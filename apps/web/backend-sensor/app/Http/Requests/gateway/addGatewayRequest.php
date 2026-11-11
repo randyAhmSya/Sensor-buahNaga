@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\gateway;
 
+use App\Rules\KodePerangkatAman;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -24,7 +25,7 @@ class addGatewayRequest extends FormRequest
     {
         return [
             'blok_id' => 'required|uuid|exists:bloks,id_blok',
-            'kode_perangkat' => 'required|string|unique:gateways,kode_perangkat',
+            'kode_perangkat' => ['required', 'string', new KodePerangkatAman, 'unique:gateways,kode_perangkat'],
             'status_koneksi' => 'required|string',
         ];
     }
