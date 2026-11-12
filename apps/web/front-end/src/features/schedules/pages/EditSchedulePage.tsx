@@ -39,14 +39,14 @@ export const EditSchedulePage: React.FC = () => {
 
           const title = isNodeScope
             ? (detail.sensor?.kode_perangkat ? `Node ${detail.sensor.kode_perangkat}` : 'Node Override')
-            : (detail.kebun?.nama_kebun || 'Kebun Buah Naga');
-          setScheduleName(detail.keterangan || detail.nama_jadwal || title);
+            : (detail.kebun?.nama_kebun || '');
+          setScheduleName(detail.keterangan || detail.nama_jadwal || title || '');
 
           const values: ScheduleFormInput = {
             scope: isNodeScope ? 'node' : 'kebun',
             farmId: detail.kebun_id || detail.kebun?.id || detail.kebun?.id_kebun || '',
             nodeId: detail.sensor?.kode_perangkat || detail.sensor_id || '',
-            location: detail.kebun?.nama_kebun || 'Kebun Buah Naga',
+            location: detail.kebun?.nama_kebun || '',
             startTime: rawStart.substring(0, 5),
             endTime: rawEnd.substring(0, 5),
             mode: modeVal,

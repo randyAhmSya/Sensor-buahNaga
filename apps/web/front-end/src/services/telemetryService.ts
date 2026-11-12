@@ -47,8 +47,8 @@ export const normalizeReadSensor = (raw: Record<string, unknown>): ReadSensor =>
   const suhu = typeof raw.suhu === 'number' ? raw.suhu : typeof raw.temperature === 'number' ? raw.temperature : 0;
   const kelembapan = typeof raw.kelembapan === 'number' ? raw.kelembapan : typeof raw.humidity === 'number' ? raw.humidity : 0;
   const lux = typeof raw.nilai_lux === 'number' ? raw.nilai_lux : typeof raw.lux === 'number' ? raw.lux : 0;
-  const baterai = typeof raw.baterai === 'number' ? raw.baterai : typeof raw.battery === 'number' ? raw.battery : 100;
-  const sinyal = typeof raw.kualitas_sinyal === 'string' ? raw.kualitas_sinyal : 'Baik';
+  const baterai = typeof raw.baterai === 'number' ? raw.baterai : typeof raw.battery === 'number' ? raw.battery : undefined;
+  const sinyal = typeof raw.kualitas_sinyal === 'string' ? raw.kualitas_sinyal : undefined;
   const waktu = String(raw.dicatat_pada || raw.waktu_catat || raw.created_at || new Date().toISOString());
 
   return {

@@ -84,3 +84,4 @@ describe('findNodeForBlock', () => {
     assert.equal(findNodeForBlock(allNodes, undefined), null)
   })
 })
+

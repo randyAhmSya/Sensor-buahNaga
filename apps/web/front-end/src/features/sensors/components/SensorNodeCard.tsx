@@ -169,12 +169,12 @@ export const SensorNodeCard: FC<SensorNodeCardProps> = ({
           </h3>
           {/* Lokasi Kebun & Blok (Baris 1) */}
           <div className="text-xs text-slate-500 mt-1 flex items-center gap-1.5 flex-wrap">
-            <span className="font-medium text-slate-600" title={sensor.farmName}>
-              {sensor.farmName}
+            <span className="font-medium text-slate-600" title={sensor.farmName || '--'}>
+              {sensor.farmName || '--'}
             </span>
             {Boolean(sensor.blockName?.trim()) && (
               <>
-                <span className="text-slate-300 select-none">•</span>
+                <span className="inline-block w-1 h-1 rounded-full bg-slate-300" />
                 <span className="font-semibold text-slate-700" title={sensor.blockName}>
                   {sensor.blockName}
                 </span>
@@ -227,8 +227,10 @@ export const SensorNodeCard: FC<SensorNodeCardProps> = ({
               <Sun className="w-3.5 h-3.5 text-slate-500 shrink-0" />
               <span>Intensitas Lux</span>
             </div>
-            <p className={`text-lg sm:text-xl font-bold tracking-tight ${isOnline ? 'text-slate-900' : 'text-slate-400'}`}>
-              {isOnline ? `${sensor.luxLevel.toLocaleString('id-ID')} lx` : '0 lx'}
+            <p className={`text-lg sm:text-xl font-bold tracking-tight ${isOnline && sensor.luxLevel !== null ? 'text-slate-900' : 'text-slate-400'}`}>
+              {sensor.luxLevel !== null && sensor.luxLevel !== undefined
+                ? `${sensor.luxLevel.toLocaleString('id-ID')} lx`
+                : '-- lx'}
             </p>
           </div>
 
@@ -237,8 +239,10 @@ export const SensorNodeCard: FC<SensorNodeCardProps> = ({
               <Thermometer className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               <span>Suhu Udara</span>
             </div>
-            <p className={`text-lg sm:text-xl font-bold tracking-tight ${isOnline ? 'text-slate-900' : 'text-slate-400'}`}>
-              {isOnline ? `${sensor.temperature} °C` : '0 °C'}
+            <p className={`text-lg sm:text-xl font-bold tracking-tight ${isOnline && sensor.temperature !== null ? 'text-slate-900' : 'text-slate-400'}`}>
+              {sensor.temperature !== null && sensor.temperature !== undefined
+                ? `${sensor.temperature} °C`
+                : '-- °C'}
             </p>
           </div>
         </div>

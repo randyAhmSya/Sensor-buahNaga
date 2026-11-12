@@ -1,9 +1,8 @@
-import { apiClient, ApiError } from './api';
+import { apiClient, ApiError } from './api.ts';
 import type { ApiResponse } from '@/types/api.types';
 import type { KebunBackend } from '@/types/kebun.types';
 import type { FarmItem } from '@/types/farm.types';
 import type { BlockItem } from '@/types/block.types';
-import { blockService } from './blockService';
 
 export interface CreateFarmPayload {
   name: string;
@@ -30,7 +29,7 @@ const resolveImageUrl = (url: string | null | undefined): string => {
   return `${apiBase}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
-import { getEntityId } from '@/utils/normalize';
+import { getEntityId } from '../utils/normalize.ts';
 
 export const mapKebunToFarmItem = (kebun: KebunBackend, blocks: BlockItem[] = []): FarmItem => {
   const photoUrl = resolveImageUrl(kebun.url_foto);
@@ -41,17 +40,22 @@ export const mapKebunToFarmItem = (kebun: KebunBackend, blocks: BlockItem[] = []
     String(kebun.status_kebun) === '1' ||
     String(kebun.status_kebun).toLowerCase() === 'aktif';
 
+  const totalBlocks =
+    typeof kebun.bloks_count === 'number'
+      ? kebun.bloks_count
+      : (Array.isArray(blocks) ? blocks.length : 0);
+
   return {
     id: kebunId,
     name: kebun.nama_kebun,
     location: kebun.lokasi_kebun || 'Lokasi belum diatur',
-    description: kebun.keterangan || `Kebun buah naga di bawah naungan tenant ${kebun.tenant_id || 'AgroLight'}`,
+    description: kebun.keterangan || '',
     status: isStatusActive ? 'Aktif' : 'Inaktif',
-    totalBlocks: blocks.length,
+    totalBlocks,
     imageUrl: photoUrl,
     bannerUrl: photoUrl,
-    gpsCoordinates: '-8.591200, 114.283100',
-    additionalNotes: 'Sistem pencahayaan otomatis terpasang',
+    gpsCoordinates: undefined,
+    additionalNotes: undefined,
     blocks: blocks,
   };
 };
@@ -121,6 +125,7 @@ export const farmService = {
       }
 
       const kebunList = resKebun.data;
+      const { blockService } = await import('./blockService.ts');
       const farmsWithBlocks = await Promise.all(
         kebunList.map(async (kebun) => {
           const farmId = getEntityId(kebun);
@@ -150,6 +155,7 @@ export const farmService = {
   getById: async (id: string): Promise<FarmItem | undefined> => {
     if (!id || id === 'farm-1') return undefined;
     try {
+      const { blockService } = await import('./blockService.ts');
       const [resKebun, blocks] = await Promise.all([
         apiClient.get<ApiResponse<KebunBackend>>(`/petani/kebun/${id}`),
         blockService.getBlocksByFarmId(id).catch(() => []),

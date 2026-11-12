@@ -32,16 +32,12 @@ export const SensorLogTable: React.FC<SensorLogTableProps> = ({ logs, onRangeFil
   }, [logs, rangeFilter])
 
   const handleExportCsv = () => {
-    const headers = ['ID', 'Waktu', 'Lux', 'Suhu', 'Kelembapan', 'Baterai', 'Sinyal', 'Gateway']
+    const headers = ['ID', 'Waktu', 'Lux', 'Suhu']
     const rows = filteredLogs.map((l) => [
       l.id,
       `"${l.timestamp}"`,
       `"${l.lux}"`,
       `"${l.temperature}"`,
-      `"${l.humidity}"`,
-      `"${l.battery}"`,
-      `"${l.signalQuality}"`,
-      `"${l.gatewayStatus}"`,
     ])
     const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -95,22 +91,18 @@ export const SensorLogTable: React.FC<SensorLogTableProps> = ({ logs, onRangeFil
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[700px]">
+        <table className="w-full text-left border-collapse min-w-[500px]">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
               <th className="py-3 px-4">Waktu</th>
               <th className="py-3 px-4">Intensitas Lux</th>
-              <th className="py-3 px-4">Suhu</th>
-              <th className="py-3 px-4">RH (Udara)</th>
-              <th className="py-3 px-4">Baterai</th>
-              <th className="py-3 px-4">Sinyal</th>
-              <th className="py-3 px-4 text-right">Status Gateway</th>
+              <th className="py-3 px-4 text-right">Suhu Udara</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm text-slate-800">
             {filteredLogs.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-xs text-slate-400 font-medium">
+                <td colSpan={3} className="py-8 text-center text-xs text-slate-400 font-medium">
                   Belum ada log telemetri sensor tercatat untuk blok ini.
                 </td>
               </tr>
@@ -119,16 +111,7 @@ export const SensorLogTable: React.FC<SensorLogTableProps> = ({ logs, onRangeFil
                 <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3 px-4 font-medium text-slate-900">{log.timestamp}</td>
                   <td className="py-3 px-4 font-bold text-emerald-800">{log.lux}</td>
-                  <td className="py-3 px-4 text-slate-700">{log.temperature}</td>
-                  <td className="py-3 px-4 text-slate-700">{log.humidity}</td>
-                  <td className="py-3 px-4 text-slate-600">{log.battery}</td>
-                  <td className="py-3 px-4 text-slate-600">{log.signalQuality}</td>
-                  <td className="py-3 px-4 text-right">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      {log.gatewayStatus}
-                    </span>
-                  </td>
+                  <td className="py-3 px-4 text-right text-slate-700">{log.temperature}</td>
                 </tr>
               ))
             )}

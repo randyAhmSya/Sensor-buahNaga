@@ -11,6 +11,7 @@ export interface KebunBackend {
   url_foto: string | null;
   status_kebun: boolean | number | string;
   keterangan?: string | null;
+  bloks_count?: number;
   created_at?: string;
   updated_at?: string;
 }

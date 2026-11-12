@@ -200,7 +200,7 @@ export const ScheduleSummaryTab: React.FC<ScheduleSummaryTabProps> = ({
                   Jadwal Default Kebun
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Berlaku otomatis untuk semua blok dan node di {kebunName} yang tidak memiliki jadwal override khusus.
+                  Berlaku otomatis untuk semua blok dan node{kebunName ? ` di ${kebunName}` : ''} yang tidak memiliki jadwal override khusus.
                 </p>
               </div>
             </div>
@@ -225,7 +225,7 @@ export const ScheduleSummaryTab: React.FC<ScheduleSummaryTabProps> = ({
                     onClick={() =>
                       setConfirmDeactivate({
                         id: defaultKebun.id_jadwal_lampu,
-                        title: `Jadwal Default Kebun (${kebunName})`,
+                        title: kebunName ? `Jadwal Default Kebun (${kebunName})` : 'Jadwal Default Kebun',
                         isOverride: false,
                       })
                     }

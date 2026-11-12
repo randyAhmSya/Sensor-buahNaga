@@ -30,7 +30,7 @@ export interface GatewayBackend {
 export interface CreateGatewayPayload {
   blok_id: string;
   kode_perangkat: string;
-  status_koneksi: GatewayStatus;
+  status_koneksi?: GatewayStatus;
 }
 
 export interface UpdateGatewayPayload {

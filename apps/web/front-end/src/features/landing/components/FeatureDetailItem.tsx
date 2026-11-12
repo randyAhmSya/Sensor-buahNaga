@@ -1,81 +1,80 @@
 import type { ElementType } from 'react'
-import { CheckCircle2 } from 'lucide-react'
 import { Card } from '../../../components/ui/Card'
-import { cn } from '../../../utils/cn'
+import { ScrollReveal } from './ScrollReveal'
+
+export interface FeaturePoint {
+  title: string
+  desc: string
+}
 
 export interface FeatureDetailItemProps {
   badge: string
-  badgeIcon?: ElementType
+  icon: ElementType
   title: string
   description: string
-  points: string[]
-  imageUrl: string
-  imageAlt: string
-  reverse?: boolean
+  points: FeaturePoint[]
   isBgSlate?: boolean
-  imageMaxWidthSm?: boolean
 }
 
 export function FeatureDetailItem({
   badge,
-  badgeIcon: BadgeIcon,
+  icon: Icon,
   title,
   description,
   points,
-  imageUrl,
-  imageAlt,
-  reverse = false,
   isBgSlate = false,
-  imageMaxWidthSm = false,
 }: FeatureDetailItemProps) {
   const containerClasses = isBgSlate
-    ? 'py-16 px-6 md:px-12 max-w-7xl mx-auto bg-slate-50 rounded-3xl my-8 border border-slate-200/60'
-    : 'py-16 px-6 max-w-7xl mx-auto'
+    ? 'bg-slate-50 border-y border-slate-200 py-16 sm:py-20 px-4 md:px-8'
+    : 'bg-white py-16 sm:py-20 px-4 md:px-8'
+
+  const cardClasses = isBgSlate
+    ? 'rounded-2xl bg-white border border-slate-200 p-5 shadow-sm space-y-1.5'
+    : 'rounded-2xl bg-slate-50 border border-slate-200 p-5 space-y-1.5'
 
   return (
     <section className={containerClasses}>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center">
-        {/* Image column */}
-        <Card
-          className={cn(
-            reverse ? 'order-2 md:order-1' : 'order-2 md:order-2',
-            'rounded-2xl overflow-hidden shadow-xs border border-slate-200 bg-white p-2 flex items-center justify-center'
-          )}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        {/* Kolom Kiri: Ringkasan Editorial & 1 Ikon Utama */}
+        <ScrollReveal
+          direction="up"
+          delay={100}
+          className="lg:col-span-5 space-y-5"
         >
-          <img
-            className={`w-full h-auto rounded-xl object-cover ${
-              imageMaxWidthSm ? 'max-w-sm mx-auto' : ''
-            }`}
-            src={imageUrl}
-            alt={imageAlt}
-            loading="lazy"
-          />
-        </Card>
-
-        {/* Text column */}
-        <div className={`${reverse ? 'order-1 md:order-2' : 'order-1 md:order-1'} space-y-4`}>
-          <div className="border border-emerald-600 bg-transparent text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full inline-flex items-center gap-1.5">
-            {BadgeIcon && <BadgeIcon className="w-3.5 h-3.5 text-emerald-600" />}
-            <span>{badge}</span>
+          <div className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+            {badge}
           </div>
 
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+          <div className="h-14 w-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-sm shrink-0 mb-4">
+            <Icon className="w-7 h-7" strokeWidth={2.25} />
+          </div>
+
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight leading-tight">
             {title}
           </h2>
 
-          <p className="text-slate-600 leading-relaxed text-base">
+          <p className="text-slate-600 leading-relaxed text-sm sm:text-base">
             {description}
           </p>
+        </ScrollReveal>
 
-          <ul className="space-y-3 pt-2">
-            {points.map((point, index) => (
-              <li key={index} className="flex items-start gap-3 text-slate-700 text-sm">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span>{point}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* Kolom Kanan: 3 Kartu Manfaat & Kapabilitas Operasional */}
+        <ScrollReveal
+          direction="up"
+          delay={200}
+          className="lg:col-span-7 grid grid-cols-1 gap-4"
+        >
+          {points.map((point) => (
+            <Card key={point.title} className={cardClasses}>
+              <h3 className="text-base font-semibold text-slate-900">
+                {point.title}
+              </h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {point.desc}
+              </p>
+            </Card>
+          ))}
+        </ScrollReveal>
       </div>
     </section>
   )

@@ -106,7 +106,10 @@ export const useFarmFilter = () => {
   const stats = useMemo(() => {
     const totalFarms = farms.length
     const activeFarms = farms.filter((f) => f.status === 'Aktif').length
-    const totalBlocks = farms.reduce((acc, curr) => acc + (curr.blocks?.length || 0), 0)
+    const totalBlocks = farms.reduce(
+      (acc, curr) => acc + (typeof curr.totalBlocks === 'number' ? curr.totalBlocks : (curr.blocks?.length || 0)),
+      0
+    )
     return { totalFarms, activeFarms, totalBlocks }
   }, [farms])
 

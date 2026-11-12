@@ -33,7 +33,7 @@ export function useEditFarmPage() {
     description: '',
     imageUrl: '',
     status: 'Aktif',
-    gpsCoordinates: '-8.591200, 114.283100',
+    gpsCoordinates: '',
     additionalNotes: '',
   })
 
@@ -58,7 +58,7 @@ export function useEditFarmPage() {
             description: farm.description || '',
             imageUrl: farm.imageUrl || '',
             status: farm.status === 'Aktif' ? 'Aktif' : 'Inaktif',
-            gpsCoordinates: farm.gpsCoordinates || '-8.591200, 114.283100',
+            gpsCoordinates: farm.gpsCoordinates || '',
             additionalNotes: farm.additionalNotes || '',
           })
           if (farm.imageUrl) {

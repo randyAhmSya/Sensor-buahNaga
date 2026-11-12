@@ -23,8 +23,9 @@ const SaasRouteGuard: FC<{ children: ReactNode; redirectTo: string }> = ({
 // Lazy-loaded Feature Pages for optimized code splitting
 const LandingPage = lazy(() => import('@/features/landing/pages/LandingPage').then((m) => ({ default: m.LandingPage })))
 const FeaturesPage = lazy(() => import('@/features/landing/pages/FeaturesPage').then((m) => ({ default: m.FeaturesPage })))
+const TechnologyPage = lazy(() => import('@/features/landing/pages/TechnologyPage').then((m) => ({ default: m.TechnologyPage })))
 const HowItWorksPage = lazy(() => import('@/features/landing/pages/HowItWorksPage').then((m) => ({ default: m.HowItWorksPage })))
-const PricingPage = lazy(() => import('@/features/landing/pages/PricingPage').then((m) => ({ default: m.PricingPage })))
+const DownloadAppPage = lazy(() => import('@/features/landing/pages/DownloadAppPage').then((m) => ({ default: m.DownloadAppPage })))
 const AboutUsPage = lazy(() => import('@/features/landing/pages/AboutUsPage').then((m) => ({ default: m.AboutUsPage })))
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage })))
 const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage').then((m) => ({ default: m.RegisterPage })))
@@ -68,10 +69,16 @@ export function AppRoutes() {
         {/* Rute Publik */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/features" element={<FeaturesPage />} />
-          <Route path="/how-it-works" element={<HowItWorksPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/fitur" element={<FeaturesPage />} />
+          <Route path="/teknologi" element={<TechnologyPage />} />
+          <Route path="/cara-kerja" element={<HowItWorksPage />} />
+          <Route path="/unduh-aplikasi" element={<DownloadAppPage />} />
           <Route path="/about-us" element={<AboutUsPage />} />
+
+          {/* Alias dan kompatibilitas navigasi */}
+          <Route path="/features" element={<Navigate to="/fitur" replace />} />
+          <Route path="/how-it-works" element={<Navigate to="/cara-kerja" replace />} />
+          <Route path="/pricing" element={<Navigate to="/" replace />} />
         </Route>
 
         <Route path="/login" element={<LoginPage />} />

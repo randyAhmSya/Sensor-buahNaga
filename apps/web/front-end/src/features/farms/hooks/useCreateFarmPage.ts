@@ -34,7 +34,7 @@ export function useCreateFarmPage({ onAddFarm }: UseCreateFarmPageProps = {}) {
     description: '',
     imageUrl: '',
     status: 'Aktif',
-    gpsCoordinates: '-8.591200, 114.283100',
+    gpsCoordinates: '',
     additionalNotes: '',
   })
 

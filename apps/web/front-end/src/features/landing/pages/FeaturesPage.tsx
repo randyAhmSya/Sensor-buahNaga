@@ -1,128 +1,134 @@
-import { Lightbulb, Calendar, QrCode, LayoutDashboard, Zap } from 'lucide-react'
+import { Lightbulb, Activity, Layers, Calendar } from 'lucide-react'
 import { FeatureDetailItem } from '../components/FeatureDetailItem'
 import { CtaBanner } from '../components/CtaBanner'
-import { SectionContainer } from '../../../components/common/SectionContainer'
+import { ScrollReveal } from '../components/ScrollReveal'
 
 const featuresData = [
   {
-    badge: 'Pencahayaan Presisi',
-    badgeIcon: Lightbulb,
-    title: 'Auto-Dimming Cerdas',
+    badge: 'PENCAHAYAAN PRESISI',
+    icon: Lightbulb,
+    title: 'Otomasi Jadwal & Auto-Dimming Lampu',
     description:
-      'Sistem kami menyesuaikan intensitas cahaya secara otomatis berdasarkan kondisi lingkungan dan suhu sekitar, memberikan pencahayaan optimal setiap saat tanpa intervensi manual.',
+      'Sistem secara cerdas menyesuaikan intensitas cahaya lampu berdasarkan sensor lux lingkungan dan jadwal induksi pembungaan tanpa intervensi manual.',
     points: [
-      'Menghemat biaya listrik secara signifikan dengan penggunaan daya yang efisien.',
-      'Menjaga siklus pembungaan tetap konsisten terlepas dari cuaca luar.',
-      'Tidak perlu pemantauan manual di malam hari.',
+      {
+        title: 'Efisiensi Daya Maksimal',
+        desc: 'Mengurangi konsumsi listrik hingga 35 persen dengan menyalakan lampu hanya saat intensitas cahaya alami di bawah ambang batas.',
+      },
+      {
+        title: 'Jadwal Terprogram Otomatis',
+        desc: 'Penyalaan lampu malam hari berjalan tepat waktu sesuai fase vegetatif dan generatif yang ditentukan petani.',
+      },
+      {
+        title: 'Kesehatan Tanaman Terjaga',
+        desc: 'Menghindari stres cahaya berlebih pada sulur tanaman buah naga berkat pengaturan tingkat kecerahan yang stabil.',
+      },
     ],
-    imageUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDlMnYzmw56gXVdtkj6vmNQsD7Yt4pQu92HB9DUvN7m--GNZ0cpTBPcNAU7JMWnUMDDH8MERpv4NdhLkmEAPEf32t7UqHcJTEQPCP5nt6GNfMMx1laHsKjRuEunOo0ce8TnaEMhDLYytgx0DlRfqfFtNYjV5pK-Ic8ltZwvShlSD42TE46jJaL6viwoN8RzgdGgoePnPzFnxNwzaU0y1qZgJql4VZVoXpaEHohbW_KFpffhOR1z1Bm4Fg',
-    imageAlt: 'Auto Dimming Preview',
-    reverse: true,
     isBgSlate: false,
   },
   {
-    badge: 'Prediksi Data',
-    badgeIcon: Calendar,
-    title: 'Estimasi Panen Akurat',
+    badge: 'TELEMETRI LINGKUNGAN',
+    icon: Activity,
+    title: 'Monitoring Telemetri Lux & Suhu Real-time',
     description:
-      'Sistem secara otomatis mencatat tanggal awal pencahayaan dan mengumpulkan data historis per blok untuk menghitung estimasi tanggal panen dengan tingkat akurasi tinggi.',
+      'Pengukuran kontinu terhadap intensitas cahaya alami dan temperatur mikroklimat di sekitar blok tanaman buah naga langsung ke dashboard Anda.',
     points: [
-      'Rencanakan kebutuhan tenaga kerja dan logistik jauh sebelum hari panen.',
-      'Kurangi tebakan manual dan hindari risiko keterlambatan panen.',
-      'Pantau status siklus pertumbuhan per blok secara visual.',
+      {
+        title: 'Sensor Presisi Lapangan',
+        desc: 'Pembacaan intensitas lux dan suhu udara setiap menit dengan transmisi protokol MQTT berkecepatan tinggi.',
+      },
+      {
+        title: 'Analisis Tren Harian',
+        desc: 'Grafik fluktuasi suhu dan lux harian untuk mengevaluasi kondisi cuaca mikro yang mempengaruhi kecepatan pembungaan.',
+      },
+      {
+        title: 'Deteksi Anomali Cepat',
+        desc: 'Peringatan otomatis saat node sensor offline atau suhu lingkungan berada di luar rentang ideal.',
+      },
     ],
-    imageUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBBxt72NeHrcz2mXSdSbMncIbCT0LZZyGuyVEQfmR5Y9lqvoJpC544hjjvocHMlTjV9qgODOYzxHbVxStG8YyuhKGS8nrlcvcxGGNOfE-6w5olqsFKbR20VUetzStQ5VSL2vDzfy26a6PR8jXRt0bH3n_JSLzZ8UCj6CYbwnSUW4MC4QBMRXchlC4m1qqc4RlPL-jcv6CTp7THUwumHNVaOeUmwOMX7FBQ5Ok_vtA1baodcMbMv80AMrQ',
-    imageAlt: 'Estimasi Panen Table',
-    reverse: false,
     isBgSlate: true,
   },
   {
-    badge: 'Akses Lapangan',
-    badgeIcon: QrCode,
-    title: 'Monitoring via QR Code',
+    badge: 'STRUKTUR LAHAN',
+    icon: Layers,
+    title: 'Manajemen Zona & Blok Kebun',
     description:
-      'Setiap blok tanaman dilengkapi dengan QR code unik untuk pairing perangkat yang cepat dan akses instan ke data lapangan langsung dari ponsel Anda.',
+      'Organisasi tiang lampu dan tanaman berdasarkan blok kebun untuk kontrol penyinaran yang fleksibel sesuai kebutuhan pertumbuhan masing-masing zona.',
     points: [
-      'Pairing perangkat keras baru dalam hitungan detik.',
-      'Akses riwayat lengkap blok tanaman secara instan saat berada di lapangan.',
-      'Sangat mudah digunakan oleh tim lapangan dengan minim pelatihan.',
+      {
+        title: 'Konfigurasi Spesifik Per Blok',
+        desc: 'Atur jadwal nyala dan intensitas berbeda untuk blok fase vegetatif awal versus blok siap induksi bunga.',
+      },
+      {
+        title: 'Identifikasi Cepat QR Tiang',
+        desc: 'Setiap tiang sensor memiliki kode QR unik untuk verifikasi dan pengecekan cepat via ponsel saat inspeksi fisik.',
+      },
+      {
+        title: 'Skalabilitas Multi-Hektar',
+        desc: 'Menampung puluhan blok dan ratusan node sensor tanpa penurunan kinerja pemantauan sistem.',
+      },
     ],
-    imageUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAoZLnvEvQNJw3e__hqgRH2m8Z7kKHTyCRvgYRQ2pIpptm33ijmMqc-Z4XIkM2OY7cySm7k9xc_27TSFe_Gl9pXuVjKk9bLMM1SWji_IrlX4KKDx8JtRVBPGMoNzB9hMq6cyUadBd4RMumnvjB_qsLRS108cXe12DQCbzA_gpyEXX7KtlHg-Q7XdQoZ-JCtqpaf8G9GJXlwdLn_vfhqGcUIvef893yAKaXCkKAlQqdv2JL6M91ZOeMKWw',
-    imageAlt: 'QR Code Scanning',
-    reverse: true,
     isBgSlate: false,
-    imageMaxWidthSm: true,
   },
   {
-    badge: 'Pusat Kendali',
-    badgeIcon: LayoutDashboard,
-    title: 'Dashboard Real-time Multi-Kebun',
+    badge: 'PERENCANAAN PANEN',
+    icon: Calendar,
+    title: 'Analisis Siklus & Estimasi Panen',
     description:
-      'Pantau seluruh kebun, blok, dan status perangkat Anda dalam satu dashboard terpusat. Dapatkan visibilitas penuh atas operasional skala besar Anda.',
+      'Perhitungan perkiraan tanggal panen berbasis data historis penyinaran dan fase fisiologis tanaman untuk memudahkan perencanaan operasional.',
     points: [
-      'Kelola banyak lokasi kebun hanya dengan satu akun utama.',
-      'Status perangkat online/offline termonitor secara real-time.',
-      'Dapat diakses kapan saja melalui antarmuka web maupun mobile.',
+      {
+        title: 'Estimasi Tanggal Akurat',
+        desc: 'Sistem memprediksi tanggal panen berdasarkan tanggal aktivasi lampu dan akumulasi hari induksi bunga.',
+      },
+      {
+        title: 'Perencanaan Logistik & Tenaga Kerja',
+        desc: 'Persiapkan kebutuhan pemetikan dan distribusi buah naga jauh hari sebelum masa panen tiba.',
+      },
+      {
+        title: 'Evaluasi Efisiensi Musim',
+        desc: 'Bandingkan data durasi penyinaran dan hasil tonase buah antar siklus tanam untuk peningkatan produktivitas.',
+      },
     ],
-    imageUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBt1JVQ4JEeJRhhmiaoIpmawmjGUK261x-fvDS4laz4p_N9OpBuRHthF5ISOzcCFfW4EI3cy4glcH7qzBuo-YfNEWWOxxQvCQeCSztjkrsok9Zc7DDIMVFS44YXKnqmcVOJf8Qj8jky6INIdX0JYtENiB7_bkEjJV12hdHV9wxnBJfAJ3T8zDFPtwrZOXgqKKQYNhxXA-Jpi5o1pNlATsduZvUH-tYHuH14pyGsK1XRM8YT6VvYHABkUw',
-    imageAlt: 'Dashboard Multi Farm',
-    reverse: false,
     isBgSlate: true,
-  },
-  {
-    badge: 'Efisiensi Daya',
-    badgeIcon: Zap,
-    title: 'Pemantauan Konsumsi Energi',
-    description:
-      'Sistem mencatat konsumsi daya (watt) secara detail per node kontrol, memungkinkan Anda mengevaluasi efisiensi dan menekan biaya operasional secara sistematis.',
-    points: [
-      'Bandingkan metrik konsumsi antar blok untuk mencari praktik terbaik.',
-      'Deteksi lonjakan daya tidak wajar untuk pencegahan masalah awal.',
-      'Evaluasi nyata penghematan biaya dari sistem auto-dimming.',
-    ],
-    imageUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDIh4RjWcpNqSzAJ1TLMAOa6NNwT0a3oQJhKt81AfcTjkNdxLqSjn08opywlDz3o6pTAXAci9PrTISJVroc1f6BRjvboANUviTFoAbEDff5dfUBd30S_Q_2V4MEGlzrwPkcUC9Y0ysMwiQs2vOx4CNg5eYM7z9XcCIfx72gfX6mQOlgl2SApwp-p_NLAMq1vi8maetfXW6Kajp94t3WQy8cEeH9RLjgv6jm_LfeGVlMQ4Y6XC4MI4K2cQ',
-    imageAlt: 'Energy Monitoring Chart',
-    reverse: true,
-    isBgSlate: false,
   },
 ]
 
 export const FeaturesPage = () => {
   return (
-    <div className="w-full flex-1 flex flex-col justify-between">
+    <div className="w-full flex-1 flex flex-col justify-between bg-slate-50">
       {/* Hero Section */}
-      <SectionContainer
-        className="py-20 md:py-24"
-        containerClassName="text-center max-w-4xl mx-auto"
-      >
-        <h1 className="text-3xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">
-          Semua yang Anda Butuhkan untuk Kebun Buah Naga yang Efisien
-        </h1>
-        <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-          Platform lengkap yang mengelola siklus pencahayaan cerdas hingga estimasi panen presisi, dirancang khusus untuk meningkatkan produktivitas agrikultur modern.
-        </p>
-      </SectionContainer>
+      <section className="bg-white border-b border-slate-200 py-16 sm:py-20 px-4 md:px-8">
+        <div className="max-w-4xl mx-auto text-center space-y-4">
+          <ScrollReveal direction="up" delay={50}>
+            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+              FITUR UTAMA AGROLIGHT
+            </div>
+          </ScrollReveal>
+          <ScrollReveal direction="up" delay={100}>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              Semua Kebutuhan Kebun Buah Naga Modern
+            </h1>
+          </ScrollReveal>
+          <ScrollReveal direction="up" delay={150}>
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl mx-auto">
+              Platform lengkap mulai dari otomasi pencahayaan cerdas, pemantauan telemetri real-time, hingga estimasi tanggal panen yang terukur.
+            </p>
+          </ScrollReveal>
+        </div>
+      </section>
 
       {/* Feature Details List */}
-      <div className="space-y-4 border-t border-slate-100">
-        {featuresData.map((item, idx) => (
+      <div>
+        {featuresData.map((item) => (
           <FeatureDetailItem
-            key={idx}
+            key={item.title}
             badge={item.badge}
-            badgeIcon={item.badgeIcon}
+            icon={item.icon}
             title={item.title}
             description={item.description}
             points={item.points}
-            imageUrl={item.imageUrl}
-            imageAlt={item.imageAlt}
-            reverse={item.reverse}
             isBgSlate={item.isBgSlate}
-            imageMaxWidthSm={item.imageMaxWidthSm}
           />
         ))}
       </div>
@@ -132,3 +138,4 @@ export const FeaturesPage = () => {
     </div>
   )
 }
+export default FeaturesPage

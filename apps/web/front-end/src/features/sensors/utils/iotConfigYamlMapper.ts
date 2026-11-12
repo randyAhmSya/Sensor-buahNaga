@@ -63,7 +63,7 @@ export const getGatewayPairingState = (
  */
 export const generateItemDeviceYaml = (data: SensorDeviceConfigData): string => {
   const pairingState = getGatewayPairingState(data.kode_gateway, data.kode_pairing);
-  const cleanNama = (data.nama || 'Blok Lahan').trim();
+  const cleanNama = (data.nama || data.kode_node || '').trim();
   const cleanSensorId = (data.sensor_id || '').trim();
 
   let kodePerangkatLine = '';

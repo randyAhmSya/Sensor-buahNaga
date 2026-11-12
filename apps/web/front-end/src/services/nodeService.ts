@@ -2,6 +2,7 @@ import { apiClient } from './api';
 import type { ApiResponse } from '@/types/api.types';
 import type { NodeSensorBackend, CreateNodePayload, UpdateNodePayload } from '@/types/node.types';
 import { farmService } from './farmService';
+import { DEFAULT_SENSOR_TYPE, normalizeSensorType } from '@/constants/sensorType';
 
 // In-flight promise cache untuk deduplikasi request simultan GET /api/petani/node?kebun_id=UUID
 const inFlightNodeRequests = new Map<string, Promise<NodeSensorBackend[]>>();
@@ -102,7 +103,7 @@ export const nodeService = {
       kode_perangkat: payload.kode_perangkat.trim(),
       blok_id: payload.blok_id.trim(),
       gateway_id: payload.gateway_id.trim(),
-      tipe_sensor: payload.tipe_sensor ? payload.tipe_sensor.trim() : 'cahaya_lux',
+      tipe_sensor: payload.tipe_sensor ? normalizeSensorType(payload.tipe_sensor) : DEFAULT_SENSOR_TYPE,
       status_koneksi: payload.status_koneksi || 'offline',
     };
 
@@ -112,9 +113,11 @@ export const nodeService = {
     if (payload.watt_per_lampu !== undefined) {
       body.watt_per_lampu = payload.watt_per_lampu;
     }
+    if (payload.qr_id && payload.qr_id.trim()) {
+      body.qr_id = payload.qr_id.trim();
+    }
 
-    // Hard-guard: Hapus key terlarang yang dapat memicu error validasi atau 500 di backend
-    delete body.qr_id;
+    // Hard-guard: Hapus key yang tidak diterima backend pada POST /petani/node
     delete body.kode_pairing;
     delete body.token_perangkat;
 
@@ -140,7 +143,7 @@ export const nodeService = {
       body.gateway_id = payload.gateway_id ? payload.gateway_id.trim() : null;
     }
     if (payload.tipe_sensor !== undefined) {
-      body.tipe_sensor = payload.tipe_sensor.trim();
+      body.tipe_sensor = normalizeSensorType(payload.tipe_sensor);
     }
     if (payload.status_koneksi !== undefined) {
       body.status_koneksi = payload.status_koneksi.trim();

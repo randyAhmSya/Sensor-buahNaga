@@ -3,45 +3,11 @@ import type { ApiResponse } from '@/types/api.types';
 import type { NodeSensorBackend, CreateNodePayload, UpdateNodePayload } from '@/types/node.types';
 import type { SensorNodeItem, SensorSummaryMetrics } from '@/types/sensor.types';
 import { nodeService } from './nodeService';
-
 import { farmService } from './farmService';
-import { getEntityId } from '@/utils/normalize';
+import { dashboardService } from './dashboardService';
+import { mapNodeToSensorItem, type SensorTelemetryReading } from '@/features/sensors/utils/sensorMapper';
 
-export const mapNodeToSensorItem = (node: NodeSensorBackend, fallbackFarmName?: string): SensorNodeItem => {
-  const isOnline =
-    node.status_koneksi?.toLowerCase() === 'aktif' ||
-    node.status_koneksi?.toLowerCase() === 'online';
-
-  return {
-    id: getEntityId(node) || node.id_sensor,
-    nodeCode: node.kode_perangkat,
-    farmId: node.blok?.kebun_id || '',
-    farmName: fallbackFarmName || node.blok?.kebun?.nama_kebun || 'Kebun Buah Naga',
-    blockId: node.blok_id || '',
-    blockName: node.blok?.nama_blok || 'Belum Terhubung Blok',
-    gatewayId: node.gateway_id || node.gateway?.id_gateway || null,
-    gatewayCode: node.gateway?.kode_perangkat || null,
-    gatewayStatus: node.gateway?.status_koneksi || null,
-    kodePairing: (node.gateway as unknown as { kode_pairing?: string | null })?.kode_pairing || node.kode_pairing || null,
-    tokenGateway: (node.gateway as unknown as { token_gateway?: string | null })?.token_gateway || node.token_perangkat || null,
-    tipeSensor: node.tipe_sensor || 'lux_suhu',
-    status: isOnline ? 'Aktif' : 'Nonaktif',
-    luxLevel: isOnline ? 120 : 0,
-    temperature: 28.5,
-    lastSeen: node.terakhir_terlihat
-      ? new Date(node.terakhir_terlihat).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-      : 'Belum ada data',
-    sparklineData: isOnline ? [85, 90, 110, 115, 120, 118, 120] : [0, 0, 0, 0, 0, 0, 0],
-    qrCode: node.qr?.teks_kode_qr || (node as unknown as { kode_qr?: { kode_qr?: string } })?.kode_qr?.kode_qr || '',
-    jumlah_lampu: node.jumlah_lampu ?? 1,
-    watt_per_lampu: node.watt_per_lampu ?? null,
-    watt_terpasang:
-      node.watt_terpasang ??
-      (node.watt_per_lampu !== null && node.watt_per_lampu !== undefined
-        ? Math.round((node.jumlah_lampu ?? 1) * node.watt_per_lampu * 100) / 100
-        : null),
-  };
-};
+export { mapNodeToSensorItem, type SensorTelemetryReading };
 
 export const sensorService = {
   getSummary: async (sensorsList?: SensorNodeItem[]): Promise<SensorSummaryMetrics> => {
@@ -74,9 +40,31 @@ export const sensorService = {
         return [];
       }
 
-      const rawNodes = await nodeService.getAll(targetKebunId);
+      // Ambil daftar node dan data ringkasan dashboard kebun (satu request) secara paralel
+      const [rawNodes, dashboardData] = await Promise.all([
+        nodeService.getAll(targetKebunId).catch(() => []),
+        dashboardService.getPetaniDashboard(targetKebunId).catch(() => null),
+      ]);
+
+      const readingsMap = new Map<string, SensorTelemetryReading>();
+      if (dashboardData && Array.isArray(dashboardData.blok)) {
+        for (const blk of dashboardData.blok) {
+          if (Array.isArray(blk.node)) {
+            for (const n of blk.node) {
+              const bacaan = (n as unknown as { bacaan_terakhir?: SensorTelemetryReading | null }).bacaan_terakhir;
+              if (bacaan) {
+                readingsMap.set(n.id_sensor, bacaan);
+              }
+            }
+          }
+        }
+      }
+
       if (rawNodes && rawNodes.length > 0) {
-        return rawNodes.map((node) => mapNodeToSensorItem(node, resolvedFarmName));
+        return rawNodes.map((node) => {
+          const reading = readingsMap.get(node.id_sensor);
+          return mapNodeToSensorItem(node, resolvedFarmName, reading);
+        });
       }
       return [];
     } catch {

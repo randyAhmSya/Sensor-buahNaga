@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { Menu, X, LogIn } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { NAV_LINKS } from '../../constants/landing.constants'
 import { BrandLogo } from '../../components/common/BrandLogo'
 
@@ -18,7 +18,7 @@ export function PublicNavbar() {
       : 'text-slate-600 font-medium hover:text-emerald-700 py-1 transition-colors'
 
   return (
-    <nav className="fixed top-0 w-full z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md transition-all">
+    <nav className="fixed top-0 w-full z-50 border-b border-slate-200 bg-white shadow-xs transition-all">
       <div className="flex justify-between items-center p-6 py-4 max-w-7xl mx-auto">
         {/* Logo */}
         <BrandLogo variant="dark" />
@@ -37,18 +37,18 @@ export function PublicNavbar() {
         </div>
 
         {/* Action Buttons */}
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="hidden md:flex items-center space-x-3">
           <Link
             to="/login"
-            className="text-slate-700 font-semibold hover:text-emerald-700 transition-colors text-sm"
+            className="text-slate-700 font-semibold hover:text-emerald-700 transition-colors text-sm px-4 py-2 rounded-xl border border-slate-300 hover:border-slate-400"
           >
-            Log In
+            Masuk Dashboard
           </Link>
           <Link
-            to="/register"
-            className="bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-800 transition-colors text-sm shadow-xs"
+            to="/unduh-aplikasi"
+            className="bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-emerald-700 transition-all text-sm shadow-xs inline-flex items-center"
           >
-            Get Started
+            <span>Unduh Aplikasi</span>
           </Link>
         </div>
 
@@ -57,7 +57,7 @@ export function PublicNavbar() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-hidden"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200 focus:outline-hidden"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -84,17 +84,16 @@ export function PublicNavbar() {
             <Link
               to="/login"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-center gap-2 py-2 text-slate-700 font-semibold hover:text-emerald-700 border border-slate-200 rounded-lg text-sm"
+              className="flex items-center justify-center py-2.5 text-slate-700 font-semibold hover:text-emerald-700 border border-slate-200 rounded-xl text-sm"
             >
-              <LogIn className="w-4 h-4" />
-              Log In
+              Masuk Dashboard
             </Link>
             <Link
-              to="/register"
+              to="/unduh-aplikasi"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-center py-2 bg-emerald-700 text-white rounded-lg font-semibold hover:bg-emerald-800 text-sm shadow-xs"
+              className="flex items-center justify-center py-2.5 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 text-sm shadow-xs"
             >
-              Get Started
+              <span>Unduh Aplikasi</span>
             </Link>
           </div>
         </div>
