@@ -1,8 +1,10 @@
 import { useState, useEffect, type FC } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Cpu, Copy, Check, AlertCircle, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { nodeService } from '@/services/nodeService';
 import { gatewayService } from '@/services/gatewayService';
+import { gatewayKeys } from '@/services/queryKeys';
 import { useFarmsWithBlocksQuery } from '@/hooks/queries/useFarmsQuery';
 import { SensorDeviceConfigView, type SensorDeviceConfigData } from '../components/SensorDeviceConfigView';
 import type { SensorNodeItem } from '@/types/sensor.types';
@@ -15,6 +17,7 @@ export const SensorIotConfigPage: FC = () => {
   const { sensorId } = useParams<{ sensorId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
   // 1. Baca data sensor dari navigation state jika tersedia untuk instant rendering
   const stateSensor = (location.state as { sensor?: SensorNodeItem } | undefined)?.sensor;
@@ -73,8 +76,8 @@ export const SensorIotConfigPage: FC = () => {
         }
 
         // Resolusi nama kebun dan blok
-        let resolvedFarmName = nodeDetail.blok?.kebun?.nama_kebun || 'Kebun';
-        let resolvedBlockName = nodeDetail.blok?.nama_blok || 'Blok Lahan';
+        let resolvedFarmName = nodeDetail.blok?.kebun?.nama_kebun || '';
+        let resolvedBlockName = nodeDetail.blok?.nama_blok || '';
         let resolvedFarmId = nodeDetail.blok?.kebun?.id_kebun || nodeDetail.blok?.kebun_id || '';
         const targetBlockId = nodeDetail.blok_id || nodeDetail.blok?.id_blok || '';
 
@@ -222,6 +225,12 @@ export const SensorIotConfigPage: FC = () => {
       const res = await gatewayService.resetPairing(targetGatewayId);
       const newPairingCode = res?.data?.kode_pairing || '';
 
+      // Invalidate gateway cache (Koreksi 4)
+      queryClient.invalidateQueries({ queryKey: gatewayKeys.all });
+      if (sensor?.farmId) {
+        queryClient.invalidateQueries({ queryKey: gatewayKeys.list(sensor.farmId) });
+      }
+
       // Tutup dialog saat reset sukses
       setIsResetDialogOpen(false);
 
@@ -286,7 +295,7 @@ export const SensorIotConfigPage: FC = () => {
 
   // Penyiapan data konfigurasi IoT yang jujur tanpa nilai karangan
   const configData: SensorDeviceConfigData = {
-    nama: sensor?.blockName || 'Blok Lahan',
+    nama: sensor?.blockName || sensor?.nodeCode || '',
     sensor_id: sensor?.id || sensorId || '',
     kode_node: sensor?.nodeCode || '',
     kode_gateway: sensor?.gatewayCode || null,
@@ -427,9 +436,11 @@ export const SensorIotConfigPage: FC = () => {
 
               {/* Badges Lokasi Kebun & Sensor ID Copy Pill */}
               <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0">
-                <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 border border-slate-200 text-slate-700">
-                  {sensor.farmName} • {sensor.blockName}
-                </span>
+                {(Boolean(sensor.farmName) || Boolean(sensor.blockName)) && (
+                  <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 border border-slate-200 text-slate-700">
+                    {sensor.farmName || '--'} • {sensor.blockName || '--'}
+                  </span>
+                )}
 
                 <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-50 border border-emerald-200 text-emerald-800">
                   Lampu: {sensor.jumlah_lampu ?? 1} unit • {formatWattTerpasang(sensor.watt_terpasang)}

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { scheduleService, normalizeTo24HourTime } from '@/services/scheduleService';
-import { farmService } from '@/services/farmService';
+import { useFarmsQuery } from '@/hooks/queries/useFarmsQuery';
 import { scheduleFormSchema } from '../schemas/scheduleSchema';
 import type { ScheduleFormInput } from '../schemas/scheduleSchema';
 import type { Farm } from '@/types/farm.types';
@@ -43,6 +43,7 @@ export const ScheduleForm: React.FC<ScheduleFormProps> = ({
 }) => {
   const navigate = useNavigate();
 
+  const { data: farmList = [] } = useFarmsQuery();
   const [farms, setFarms] = useState<Farm[]>([]);
   const [nodes, setNodes] = useState<
     Array<{
@@ -78,13 +79,15 @@ export const ScheduleForm: React.FC<ScheduleFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    if (farmList.length > 0) {
+      setFarms(farmList);
+    }
+  }, [farmList]);
+
+  useEffect(() => {
     let isMounted = true;
-    Promise.all([
-      farmService.getAll().catch(() => []),
-      scheduleService.getAvailableNodesForSchedule().catch(() => []),
-    ]).then(([farmList, nodeList]) => {
+    scheduleService.getAvailableNodesForSchedule().then((nodeList) => {
       if (isMounted) {
-        setFarms(farmList);
         setNodes(nodeList);
 
         // Sinkronisasi jika nodeId di formData adalah ID sensor (UUID) atau kode perangkat

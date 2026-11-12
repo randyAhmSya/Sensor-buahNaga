@@ -54,7 +54,7 @@ export const ScheduleHistoryTab: React.FC<ScheduleHistoryTabProps> = ({
   // Label nama cakupan yang sedang dilihat
   const activeScopeLabel = React.useMemo(() => {
     if (selectedScope === 'default') {
-      return `Default Kebun (${kebunName})`;
+      return kebunName ? `Default Kebun (${kebunName})` : 'Default Kebun';
     }
     const found = nodesWithSensor.find((n) => n.id_sensor === selectedScope);
     if (found) {
@@ -135,7 +135,7 @@ export const ScheduleHistoryTab: React.FC<ScheduleHistoryTabProps> = ({
               onChange={(e) => onScopeChange(e.target.value)}
               className="w-full appearance-none pl-3.5 pr-9 py-2 bg-white border border-slate-200 hover:border-slate-300 focus:border-emerald-600 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer shadow-2xs"
             >
-              <option value="default">Default Kebun ({kebunName})</option>
+              <option value="default">{kebunName ? `Default Kebun (${kebunName})` : 'Default Kebun'}</option>
               {nodesWithSensor.map((node) => (
                 <option key={node.id_sensor} value={node.id_sensor!}>
                   {node.nama_blok} - {node.kode_perangkat || 'Node'}

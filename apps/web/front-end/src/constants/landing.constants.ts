@@ -29,10 +29,11 @@ export interface HowItWorksStep {
 }
 
 export const NAV_LINKS: NavLinkItem[] = [
-  { label: 'Features', path: '/features', footerLabel: 'Fitur Utama' },
-  { label: 'How it Works', path: '/how-it-works', footerLabel: 'Cara Kerja' },
-  { label: 'Pricing', path: '/pricing', footerLabel: 'Paket Harga' },
-  { label: 'About Us', path: '/about-us', footerLabel: 'Tentang Kami' },
+  { label: 'Fitur', path: '/fitur', footerLabel: 'Fitur Utama' },
+  { label: 'Teknologi', path: '/teknologi', footerLabel: 'Teknologi IoT' },
+  { label: 'Cara Kerja', path: '/cara-kerja', footerLabel: 'Cara Kerja' },
+  { label: 'Unduh Aplikasi', path: '/unduh-aplikasi', footerLabel: 'Unduh Aplikasi' },
+  { label: 'Tentang Kami', path: '/about-us', footerLabel: 'Tentang Kami' },
 ]
 
 export const PRICING_PLANS: PricingPlan[] = [

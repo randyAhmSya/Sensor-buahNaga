@@ -1,17 +1,15 @@
 import { z } from 'zod'
 import { antiScriptRefine } from '@/utils/sanitize'
+import { kodePerangkatSchema } from './deviceCode.schema'
+import { VALID_SENSOR_TYPES } from '@/constants/sensorType'
 
 /**
  * Skema validasi Zod untuk Formulir Tambah / Konfigurasi Node Sensor Baru
- * Memastikan penempatan blok_id dan gateway_id berstatus .min(1, 'Wajib dipilih') (bukan .optional()).
+ * Memastikan format kode perangkat memenuhi aturan MQTT broker (/^[A-Za-z0-9_-]{3,50}$/)
+ * serta penempatan blok_id dan gateway_id berstatus .min(1, 'Wajib dipilih').
  */
 export const nodeSensorSchema = z.object({
-  kode_perangkat: antiScriptRefine(
-    z
-      .string()
-      .trim()
-      .min(1, 'Kode perangkat node sensor wajib diisi')
-  ),
+  kode_perangkat: kodePerangkatSchema,
   blok_id: antiScriptRefine(
     z
       .string()
@@ -24,12 +22,7 @@ export const nodeSensorSchema = z.object({
       .trim()
       .min(1, 'Wajib dipilih')
   ),
-  tipe_sensor: antiScriptRefine(
-    z
-      .string()
-      .trim()
-      .min(1, 'Wajib dipilih')
-  ).default('lux_suhu'),
+  tipe_sensor: z.enum(VALID_SENSOR_TYPES).default('lux_suhu'),
   status_koneksi: z.enum(['aktif', 'nonaktif']).default('aktif'),
   jumlah_lampu: z.coerce
     .number()

@@ -65,10 +65,10 @@ export interface SensorLogItem {
   timestamp: string
   lux: string
   temperature: string
-  humidity: string
-  battery: string
-  signalQuality: string
-  gatewayStatus: 'Online / Synced' | 'Offline'
+  humidity?: string
+  battery?: string
+  signalQuality?: string
+  gatewayStatus?: string
 }
 
 export interface CycleHistoryItem {

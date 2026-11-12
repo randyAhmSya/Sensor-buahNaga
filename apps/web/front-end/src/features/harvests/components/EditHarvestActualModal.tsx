@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import type { HarvestCycleItem } from '@/data/mockHarvests';
+import type { HarvestCycle } from '../types/harvest.types';
 
 interface EditHarvestActualModalProps {
   isOpen: boolean;
-  cycle: HarvestCycleItem | null;
+  cycle: HarvestCycle | null;
   onClose: () => void;
   onSave: (cycleId: string, actualDate: string, status: 'Berjalan' | 'Selesai') => void;
 }
@@ -21,8 +21,8 @@ export const EditHarvestActualModal: React.FC<EditHarvestActualModalProps> = ({
 
   useEffect(() => {
     if (cycle) {
-      setActualDate(cycle.actualHarvestDate || new Date().toISOString().split('T')[0]);
-      setStatus(cycle.status);
+      setActualDate(cycle.tanggal_panen || new Date().toISOString().split('T')[0]);
+      setStatus(cycle.status_siklus === 'SELESAI' ? 'Selesai' : 'Berjalan');
     }
   }, [cycle]);
 
@@ -30,7 +30,7 @@ export const EditHarvestActualModal: React.FC<EditHarvestActualModalProps> = ({
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(cycle.id, actualDate, status);
+    onSave(cycle.id_siklus_panen, actualDate, status);
     onClose();
   };
 
@@ -53,8 +53,8 @@ export const EditHarvestActualModal: React.FC<EditHarvestActualModalProps> = ({
 
         <form onSubmit={handleSave} className="p-6 space-y-4">
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600 space-y-1">
-            <div><span className="font-semibold text-slate-800">{cycle.blockName}</span> ({cycle.farmName})</div>
-            <div>Estimasi Awal: <span className="font-semibold text-slate-800">{cycle.estimatedHarvestDate}</span></div>
+            <div><span className="font-semibold text-slate-800">{cycle.blockName || '--'}</span> ({cycle.farmName || '--'})</div>
+            <div>Estimasi Awal: <span className="font-semibold text-slate-800">{cycle.estimasi_tanggal_panen}</span></div>
           </div>
 
           <div className="space-y-1.5">

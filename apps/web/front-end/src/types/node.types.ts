@@ -58,6 +58,7 @@ export interface CreateNodePayload {
   status_koneksi?: NodeSensorStatus;
   jumlah_lampu?: number;
   watt_per_lampu?: number | null;
+  qr_id?: string | null;
 }
 
 export interface UpdateNodePayload {

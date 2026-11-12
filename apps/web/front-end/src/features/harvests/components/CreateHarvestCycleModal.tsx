@@ -97,8 +97,8 @@ export const CreateHarvestCycleModal: React.FC<CreateHarvestCycleModalProps> = (
       // Tambahkan nama blok & kebun jika belum terisi dari backend
       const enriched: HarvestCycle = {
         ...created,
-        blockName: created.blockName || selectedBlock?.name || 'Blok Lahan',
-        farmName: created.farmName || selectedBlock?.farmName || 'Kebun Buah Naga',
+        blockName: created.blockName || selectedBlock?.name || '',
+        farmName: created.farmName || selectedBlock?.farmName || '',
       };
 
       notify.success('Siklus Dimulai', 'Siklus panen fotoperiode berhasil diinisiasi.');

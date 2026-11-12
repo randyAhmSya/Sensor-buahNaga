@@ -15,8 +15,8 @@ export interface SensorNodeItem {
   tokenGateway?: string | null
   tipeSensor?: string
   status: SensorStatus
-  luxLevel: number
-  temperature: number
+  luxLevel: number | null
+  temperature: number | null
   lastSeen: string
   sparklineData: number[]
   qrCode?: string

@@ -25,8 +25,8 @@ export const HarvestCycleTable: React.FC<HarvestCycleTableProps> = ({
       header: 'Nama Blok & Kebun',
       cell: (item) => (
         <div>
-          <div className="font-bold text-slate-900">{item.blockName || 'Blok Lahan'}</div>
-          <div className="text-xs text-slate-500">{item.farmName || 'Kebun Buah Naga'}</div>
+          <div className="font-bold text-slate-900">{item.blockName || '--'}</div>
+          <div className="text-xs text-slate-500">{item.farmName || '--'}</div>
         </div>
       ),
     },
@@ -161,10 +161,10 @@ export const HarvestCycleTable: React.FC<HarvestCycleTableProps> = ({
         <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
           <div className="min-w-0 flex-1">
             <h4 className="text-base font-bold text-slate-900 truncate">
-              {item.blockName || 'Blok Lahan'}
+              {item.blockName || '--'}
             </h4>
             <p className="text-xs text-slate-500 mt-0.5 truncate">
-              {item.farmName || 'Kebun Buah Naga'}
+              {item.farmName || '--'}
             </p>
           </div>
 

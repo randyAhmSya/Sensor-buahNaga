@@ -39,23 +39,23 @@ const normalizeHarvestCycle = (raw: unknown, defaultBlockName?: string, defaultF
     (item.blockName as string) ||
     (rawBlok?.nama_blok as string) ||
     defaultBlockName ||
-    'Blok Lahan';
+    '';
 
   const farmName =
     (item.farmName as string) ||
     (rawKebun?.nama_kebun as string) ||
     defaultFarmName ||
-    'Kebun Buah Naga';
+    '';
 
   return {
     id_siklus_panen: idSiklus,
     block_id: blockId,
     tanggal_penyinaran: String(item.tanggal_penyinaran || item.lightingDate || item.tanggal_mulai || ''),
-    target_hari_berbunga: Number(item.target_hari_berbunga || item.bloomingTargetDays || item.target_berbunga || 20),
+    target_hari_berbunga: Number(item.target_hari_berbunga || item.bloomingTargetDays || item.target_berbunga || 0),
     target_hari_panen_setelah_bunga:
       item.target_hari_panen_setelah_bunga !== undefined
         ? Number(item.target_hari_panen_setelah_bunga)
-        : 50,
+        : 0,
     estimasi_tanggal_panen: String(item.estimasi_tanggal_panen || item.estimatedHarvestDate || item.estimasi_panen || ''),
     tanggal_berbunga_aktual:
       item.tanggal_berbunga_aktual !== undefined && item.tanggal_berbunga_aktual !== null

@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle, X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import type { ActiveScheduleItem } from '@/data/mockSchedules';
+import type { ActiveScheduleItem } from '../types/schedule.types';
 
 interface DeleteScheduleModalProps {
   isOpen: boolean;

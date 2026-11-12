@@ -11,14 +11,15 @@ import {
   Info,
   AlertCircle,
 } from 'lucide-react';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { gatewayService } from '@/services/gatewayService';
 import { sensorService } from '@/services/sensorService';
 import { blockService } from '@/services/blockService';
 import { useFarmsWithBlocksQuery } from '@/hooks/queries/useFarmsQuery';
-import { sensorKeys, blockKeys, farmKeys } from '@/services/queryKeys';
+import { useSensorsQuery } from '@/hooks/queries/useSensorsQuery';
+import { sensorKeys, blockKeys, farmKeys, gatewayKeys } from '@/services/queryKeys';
 import { useNotify } from '@/context/NotificationContext';
 import { useSaasMode } from '@/context/SaasContext';
 import type { GatewayBackend } from '@/types/gateway.types';
@@ -26,6 +27,19 @@ import type { CreateNodePayload } from '@/types/node.types';
 import type { SensorNodeItem } from '@/types/sensor.types';
 import { containsMaliciousScript, XSS_ERROR_MESSAGE } from '@/utils/sanitize';
 import { nodeSensorSchema } from '@/schemas/nodeSensor.schema';
+import {
+  buildGatewayCode,
+  resolveKebunGateway,
+  mapCreateGatewayError,
+  mapCreateNodeError,
+  isKebunAlreadyHasGatewayError,
+} from '../utils/kebunGateway';
+import {
+  DEFAULT_SENSOR_TYPE,
+  normalizeSensorType,
+  SENSOR_TYPE_OPTIONS,
+  type SensorType,
+} from '@/constants/sensorType';
 
 export const CreateSensorNodePage: FC = () => {
   const navigate = useNavigate();
@@ -35,28 +49,19 @@ export const CreateSensorNodePage: FC = () => {
 
   // 1. Fetch data kebun dan blok secara reaktif
   const { data: farms = [], isLoading: isLoadingFarms } = useFarmsWithBlocksQuery();
+  const activeFarmId = farms[0]?.id;
 
-  // 2. Fetch seluruh sensor aktif untuk validasi 1 Blok = 1 Sensor
-  const { data: existingSensors = [] } = useQuery<SensorNodeItem[]>({
-    queryKey: sensorKeys.all,
-    queryFn: () => sensorService.getAll(),
-    staleTime: 30_000,
-  });
+  // 2. Fetch seluruh sensor aktif untuk validasi 1 Blok = 1 Sensor (menggunakan cache bersama)
+  const { data: existingSensors = [] } = useSensorsQuery(activeFarmId);
 
   // State Form
   const [selectedBlockId, setSelectedBlockId] = useState<string>('');
   const [kodePerangkat, setKodePerangkat] = useState<string>('');
   const [jumlahLampu, setJumlahLampu] = useState<number | string>(1);
   const [wattPerLampu, setWattPerLampu] = useState<string>('');
-  const [tipeSensor] = useState<string>('cahaya_lux');
-  const [gatewayMode, setGatewayMode] = useState<'auto' | 'existing'>('auto');
-  const [selectedGatewayId, setSelectedGatewayId] = useState<string>('');
+  const [tipeSensor, setTipeSensor] = useState<SensorType>(DEFAULT_SENSOR_TYPE);
   const [gateways, setGateways] = useState<GatewayBackend[]>([]);
   const [isLoadingGateways, setIsLoadingGateways] = useState<boolean>(false);
-  const [cachedAutoGateway, setCachedAutoGateway] = useState<{
-    blockId: string;
-    gateway: GatewayBackend;
-  } | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,79 +87,10 @@ export const CreateSensorNodePage: FC = () => {
     return map;
   }, [existingSensors]);
 
-  // Load gateway saat blok terpilih berubah
-  const loadGatewaysForBlock = useCallback(
-    async (blockId: string) => {
-      const trimmedId = blockId.trim();
-      if (!trimmedId) {
-        setGateways([]);
-        setIsLoadingGateways(false);
-        setSelectedGatewayId('');
-        return;
-      }
-
-      setIsLoadingGateways(true);
-      try {
-        let resolvedFarmId: string | undefined;
-        for (const f of farms) {
-          const farmId = ((f as unknown as { id_kebun?: string }).id_kebun ?? f.id) as string | undefined;
-          const matchedBlock = (f.blocks || []).find((b) => {
-            const bId = ((b as unknown as { id_blok?: string }).id_blok ?? b.id) as string | undefined;
-            return String(bId) === String(trimmedId);
-          });
-          if (matchedBlock) {
-            resolvedFarmId =
-              (matchedBlock as unknown as { kebun_id?: string; farmId?: string }).kebun_id ??
-              (matchedBlock as unknown as { kebun_id?: string; farmId?: string }).farmId ??
-              farmId;
-            break;
-          }
-        }
-
-        const data = await gatewayService.getByBlockId(trimmedId, resolvedFarmId);
-        setGateways(data || []);
-      } catch {
-        setGateways([]);
-      } finally {
-        setIsLoadingGateways(false);
-      }
-    },
-    [farms]
-  );
-
-  useEffect(() => {
-    loadGatewaysForBlock(selectedBlockId);
-  }, [selectedBlockId, loadGatewaysForBlock]);
-
-  // Filter gateway sesuai blok terpilih
-  const filteredGateways = useMemo(() => {
-    if (!selectedBlockId) return [];
-    return gateways.filter((gw) => {
-      const gwBlokId =
-        gw.blok_id ??
-        (gw as unknown as { blockId?: string }).blockId ??
-        (gw as unknown as { blok?: { id_blok?: string; id?: string } }).blok?.id_blok ??
-        (gw as unknown as { blok?: { id_blok?: string; id?: string } }).blok?.id;
-      return String(gwBlokId) === String(selectedBlockId);
-    });
-  }, [gateways, selectedBlockId]);
-
-  // Sinkronisasi mode gateway
-  useEffect(() => {
-    if (filteredGateways.length > 0) {
-      if (!selectedGatewayId || !filteredGateways.some((g) => (g.id_gateway || g.id) === selectedGatewayId)) {
-        setSelectedGatewayId(filteredGateways[0]?.id_gateway || filteredGateways[0]?.id || '');
-      }
-    } else {
-      setGatewayMode('auto');
-      setSelectedGatewayId('');
-    }
-  }, [filteredGateways, selectedGatewayId]);
-
   // Cari informasi kebun & blok terpilih untuk ringkasan real-time
   const selectedDetails = useMemo(() => {
     if (!selectedBlockId) {
-      return { farmName: '', blockName: '', farmId: '' };
+      return { farmName: '', blockName: '', farmId: '', blockIds: [] as string[] };
     }
     for (const f of farms) {
       const matchedBlock = (f.blocks || []).find((b) => {
@@ -162,21 +98,56 @@ export const CreateSensorNodePage: FC = () => {
         return String(bId) === String(selectedBlockId);
       });
       if (matchedBlock) {
+        const blockIds = (f.blocks || [])
+          .map((b) => (((b as unknown as { id_blok?: string }).id_blok ?? b.id) as string) || '')
+          .filter(Boolean);
         return {
           farmName: f.name,
           farmId: f.id,
           blockName: matchedBlock.name,
+          blockIds,
         };
       }
     }
-    return { farmName: '', blockName: '', farmId: '' };
+    return { farmName: '', blockName: '', farmId: '', blockIds: [] as string[] };
   }, [farms, selectedBlockId]);
 
-  // Cari data gateway terpilih
-  const selectedGateway = useMemo(() => {
-    if (gatewayMode !== 'existing' || !selectedGatewayId) return null;
-    return filteredGateways.find((g) => (g.id_gateway || g.id) === selectedGatewayId) || null;
-  }, [gatewayMode, selectedGatewayId, filteredGateways]);
+  // Load gateway saat kebun terpilih berubah (1 kebun = 1 gateway)
+  const loadGatewaysForKebun = useCallback(
+    async (farmId: string) => {
+      const cleanId = farmId.trim();
+      if (!cleanId) {
+        setGateways([]);
+        setIsLoadingGateways(false);
+        return;
+      }
+
+      setIsLoadingGateways(true);
+      try {
+        const data = await gatewayService.getAllByKebun(cleanId);
+        setGateways(data || []);
+      } catch {
+        setGateways([]);
+      } finally {
+        setIsLoadingGateways(false);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (selectedDetails.farmId) {
+      loadGatewaysForKebun(selectedDetails.farmId);
+    } else {
+      setGateways([]);
+    }
+  }, [selectedDetails.farmId, loadGatewaysForKebun]);
+
+  // Resolusi gateway kebun secara deterministik (1 kebun = 1 gateway)
+  const kebunGateway = useMemo(() => {
+    if (!selectedDetails.farmId || gateways.length === 0) return null;
+    return resolveKebunGateway(gateways, selectedDetails.farmId, selectedDetails.blockIds);
+  }, [gateways, selectedDetails.farmId, selectedDetails.blockIds]);
 
   // Handler pembuatan blok cepat
   const handleQuickBlockSubmit = async (e: FormEvent) => {
@@ -251,92 +222,78 @@ export const CreateSensorNodePage: FC = () => {
     }
 
     setIsSubmitting(true);
+    let createdGwInCurrentAttempt: GatewayBackend | null = null;
 
     try {
       let resolvedGatewayId = '';
       let resolvedGatewayCode = '';
       let resolvedPairingCode = '';
 
-      if (gatewayMode === 'existing') {
-        if (!selectedGatewayId.trim()) {
-          setError('Pilih Gateway IoT yang tersedia di blok ini, atau gunakan mode buat baru otomatis.');
-          setIsSubmitting(false);
-          return;
-        }
-        resolvedGatewayId = selectedGatewayId.trim();
-        resolvedGatewayCode = selectedGateway?.kode_perangkat || 'GTW-IoT';
-        resolvedPairingCode = selectedGateway?.kode_pairing || '';
+      if (kebunGateway) {
+        resolvedGatewayId = kebunGateway.id_gateway || kebunGateway.id || '';
+        resolvedGatewayCode = kebunGateway.kode_perangkat;
+        resolvedPairingCode = kebunGateway.kode_pairing || '';
       } else {
-        // Mode 'auto': gunakan gateway sementara jika sudah pernah dibuat untuk blok ini saat retry
-        if (cachedAutoGateway && cachedAutoGateway.blockId === selectedBlockId.trim()) {
-          resolvedGatewayId = cachedAutoGateway.gateway.id_gateway || cachedAutoGateway.gateway.id || '';
-          resolvedGatewayCode = cachedAutoGateway.gateway.kode_perangkat;
-          resolvedPairingCode = cachedAutoGateway.gateway.kode_pairing || '';
-        } else {
-          // Buat gateway baru secara otomatis dengan kode unik deterministik
-          const cleanNode = kodePerangkat.trim().replace(/[^a-zA-Z0-9_-]/g, '').toUpperCase();
-          let candidateCode = `GTW-${cleanNode}`;
+        // Mode otomatis: Jika kebun belum punya gateway, buat SATU gateway deterministik baru
+        const candidateCode = buildGatewayCode(kodePerangkat);
+        let createdGw: GatewayBackend | null = null;
 
-          const codeExists = gateways.some(
-            (g) => g.kode_perangkat.toLowerCase() === candidateCode.toLowerCase()
-          );
-          if (codeExists) {
-            candidateCode = `${candidateCode}-${Date.now().toString().slice(-4)}`;
+        try {
+          const gwRes = await gatewayService.create({
+            blok_id: selectedBlockId.trim(),
+            kode_perangkat: candidateCode,
+            status_koneksi: 'belum_terhubung',
+          });
+
+          const resObj = gwRes as unknown as Record<string, unknown>;
+          const resData = (resObj?.data as Record<string, unknown>)?.data || resObj?.data || resObj;
+          const resDataTyped = resData as Record<string, unknown>;
+          const newGwId = String(resDataTyped?.id_gateway || resDataTyped?.id || '');
+
+          if (!newGwId) {
+            throw new Error('Server tidak mengembalikan ID gateway valid.');
           }
 
-          let createdGw: GatewayBackend | null = null;
-          try {
-            const gwRes = await gatewayService.create({
-              blok_id: selectedBlockId.trim(),
-              kode_perangkat: candidateCode,
-              status_koneksi: 'belum_terhubung',
-            });
-            const resObj = gwRes as unknown as Record<string, unknown>;
-            const resData = (resObj?.data as Record<string, unknown>)?.data || resObj?.data || resObj;
-            const resDataTyped = resData as Record<string, unknown>;
-            createdGw = {
-              id_gateway: String(resDataTyped?.id_gateway || resDataTyped?.id || `gtw-${Date.now()}`),
-              blok_id: selectedBlockId.trim(),
-              kode_perangkat: String(resDataTyped?.kode_perangkat || candidateCode),
-              status_koneksi: String(resDataTyped?.status_koneksi || 'belum_terhubung'),
-              kode_pairing: String(resDataTyped?.kode_pairing || ''),
-            };
-          } catch (gwErr: unknown) {
-            const errObj = gwErr as Record<string, unknown>;
-            const status = (errObj?.status || (errObj?.response as Record<string, unknown>)?.status) as number;
-            if (status === 422) {
-              const retryCode = `${candidateCode}-${Date.now().toString().slice(-4)}`;
-              const retryRes = await gatewayService.create({
-                blok_id: selectedBlockId.trim(),
-                kode_perangkat: retryCode,
-                status_koneksi: 'belum_terhubung',
-              });
-              const retryObj = retryRes as unknown as Record<string, unknown>;
-              const retryData = (retryObj?.data as Record<string, unknown>)?.data || retryObj?.data || retryObj;
-              const retryDataTyped = retryData as Record<string, unknown>;
-              createdGw = {
-                id_gateway: String(retryDataTyped?.id_gateway || retryDataTyped?.id || `gtw-${Date.now()}`),
-                blok_id: selectedBlockId.trim(),
-                kode_perangkat: String(retryDataTyped?.kode_perangkat || retryCode),
-                status_koneksi: String(retryDataTyped?.status_koneksi || 'belum_terhubung'),
-                kode_pairing: String(retryDataTyped?.kode_pairing || ''),
-              };
+          createdGw = {
+            id_gateway: newGwId,
+            blok_id: selectedBlockId.trim(),
+            kode_perangkat: String(resDataTyped?.kode_perangkat || candidateCode),
+            status_koneksi: String(resDataTyped?.status_koneksi || 'belum_terhubung'),
+            kode_pairing: String(resDataTyped?.kode_pairing || ''),
+          };
+
+          // Invalidasi cache gateway segera setelah pembuatan berhasil
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: gatewayKeys.all }),
+            selectedDetails.farmId
+              ? queryClient.invalidateQueries({ queryKey: gatewayKeys.list(selectedDetails.farmId) })
+              : Promise.resolve(),
+          ]);
+        } catch (gwErr: unknown) {
+          // Koreksi 2: Balapan dua tab atau dua pengguna (HTTP 422: Kebun ini sudah memiliki gateway)
+          if (isKebunAlreadyHasGatewayError(gwErr) && selectedDetails.farmId) {
+            const refetched = await gatewayService.getAllByKebun(selectedDetails.farmId);
+            const recovered = resolveKebunGateway(refetched, selectedDetails.farmId, selectedDetails.blockIds);
+            if (recovered && (recovered.id_gateway || recovered.id)) {
+              createdGw = recovered;
             } else {
-              throw gwErr;
+              throw new Error(mapCreateGatewayError(gwErr));
             }
+          } else {
+            throw new Error(mapCreateGatewayError(gwErr));
           }
+        }
 
-          if (createdGw) {
-            setCachedAutoGateway({ blockId: selectedBlockId.trim(), gateway: createdGw });
-            resolvedGatewayId = createdGw.id_gateway;
-            resolvedGatewayCode = createdGw.kode_perangkat;
-            resolvedPairingCode = createdGw.kode_pairing || '';
-          }
+        if (createdGw) {
+          createdGwInCurrentAttempt = createdGw;
+          resolvedGatewayId = createdGw.id_gateway || createdGw.id || '';
+          resolvedGatewayCode = createdGw.kode_perangkat;
+          resolvedPairingCode = createdGw.kode_pairing || '';
         }
       }
 
       if (!resolvedGatewayId) {
-        setError('Gagal menyiapkan Gateway IoT untuk blok ini.');
+        setError('Gagal menyiapkan Gateway IoT untuk kebun ini.');
         setIsSubmitting(false);
         return;
       }
@@ -350,7 +307,7 @@ export const CreateSensorNodePage: FC = () => {
         kode_perangkat: kodePerangkat.trim(),
         blok_id: selectedBlockId.trim(),
         gateway_id: resolvedGatewayId,
-        tipe_sensor: tipeSensor.trim(),
+        tipe_sensor: normalizeSensorType(tipeSensor),
         status_koneksi: 'aktif',
         jumlah_lampu: isNaN(parsedJumlah) ? 1 : parsedJumlah,
         watt_per_lampu: parsedWatt,
@@ -377,7 +334,7 @@ export const CreateSensorNodePage: FC = () => {
         kode_perangkat: kodePerangkat.trim(),
         blok_id: selectedBlockId.trim(),
         gateway_id: resolvedGatewayId,
-        tipe_sensor: tipeSensor.trim(),
+        tipe_sensor: normalizeSensorType(tipeSensor),
         status_koneksi: 'offline',
         jumlah_lampu: effectiveJumlahLampu,
         watt_per_lampu: parsedWatt,
@@ -395,6 +352,10 @@ export const CreateSensorNodePage: FC = () => {
         ''
       );
 
+      if (!newSensorId) {
+        throw new Error('Server tidak mengembalikan ID sensor valid.');
+      }
+
       // Invalidate TanStack Query caches
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: sensorKeys.all, refetchType: 'all' }),
@@ -404,6 +365,7 @@ export const CreateSensorNodePage: FC = () => {
         queryClient.invalidateQueries({ queryKey: ['kebun'], refetchType: 'all' }),
         queryClient.invalidateQueries({ queryKey: farmKeys.all, refetchType: 'all' }),
         queryClient.invalidateQueries({ queryKey: farmKeys.withBlocks(), refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: gatewayKeys.all, refetchType: 'all' }),
       ]);
 
       notify.success('Registrasi Berhasil', `Node sensor ${kodePerangkat.trim()} berhasil didaftarkan.`);
@@ -415,12 +377,12 @@ export const CreateSensorNodePage: FC = () => {
           : null;
 
       const sensorPayload: SensorNodeItem = {
-        id: newSensorId || `temp-${Date.now()}`,
+        id: newSensorId,
         nodeCode: kodePerangkat.trim(),
         farmId: selectedDetails.farmId || '',
-        farmName: selectedDetails.farmName || 'Kebun Buah Naga',
+        farmName: selectedDetails.farmName || '',
         blockId: selectedBlockId.trim(),
-        blockName: selectedDetails.blockName || 'Blok Lahan',
+        blockName: selectedDetails.blockName || '',
         status: 'Offline',
         luxLevel: 0,
         temperature: 0,
@@ -436,51 +398,28 @@ export const CreateSensorNodePage: FC = () => {
       };
 
       // Redirect langsung ke halaman Konfigurasi IoT
-      const targetUrl = newSensorId
-        ? `/kebun/sensors/${newSensorId}/iot-config`
-        : '/kebun/sensors';
-
-      navigate(targetUrl, {
+      navigate(`/kebun/sensors/${newSensorId}/iot-config`, {
         replace: true,
         state: { sensor: sensorPayload },
       });
     } catch (err: unknown) {
-      let msg = 'Gagal menambahkan node sensor baru.';
+      const mappedMsg = mapCreateNodeError(err, isSaasEnabled);
+      if (createdGwInCurrentAttempt) {
+        // Koreksi 5: Gateway sudah terbuat tapi registrasi node gagal
+        setError(
+          `Gateway IoT ${createdGwInCurrentAttempt.kode_perangkat} berhasil didaftarkan di kebun ini, namun registrasi node sensor gagal: ${mappedMsg}. Gateway tersebut sudah tersimpan dan dapat langsung digunakan pada penyimpanan berikutnya.`
+        );
+      } else {
+        setError(mappedMsg);
+      }
       if (err && typeof err === 'object') {
         const errObj = err as Record<string, unknown>;
         const status = (errObj.status || (errObj.response as Record<string, unknown>)?.status) as number;
-        const responseData = (errObj.response as Record<string, unknown>)?.data as Record<string, unknown>;
-        const errors = (responseData?.errors || errObj.errors) as Record<string, string[]> | undefined;
-
-        if (status === 422) {
-          if (errors?.blok_id) {
-            msg = 'Blok lahan ini sudah memiliki node sensor aktif. Satu blok hanya dapat dipasangkan dengan satu node.';
-          } else if (errors?.kode_perangkat) {
-            msg = 'Kode perangkat node ini sudah digunakan. Mohon gunakan kode perangkat lain yang unik.';
-          } else if (errors?.gateway_id) {
-            msg = 'Gateway IoT yang dipilih tidak valid untuk blok ini.';
-          } else if (errors?.jumlah_lampu) {
-            msg = 'Jumlah Lampu: ' + errors.jumlah_lampu.join(', ');
-          } else if (errors?.watt_per_lampu) {
-            msg = 'Daya per Lampu: ' + errors.watt_per_lampu.join(', ');
-          } else if (responseData?.message) {
-            msg = String(responseData.message);
-          }
-        } else if (status === 403) {
-          msg = isSaasEnabled
-            ? 'Batas kuota perangkat sensor pada paket langganan Anda telah tercapai.'
-            : 'Anda tidak memiliki hak akses untuk menambahkan perangkat sensor pada blok ini.';
-          if (isSaasEnabled) {
-            setIsSubscriptionError(true);
-          }
-        } else if (status === 404) {
-          msg = 'Blok atau Gateway tidak ditemukan di server.';
-        } else if (errObj.message) {
-          msg = String(errObj.message);
+        if (status === 403 && isSaasEnabled) {
+          setIsSubscriptionError(true);
         }
       }
-      setError(msg);
-      notify.error('Registrasi Gagal', msg);
+      notify.error('Registrasi Gagal', mappedMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -600,7 +539,7 @@ export const CreateSensorNodePage: FC = () => {
               </p>
             </div>
 
-            {/* SEKSI 2: GATEWAY IOT */}
+            {/* SEKSI 2: GATEWAY IOT (1 KEBUN 1 GATEWAY) */}
             {selectedBlockId && (
               <div className="space-y-3 pt-3 border-t border-slate-100">
                 <div className="flex items-center gap-2">
@@ -609,87 +548,45 @@ export const CreateSensorNodePage: FC = () => {
                     2. Gateway Penghubung IoT
                   </label>
                   {isLoadingGateways && (
-                    <span className="text-[11px] text-slate-400 italic">Memeriksa gateway...</span>
+                    <span className="text-[11px] text-slate-400 italic">Memeriksa gateway kebun...</span>
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label
-                    className={`p-3.5 rounded-xl border text-left cursor-pointer transition-colors flex items-start gap-3 ${
-                      gatewayMode === 'auto'
-                        ? 'border-emerald-600 bg-emerald-50/50 text-slate-900 ring-1 ring-emerald-600'
-                        : 'border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="gatewayMode"
-                      value="auto"
-                      checked={gatewayMode === 'auto'}
-                      onChange={() => setGatewayMode('auto')}
-                      className="mt-0.5 text-emerald-700 focus:ring-emerald-600 cursor-pointer"
-                    />
-                    <div className="text-xs space-y-0.5">
-                      <span className="font-bold block text-slate-900">Buat Gateway Baru Otomatis</span>
-                      <span className="text-slate-500 text-[11px] block leading-normal">
-                        Generate gateway tambahan beserta kode pairing baru khusus untuk node ini.
+                {kebunGateway ? (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
+                        Gateway IoT Kebun Terhubung
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                        1 Kebun 1 Gateway
                       </span>
                     </div>
-                  </label>
-
-                  <label
-                    className={`p-3.5 rounded-xl border text-left cursor-pointer transition-colors flex items-start gap-3 ${
-                      filteredGateways.length === 0
-                        ? 'opacity-60 cursor-not-allowed bg-slate-50 border-slate-200 text-slate-400'
-                        : gatewayMode === 'existing'
-                        ? 'border-emerald-600 bg-emerald-50/50 text-slate-900 ring-1 ring-emerald-600'
-                        : 'border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="gatewayMode"
-                      value="existing"
-                      checked={gatewayMode === 'existing'}
-                      onChange={() => setGatewayMode('existing')}
-                      disabled={filteredGateways.length === 0}
-                      className="mt-0.5 text-emerald-700 focus:ring-emerald-600 cursor-pointer"
-                    />
-                    <div className="text-xs space-y-0.5">
-                      <span className="font-bold block text-slate-900">Gunakan Gateway Tersedia</span>
-                      <span className="text-slate-500 text-[11px] block leading-normal">
-                        {filteredGateways.length > 0
-                          ? `Tersedia ${filteredGateways.length} gateway di blok ini.`
-                          : 'Belum ada gateway terdaftar di blok ini.'}
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono font-bold text-sm text-slate-900">
+                        {kebunGateway.kode_perangkat}
+                      </span>
+                      <span className="text-xs font-semibold text-emerald-700">
+                        {kebunGateway.status_koneksi === 'terhubung' ? 'Terhubung' : 'Belum Terhubung'}
                       </span>
                     </div>
-                  </label>
-                </div>
-
-                {gatewayMode === 'existing' && filteredGateways.length > 0 && (
-                  <div className="space-y-1.5 pt-1">
-                    <label htmlFor="select-gateway-existing" className="block text-[11px] font-semibold text-slate-700">
-                      Pilih Gateway Terdaftar:
-                    </label>
-                    <div className="relative">
-                      <select
-                        id="select-gateway-existing"
-                        value={selectedGatewayId}
-                        onChange={(e) => setSelectedGatewayId(e.target.value)}
-                        required
-                        className="block w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-medium text-slate-900 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer shadow-2xs"
-                      >
-                        {filteredGateways.map((gw) => {
-                          const gwId = gw.id_gateway || gw.id || '';
-                          return (
-                            <option key={gwId} value={gwId}>
-                              {gw.kode_perangkat} ({gw.status_koneksi === 'terhubung' ? 'Terhubung' : 'Belum Terhubung'})
-                            </option>
-                          );
-                        })}
-                      </select>
-                      <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <p className="text-[11px] text-slate-600 leading-normal">
+                      Node sensor pada blok ini akan otomatis terhubung ke Gateway IoT kebun ini ({selectedDetails.farmName || 'Kebun'}).
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-amber-900 uppercase tracking-wider">
+                        Kebun Belum Memiliki Gateway
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold">
+                        Otomatis Dibuat
+                      </span>
                     </div>
+                    <p className="text-[11px] text-amber-800 leading-normal">
+                      Sesuai aturan arsitektur sistem, satu kebun hanya boleh memiliki satu gateway. Karena kebun ini belum memiliki gateway, sistem akan mendaftarkan 1 Gateway IoT otomatis ({buildGatewayCode(kodePerangkat || 'NODE')}) saat node sensor disimpan.
+                    </p>
                   </div>
                 )}
               </div>
@@ -729,12 +626,33 @@ export const CreateSensorNodePage: FC = () => {
                 </p>
               </div>
 
-              {/* Tipe Sensor Info */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between text-xs">
-                <span className="font-semibold text-slate-600">Tipe Pengukuran Sensor:</span>
-                <span className="font-mono font-bold text-emerald-800 bg-emerald-100/60 px-2.5 py-1 rounded-md">
-                  Intensitas Cahaya (cahaya_lux)
-                </span>
+              {/* Tipe Sensor Dropdown */}
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="select-tipe-sensor"
+                  className="block text-xs font-semibold text-slate-800"
+                >
+                  Tipe Pengukuran Sensor <span className="text-rose-600 font-bold ml-0.5">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    id="select-tipe-sensor"
+                    value={tipeSensor}
+                    onChange={(e) => setTipeSensor(normalizeSensorType(e.target.value))}
+                    disabled={isSubmitting}
+                    className="block w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-900 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 transition-colors shadow-2xs pr-10 cursor-pointer"
+                  >
+                    {SENSOR_TYPE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  Pilih spesifikasi kemampuan telemetri modul sensor IoT.
+                </p>
               </div>
 
               {/* Jumlah Lampu & Watt per Lampu */}
@@ -867,18 +785,18 @@ export const CreateSensorNodePage: FC = () => {
               <div className="flex justify-between items-start gap-2 pt-2 border-t border-slate-100">
                 <span className="text-slate-500 font-medium">Gateway IoT:</span>
                 <span className="font-semibold text-slate-800 text-right">
-                  {gatewayMode === 'auto'
-                    ? 'Dibuat Otomatis (GTW-*)'
-                    : selectedGateway?.kode_perangkat || '-'}
+                  {kebunGateway
+                    ? kebunGateway.kode_perangkat
+                    : 'Dibuat Otomatis (GTW-*)'}
                 </span>
               </div>
 
               <div className="flex justify-between items-start gap-2">
                 <span className="text-slate-500 font-medium">Kode Pairing:</span>
                 <span className="font-mono font-bold text-emerald-800 text-right">
-                  {gatewayMode === 'auto'
-                    ? 'Akan Digenerate'
-                    : selectedGateway?.kode_pairing || '-'}
+                  {kebunGateway
+                    ? kebunGateway.kode_pairing || '--'
+                    : 'Akan Digenerate'}
                 </span>
               </div>
             </div>

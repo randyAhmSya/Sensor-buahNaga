@@ -7,6 +7,7 @@ import { notificationKeys, queryKeys, tenantKeys } from '@/services/queryKeys';
 import { useAdminAccessHistoryQuery } from '@/hooks/useAdmin';
 import { Bell } from 'lucide-react';
 import type { NotificationFilterTab } from '@/types/notification.types';
+import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
 export interface NotificationPopoverProps {
   role: 'super_admin' | 'petani' | 'admin_kebun';
@@ -22,32 +23,6 @@ interface DisplayNotificationItem {
   waktuRelatif: string;
   tautan?: string;
   tipe?: string;
-}
-
-/**
- * Helper format waktu relatif tanpa em dash
- */
-function formatRelativeTime(dateString?: string): string {
-  if (!dateString) return 'Baru saja';
-  try {
-    const then = new Date(dateString).getTime();
-    const now = Date.now();
-    const diffSec = Math.floor((now - then) / 1000);
-
-    if (diffSec < 60) return 'Baru saja';
-    const diffMin = Math.floor(diffSec / 60);
-    if (diffMin < 60) return `${diffMin} menit yang lalu`;
-    const diffHour = Math.floor(diffMin / 60);
-    if (diffHour < 24) return `${diffHour} jam yang lalu`;
-    const diffDay = Math.floor(diffHour / 24);
-    if (diffDay < 30) return `${diffDay} hari yang lalu`;
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-    });
-  } catch {
-    return 'Beberapa waktu lalu';
-  }
 }
 
 const STORAGE_ADMIN_READ_KEY = 'agrolight_admin_read_notifications';

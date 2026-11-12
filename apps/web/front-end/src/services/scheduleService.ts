@@ -3,6 +3,8 @@ import type { ApiResponse } from '@/types/api.types';
 import type { ActiveScheduleItem } from '@/features/schedules/types/schedule.types';
 import { farmService } from './farmService';
 import { nodeService } from './nodeService';
+import { queryClient } from '@/lib/queryClient';
+import { farmKeys, sensorKeys } from './queryKeys';
 
 /**
  * Kontrak Data Model Backend Jadwal Lampu (Tabel: jadwal_lampus)
@@ -329,7 +331,7 @@ export const scheduleService = {
         nodeCode = item.nama_jadwal || 'Default Seluruh Kebun';
       }
 
-      const location = item.kebun?.nama_kebun || 'Kebun Buah Naga';
+      const location = item.kebun?.nama_kebun || '';
       const intensity =
         item.instensitas_cahaya ??
         item.intensitas_cahaya ??
@@ -516,7 +518,13 @@ export const scheduleService = {
    * Mengambil node sensor yang tersedia untuk dipilih di formulir jadwal
    */
   getAvailableNodesForSchedule: async () => {
-    const farms = await farmService.getAll().catch(() => []);
+    const farms = await queryClient
+      .fetchQuery({
+        queryKey: farmKeys.all,
+        queryFn: () => farmService.getAll(),
+        staleTime: 60_000,
+      })
+      .catch(() => []);
     const result: Array<{
       id: string; // ID Sensor (UUID)
       code: string; // kode_perangkat
@@ -529,17 +537,23 @@ export const scheduleService = {
 
     for (const farm of farms) {
       if (!farm.id) continue;
-      const nodes = await nodeService.getAll(farm.id).catch(() => []);
+      const nodes = await queryClient
+        .fetchQuery({
+          queryKey: sensorKeys.list(farm.id),
+          queryFn: () => nodeService.getAll(farm.id),
+          staleTime: 30_000,
+        })
+        .catch(() => []);
       for (const node of nodes) {
-        const blockName = node.blok?.nama_blok || 'Blok Lahan';
+        const blockName = node.blok?.nama_blok || '';
         result.push({
           id: node.id_sensor || node.id || '',
           code: node.kode_perangkat,
-          location: `${farm.name} - ${blockName}`,
+          location: blockName ? `${farm.name} - ${blockName}` : farm.name,
           status: node.status_koneksi === 'aktif' ? 'Aktif' : 'Maintenance',
           farmId: farm.id,
           blockId: node.blok_id || undefined,
-          blockName,
+          blockName: blockName || undefined,
         });
       }
     }

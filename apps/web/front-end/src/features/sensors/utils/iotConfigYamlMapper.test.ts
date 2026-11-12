@@ -122,5 +122,27 @@ describe('iotConfigYamlMapper - Pembentuk Konfigurasi YAML IoT', () => {
     assert.match(yamlSesudah, /kode_pairing: "PAIR-RESET99"/);
     assert.doesNotMatch(yamlSesudah, /Gateway sudah dipasangkan/);
   });
+
+  it('6. Kasus nama blok kosong menggunakan fallback kode_node atau string kosong', () => {
+    const configTanpaNama: SensorDeviceConfigData = {
+      nama: '',
+      sensor_id: '6f2a8932-d1d7-4ea2-9443-4c9c1e15e8b1',
+      kode_node: 'NODE-ESP32-09',
+      kode_gateway: null,
+      kode_pairing: null,
+    };
+    const itemYaml = generateItemDeviceYaml(configTanpaNama);
+    assert.match(itemYaml, /nama: "NODE-ESP32-09"/);
+
+    const configSemuaKosong: SensorDeviceConfigData = {
+      nama: '',
+      sensor_id: '6f2a8932-d1d7-4ea2-9443-4c9c1e15e8b1',
+      kode_node: '',
+      kode_gateway: null,
+      kode_pairing: null,
+    };
+    const itemYaml2 = generateItemDeviceYaml(configSemuaKosong);
+    assert.match(itemYaml2, /nama: ""/);
+  });
 });
 

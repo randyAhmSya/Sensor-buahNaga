@@ -8,6 +8,9 @@ import { nodeService } from '@/services/nodeService'
 import type { GatewayBackend } from '@/types/gateway.types'
 import type { SensorNodeItem, SensorStatus } from '@/types/sensor.types'
 import { containsMaliciousScript, XSS_ERROR_MESSAGE } from '@/utils/sanitize'
+import { kodePerangkatSchema } from '@/schemas/deviceCode.schema'
+import { resolveKebunGateway, mapUpdateNodeError } from '../utils/kebunGateway'
+import { normalizeSensorType, SENSOR_TYPE_OPTIONS } from '@/constants/sensorType'
 
 export interface EditSensorFormData {
   nodeCode: string
@@ -44,11 +47,12 @@ const EditSensorFormContent: FC<EditSensorFormContentProps> = ({
 }) => {
   const [gateways, setGateways] = useState<GatewayBackend[]>([])
   const [isLoadingGateways, setIsLoadingGateways] = useState(false)
+  const resolvedGateway = resolveKebunGateway(gateways)
   const [formData, setFormData] = useState<EditSensorFormData>({
     nodeCode: sensor.nodeCode,
     gatewayId: sensor.gatewayId || null,
     status: sensor.status,
-    tipeSensor: sensor.tipeSensor || 'cahaya',
+    tipeSensor: normalizeSensorType(sensor.tipeSensor),
     jumlahLampu: sensor.jumlah_lampu ?? 1,
     wattPerLampu: sensor.watt_per_lampu ?? null,
   })
@@ -61,20 +65,12 @@ const EditSensorFormContent: FC<EditSensorFormContentProps> = ({
   const [error, setError] = useState<string | null>(null)
   const [successInfo, setSuccessInfo] = useState<string | null>(null)
 
-  // Fetch gateway yang terdaftar di blok sensor dengan resolusi defensif kebunId
+  // Fetch gateway kebun dengan resolusi defensif farmId (1 Kebun 1 Gateway)
   useEffect(() => {
     let isMounted = true
 
     const resolveAndFetch = async () => {
       const targetBlockId = sensor.blockId ? sensor.blockId.trim() : ''
-      if (!targetBlockId) {
-        if (isMounted) {
-          setGateways([])
-          setIsLoadingGateways(false)
-        }
-        return
-      }
-
       setIsLoadingGateways(true)
       try {
         const rawSensor = sensor as unknown as {
@@ -103,7 +99,13 @@ const EditSensorFormContent: FC<EditSensorFormContentProps> = ({
           }
         }
 
-        const data = await gatewayService.getByBlockId(targetBlockId, resolvedFarmId)
+        let data: GatewayBackend[] = []
+        if (resolvedFarmId) {
+          data = await gatewayService.getAllByKebun(resolvedFarmId)
+        } else if (targetBlockId) {
+          data = await gatewayService.getByBlockId(targetBlockId)
+        }
+
         if (isMounted) {
           setGateways(data || [])
         }
@@ -143,12 +145,14 @@ const EditSensorFormContent: FC<EditSensorFormContentProps> = ({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!formData.nodeCode.trim()) {
-      setError('Kode node perangkat wajib diisi.')
+    const nodeCodeTrimmed = formData.nodeCode.trim()
+    const nodeCodeValidation = kodePerangkatSchema.safeParse(nodeCodeTrimmed)
+    if (!nodeCodeValidation.success) {
+      setError(nodeCodeValidation.error.issues[0]?.message || 'Kode node perangkat tidak valid.')
       return
     }
 
-    if (containsMaliciousScript(formData.nodeCode) || containsMaliciousScript(formData.tipeSensor)) {
+    if (containsMaliciousScript(nodeCodeTrimmed) || containsMaliciousScript(formData.tipeSensor)) {
       setError(XSS_ERROR_MESSAGE)
       return
     }
@@ -166,6 +170,8 @@ const EditSensorFormContent: FC<EditSensorFormContentProps> = ({
 
     const submitPayload: EditSensorFormData = {
       ...formData,
+      nodeCode: nodeCodeTrimmed,
+      tipeSensor: normalizeSensorType(formData.tipeSensor),
       jumlahLampu: effectiveJumlah,
       wattPerLampu: parsedWatt,
     }
@@ -174,25 +180,7 @@ const EditSensorFormContent: FC<EditSensorFormContentProps> = ({
       await onSubmit(sensor.id, submitPayload)
       onClose()
     } catch (err: unknown) {
-      let msg = 'Gagal memperbarui data sensor.'
-      if (err && typeof err === 'object') {
-        const errObj = err as Record<string, unknown>
-        const responseData = (errObj.response as Record<string, unknown>)?.data as Record<string, unknown>
-        const errors = (responseData?.errors || errObj.errors) as Record<string, string[]> | undefined
-
-        if (errors?.jumlah_lampu) {
-          msg = 'Jumlah Lampu: ' + errors.jumlah_lampu.join(', ')
-        } else if (errors?.watt_per_lampu) {
-          msg = 'Daya per Lampu: ' + errors.watt_per_lampu.join(', ')
-        } else if (errors?.kode_perangkat) {
-          msg = 'Kode Perangkat: ' + errors.kode_perangkat.join(', ')
-        } else if (responseData?.message) {
-          msg = String(responseData.message)
-        } else if (errObj.message) {
-          msg = String(errObj.message)
-        }
-      }
-      setError(msg)
+      setError(mapUpdateNodeError(err))
     }
   }
 
@@ -266,10 +254,10 @@ const EditSensorFormContent: FC<EditSensorFormContentProps> = ({
         />
       </div>
 
-      {/* Dropdown Gateway IoT (Hanya Gateway di Blok Terkait) */}
+      {/* Dropdown Gateway IoT Kebun (1 Kebun 1 Gateway) */}
       <div className="space-y-1.5">
         <label htmlFor="edit-select-gateway" className="block text-sm font-semibold text-slate-800">
-          Gateway IoT Terhubung <span className="text-xs font-normal text-slate-500">(Opsional)</span>
+          Gateway IoT Kebun <span className="text-xs font-normal text-slate-500">(Opsional)</span>
         </label>
         <select
           id="edit-select-gateway"
@@ -279,26 +267,21 @@ const EditSensorFormContent: FC<EditSensorFormContentProps> = ({
           className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed cursor-pointer pr-8"
         >
           {isLoadingGateways ? (
-            <option value="">Memuat daftar gateway blok...</option>
-          ) : gateways.length === 0 ? (
-            <option value="">(Belum ada gateway di blok ini)</option>
+            <option value="">Memuat gateway kebun...</option>
+          ) : !resolvedGateway ? (
+            <option value="">(Belum ada gateway di kebun ini)</option>
           ) : (
             <>
               <option value="">(Tanpa Gateway Tambahan)</option>
-              {gateways.map((gtw) => {
-                const gtwId = gtw.id_gateway || gtw.id || ''
-                return (
-                  <option key={gtwId} value={gtwId}>
-                    {gtw.kode_perangkat} ({gtw.status_koneksi || 'offline'})
-                  </option>
-                )
-              })}
+              <option value={resolvedGateway.id_gateway || resolvedGateway.id || ''}>
+                {resolvedGateway.kode_perangkat} ({resolvedGateway.status_koneksi || 'offline'})
+              </option>
             </>
           )}
         </select>
-        {gateways.length === 0 && !isLoadingGateways && (
+        {!resolvedGateway && !isLoadingGateways && (
           <p className="text-[11px] text-slate-500">
-            Blok ini belum memiliki Gateway. Anda dapat menambahkan Gateway di menu Kebun dan Blok jika diperlukan transmisi jarak jauh.
+            Kebun ini belum memiliki Gateway. Anda dapat menambahkan Gateway saat pendaftaran node sensor baru jika diperlukan transmisi jarak jauh.
           </p>
         )}
       </div>
@@ -311,13 +294,14 @@ const EditSensorFormContent: FC<EditSensorFormContentProps> = ({
         <select
           id="edit-select-tipe"
           value={formData.tipeSensor}
-          onChange={(e) => setFormData((prev) => ({ ...prev, tipeSensor: e.target.value }))}
+          onChange={(e) => setFormData((prev) => ({ ...prev, tipeSensor: normalizeSensorType(e.target.value) }))}
           className="block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer pr-8"
         >
-          <option value="lux_suhu">Sensor Cahaya & Suhu (lux_suhu)</option>
-          <option value="cahaya">Sensor Cahaya (Lux)</option>
-          <option value="suhu">Sensor Suhu Lingkungan</option>
-          <option value="kelembapan">Sensor Kelembapan</option>
+          {SENSOR_TYPE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
         </select>
       </div>
 

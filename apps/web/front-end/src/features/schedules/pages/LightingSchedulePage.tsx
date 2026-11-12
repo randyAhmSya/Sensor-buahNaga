@@ -83,7 +83,7 @@ export const LightingSchedulePage: React.FC = () => {
   };
 
   const selectedFarm = farms.find((f) => f.id === selectedKebunId);
-  const selectedFarmName = selectedFarm ? selectedFarm.name : 'Kebun Buah Naga';
+  const selectedFarmName = selectedFarm ? selectedFarm.name : '';
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

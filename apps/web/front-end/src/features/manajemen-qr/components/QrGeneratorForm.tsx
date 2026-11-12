@@ -1,8 +1,7 @@
 import { useState, type FC } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { qrGeneratorSchema, type QrGeneratorFormValues } from '../../../schemas/qrSchema'
-import { FormWrapper } from '../../../components/form/FormWrapper'
 import { InputField } from '../../../components/form/InputField'
 import { SelectField } from '../../../components/form/SelectField'
 import { Button } from '../../../components/ui/Button'
@@ -56,9 +55,10 @@ export const QrGeneratorForm: FC<QrGeneratorFormProps> = ({ onGenerate }) => {
           </div>
         )}
 
-        <FormWrapper methods={methods} onSubmit={onSubmit} className="space-y-4">
-          <SelectField
-            name="targetType"
+        <FormProvider {...methods}>
+          <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+            <SelectField
+              name="targetType"
             label="Tipe Target Aset"
             options={[
               { label: 'Sensor IoT / Node Telemetri', value: 'Sensor' },
@@ -117,7 +117,8 @@ export const QrGeneratorForm: FC<QrGeneratorFormProps> = ({ onGenerate }) => {
           >
             Generate Kode QR
           </Button>
-        </FormWrapper>
+          </form>
+        </FormProvider>
       </CardContent>
     </Card>
   )
