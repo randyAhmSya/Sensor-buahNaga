@@ -11,6 +11,7 @@ use App\Models\Kebun;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use App\Traits\ApiResponser;
 
 class SiklusPanenController extends Controller
@@ -30,8 +31,14 @@ class SiklusPanenController extends Controller
     public function index(Request $request): JsonResponse
     {
         $blokId = $request->query('blok_id');
+        $kebunId = $request->query('kebun_id');
+
+        if (!$blokId && $kebunId) {
+            return $this->indexPerKebun((string) $kebunId);
+        }
+
         if (!$blokId) {
-            return $this->errorResponse('Parameter blok_id wajib disertakan.', 400);
+            return $this->errorResponse('Parameter blok_id atau kebun_id wajib disertakan.', 400);
         }
 
         $blok = Blok::find($blokId);
@@ -46,6 +53,26 @@ class SiklusPanenController extends Controller
 
         $siklusList = $this->siklusService->getAllSiklusByBlok($blokId);
         return $this->successResponse($siklusList, 'Data siklus panen berhasil diambil.');
+    }
+
+    private function indexPerKebun(string $kebunId): JsonResponse
+    {
+        if (!Str::isUuid($kebunId)) {
+            return $this->errorResponse('ID kebun tidak valid.', 400);
+        }
+
+        $kebun = Kebun::find($kebunId);
+        if (!$kebun) {
+            return $this->errorResponse('Data kebun tidak ditemukan.', 404);
+        }
+        if (Gate::denies('view', $kebun)) {
+            return $this->errorResponse('Anda tidak memiliki akses ke kebun ini.', 403);
+        }
+
+        return $this->successResponse(
+            $this->siklusService->getAllSiklusByKebun($kebunId),
+            'Data siklus panen kebun berhasil diambil.'
+        );
     }
 
     public function store(addSiklusPanenRequest $request): JsonResponse

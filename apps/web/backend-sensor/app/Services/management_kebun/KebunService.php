@@ -9,11 +9,15 @@ use Illuminate\Database\Eloquent\Collection;
 class KebunService
 {
     use FileUploadTrait;
-    public function getAllKebun(?string $tenantId = null): Collection
+    public function getAllKebun(?string $tenantId = null, bool $denganBlok = false): Collection
     {
         return Kebun::when($tenantId, function ($query, $tenantId) {
             return $query->where('tenant_id', $tenantId);
-        })->latest()->get();
+        })
+            ->withCount('bloks')
+            ->when($denganBlok, fn ($query) => $query->with('bloks'))
+            ->latest()
+            ->get();
     }
 
     public function getKebunById(string $idKebun): ?kebun

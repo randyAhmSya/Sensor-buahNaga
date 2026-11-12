@@ -4,8 +4,10 @@ namespace App\Http\Requests\node;
 
 use App\Rules\GatewaySekebunDenganBlok;
 use App\Rules\KodePerangkatAman;
+use App\Support\TipeSensor;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class addNodeRequest extends FormRequest
 {
@@ -31,7 +33,7 @@ class addNodeRequest extends FormRequest
             'kode_perangkat' => ['required', 'string', new KodePerangkatAman, 'unique:node_sensors,kode_perangkat'],
             'jumlah_lampu' => 'sometimes|integer|min:1|max:10000',
             'watt_per_lampu' => 'nullable|numeric|min:0|max:5000',
-            'tipe_sensor' => 'required|string',
+            'tipe_sensor' => ['required', 'string', Rule::in(TipeSensor::DAFTAR)],
             'status_koneksi' => 'required|string',
         ];
     }

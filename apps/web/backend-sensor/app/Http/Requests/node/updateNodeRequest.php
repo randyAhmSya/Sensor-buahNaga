@@ -5,6 +5,7 @@ namespace App\Http\Requests\node;
 use App\Rules\GatewaySekebunDenganBlok;
 use App\Rules\KodePerangkatAman;
 use App\Services\management_kebun\NodeService;
+use App\Support\TipeSensor;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -32,7 +33,7 @@ class updateNodeRequest extends FormRequest
         return [
             'gateway_id' => ['bail', 'sometimes', 'uuid', 'exists:gateways,id_gateway', new GatewaySekebunDenganBlok($node?->blok_id)],
             'kode_perangkat' => ['sometimes', 'string', new KodePerangkatAman, Rule::unique('node_sensors', 'kode_perangkat')->ignore($node?->id_sensor, 'id_sensor')],
-            'tipe_sensor' => 'sometimes|string',
+            'tipe_sensor' => ['sometimes', 'string', Rule::in(TipeSensor::DAFTAR)],
             'status_koneksi' => 'sometimes|string',
         ];
     }

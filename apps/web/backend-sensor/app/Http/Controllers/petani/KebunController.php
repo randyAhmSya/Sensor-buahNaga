@@ -50,7 +50,8 @@ class KebunController extends Controller
             $tenantId = $user->tenant_id;
         }
 
-        $kebuns = $this->kebunService->getAllKebun($tenantId);
+        $denganBlok = $request->query('include') === 'blok';
+        $kebuns = $this->kebunService->getAllKebun($tenantId, $denganBlok);
         return $this->successResponse($kebuns, 'Daftar kebun berhasil diambil.');
     }
 

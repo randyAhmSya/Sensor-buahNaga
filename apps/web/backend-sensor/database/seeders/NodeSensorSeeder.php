@@ -23,7 +23,7 @@ class NodeSensorSeeder extends Seeder
                 'kode_perangkat' => 'SNS-LIGHT-' . ($index + 1),
                 'kode_pairing' => Str::upper(Str::random(6)),
                 'token_perangkat' => Str::random(32),
-                'tipe_sensor' => 'Lux & Temp Sensor',
+                'tipe_sensor' => 'lux_suhu',
                 'status_koneksi' => 'CONNECTED',
                 'terakhir_terlihat' => now(),
                 'created_at' => now(),

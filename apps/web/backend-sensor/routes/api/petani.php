@@ -70,4 +70,5 @@ Route::middleware(['auth:sanctum', EnsureTenantAktif::class, EnsureLanggananAkti
     Route::get('log-energy', [LogEnergyController::class, 'index']);
     Route::get('log-peredupan', [LogPeredupanController::class, 'index']);
     Route::get('blok/{id}/status-lampu', [BlokStatusController::class, 'statusLampu']);
+    Route::get('kebun/{id}/status-lampu', [BlokStatusController::class, 'statusLampuKebun']);
 });
