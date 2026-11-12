@@ -8,71 +8,10 @@ import type {
   RecordHarvestPayload,
 } from '@/features/harvests/types/harvest.types';
 import { farmService } from './farmService';
-
-/**
- * Normalisasi data siklus panen dari berbagai kemungkinan format backend
- */
-const normalizeHarvestCycle = (raw: unknown, defaultBlockName?: string, defaultFarmName?: string): HarvestCycle => {
-  const item = (raw || {}) as Record<string, unknown>;
-  const idSiklus = String(
-    item.id_siklus_panen ||
-    item.id ||
-    item.uuid ||
-    item.id_siklus ||
-    ''
-  );
-  const blockId = String(
-    item.block_id ||
-    item.blok_id ||
-    item.id_blok ||
-    ''
-  );
-
-  // Status backend: "BERJALAN" | "SELESAI"
-  const rawStatus = String(item.status_siklus || item.status || 'BERJALAN').toUpperCase();
-  const statusSiklus: 'BERJALAN' | 'SELESAI' = rawStatus === 'SELESAI' ? 'SELESAI' : 'BERJALAN';
-
-  const rawBlok = (item.blok || item.block) as Record<string, unknown> | undefined;
-  const rawKebun = (rawBlok?.kebun || rawBlok?.farm || item.kebun) as Record<string, unknown> | undefined;
-
-  const blockName =
-    (item.blockName as string) ||
-    (rawBlok?.nama_blok as string) ||
-    defaultBlockName ||
-    '';
-
-  const farmName =
-    (item.farmName as string) ||
-    (rawKebun?.nama_kebun as string) ||
-    defaultFarmName ||
-    '';
-
-  return {
-    id_siklus_panen: idSiklus,
-    block_id: blockId,
-    tanggal_penyinaran: String(item.tanggal_penyinaran || item.lightingDate || item.tanggal_mulai || ''),
-    target_hari_berbunga: Number(item.target_hari_berbunga || item.bloomingTargetDays || item.target_berbunga || 0),
-    target_hari_panen_setelah_bunga:
-      item.target_hari_panen_setelah_bunga !== undefined
-        ? Number(item.target_hari_panen_setelah_bunga)
-        : 0,
-    estimasi_tanggal_panen: String(item.estimasi_tanggal_panen || item.estimatedHarvestDate || item.estimasi_panen || ''),
-    tanggal_berbunga_aktual:
-      item.tanggal_berbunga_aktual !== undefined && item.tanggal_berbunga_aktual !== null
-        ? String(item.tanggal_berbunga_aktual)
-        : null,
-    tanggal_panen:
-      item.tanggal_panen !== undefined && item.tanggal_panen !== null
-        ? String(item.tanggal_panen)
-        : (item.actualHarvestDate ? String(item.actualHarvestDate) : null),
-    status_siklus: statusSiklus,
-    blockName,
-    farmName,
-    blok: rawBlok as HarvestCycle['blok'],
-    created_at: item.created_at ? String(item.created_at) : undefined,
-    updated_at: item.updated_at ? String(item.updated_at) : undefined,
-  };
-};
+import {
+  normalizeHarvestCycle,
+  mapSiklusListToHarvestCycles,
+} from '@/features/harvests/utils/harvestCycleMapper';
 
 export const harvestService = {
   /**
@@ -222,55 +161,47 @@ export const harvestService = {
   },
 
   /**
-   * Mengambil semua siklus panen dari kumpulan blok (atau seluruh kebun aktif)
-   * Berguna untuk menampilkan tabel terpadu dan menghitung total di Dashboard
+   * Mengambil semua siklus panen dari seluruh kebun aktif dalam satu request per kebun
+   * Endpoint: GET /api/petani/siklus-panen?kebun_id={id}
    */
   getAllCycles: async (
-    knownBlocks?: { id: string; name: string; farmName?: string }[]
+    knownBlocks?: Array<{ id: string; name: string; farmName?: string; farmId?: string }>
   ): Promise<HarvestCycle[]> => {
     let blockList = knownBlocks;
+    let farmIds = Array.from(
+      new Set(blockList?.map((b) => b.farmId).filter(Boolean))
+    ) as string[];
 
-    if (!blockList || blockList.length === 0) {
-      try {
-        const farms = await farmService.getAllWithBlocks();
-        blockList = farms.flatMap((farm) =>
-          (farm.blocks || []).map((blk) => ({
-            id: blk.id,
-            name: blk.name,
-            farmName: farm.name,
-          }))
-        );
-      } catch {
-        blockList = [];
-      }
+    // Bila blockList belum ada atau belum memuat farmId, ambil dari farmService.getAllWithBlocks()
+    if (!blockList || blockList.length === 0 || farmIds.length === 0) {
+      const farms = await farmService.getAllWithBlocks();
+      blockList = farms.flatMap((farm) =>
+        (farm.blocks || []).map((blk) => ({
+          id: blk.id,
+          name: blk.name,
+          farmName: farm.name,
+          farmId: farm.id,
+        }))
+      );
+      farmIds = farms.map((f) => f.id).filter(Boolean);
     }
 
-    if (!blockList || blockList.length === 0) {
+    if (farmIds.length === 0) {
       return [];
     }
 
-    const results = await Promise.allSettled(
-      blockList.map((b) =>
-        harvestService.getHarvestCycles(b.id, {
-          blockName: b.name,
-          farmName: b.farmName,
-        })
-      )
-    );
-
-    const mergedCycles: HarvestCycle[] = [];
-    results.forEach((res) => {
-      if (res.status === 'fulfilled' && Array.isArray(res.value)) {
-        mergedCycles.push(...res.value);
-      }
+    // Panggil GET /petani/siklus-panen?kebun_id={id} untuk setiap kebun secara paralel
+    const fetchPromises = farmIds.map(async (fId) => {
+      const res = await apiClient.get<ApiResponse<unknown[]>>('/petani/siklus-panen', {
+        params: { kebun_id: fId.trim() },
+      });
+      return Array.isArray(res.data) ? res.data : [];
     });
 
-    // Urutkan berdasarkan tanggal penyinaran terbaru
-    return mergedCycles.sort((a, b) => {
-      const dateA = new Date(a.tanggal_penyinaran).getTime() || 0;
-      const dateB = new Date(b.tanggal_penyinaran).getTime() || 0;
-      return dateB - dateA;
-    });
+    const results = await Promise.all(fetchPromises);
+    const allRawCycles = results.flat();
+
+    return mapSiklusListToHarvestCycles(allRawCycles, blockList);
   },
 
   /**

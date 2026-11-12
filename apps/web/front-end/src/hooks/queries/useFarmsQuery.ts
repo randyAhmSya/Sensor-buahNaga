@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
 import { farmService, type CreateFarmPayload } from '@/services/farmService';
-import { blockService } from '@/services/blockService';
 import { farmKeys, petaniSubscriptionKeys } from '@/services/queryKeys';
 import type { FarmItem } from '@/types/farm.types';
 import type { ApiError } from '@/services/api';
@@ -79,31 +78,7 @@ export function useFarmsWithBlocksQuery(options?: UseFarmsQueryOptions) {
 
   return useQuery<FarmItem[], ApiError>({
     queryKey: farmKeys.withBlocks(),
-    queryFn: async (): Promise<FarmItem[]> => {
-      // Optimasi deduplikasi: gunakan data dasar kebun dari cache ['kebun'] jika sudah ada
-      const cachedFarms = queryClient.getQueryData<FarmItem[]>(['kebun']);
-      let baseFarms = cachedFarms;
-      if (!baseFarms || baseFarms.length === 0) {
-        baseFarms = await farmService.getAll();
-      }
-
-      if (!baseFarms || baseFarms.length === 0) {
-        return [];
-      }
-
-      const farmsWithBlocks = await Promise.all(
-        baseFarms.map(async (farm) => {
-          const blocks = await blockService.getBlocksByFarmId(farm.id).catch(() => []);
-          return {
-            ...farm,
-            totalBlocks: blocks.length,
-            blocks,
-          };
-        })
-      );
-
-      return farmsWithBlocks;
-    },
+    queryFn: () => farmService.getAllWithBlocks(),
     enabled: isEnabled,
     staleTime: 60_000,
     retry: (failureCount, error) => {

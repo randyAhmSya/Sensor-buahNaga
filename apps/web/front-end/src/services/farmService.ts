@@ -3,6 +3,7 @@ import type { ApiResponse } from '@/types/api.types';
 import type { KebunBackend } from '@/types/kebun.types';
 import type { FarmItem } from '@/types/farm.types';
 import type { BlockItem } from '@/types/block.types';
+import { mapBloksToBlockItems } from '../features/blocks/utils/blockMapper.ts';
 
 export interface CreateFarmPayload {
   name: string;
@@ -115,26 +116,42 @@ export const farmService = {
     }
 
     try {
-      const endpoint = tenantId ? `/admin/kebun` : `/petani/kebun`;
-      const params = tenantId ? { tenant_id: tenantId } : undefined;
+      if (tenantId) {
+        // Jalur admin: tetap mempertahankan perilaku existing (parameter tenant_id dan fetch blok per kebun)
+        const endpoint = `/admin/kebun`;
+        const params = { tenant_id: tenantId };
+        const resKebun = await apiClient.get<ApiResponse<KebunBackend[]>>(endpoint, { params });
 
-      const resKebun = await apiClient.get<ApiResponse<KebunBackend[]>>(endpoint, { params });
+        if (!resKebun || !Array.isArray(resKebun.data) || resKebun.data.length === 0) {
+          return [];
+        }
+
+        const kebunList = resKebun.data;
+        const { blockService } = await import('./blockService.ts');
+        const farmsWithBlocks = await Promise.all(
+          kebunList.map(async (kebun) => {
+            const farmId = getEntityId(kebun);
+            const blocks = await blockService.getBlocksByFarmId(farmId).catch(() => []);
+            return mapKebunToFarmItem(kebun, blocks);
+          })
+        );
+
+        return farmsWithBlocks;
+      }
+
+      // Jalur petani: satu pemanggilan agregat GET /petani/kebun?include=blok tanpa nodeService.getAll
+      const resKebun = await apiClient.get<ApiResponse<KebunBackend[]>>('/petani/kebun', {
+        params: { include: 'blok' },
+      });
 
       if (!resKebun || !Array.isArray(resKebun.data) || resKebun.data.length === 0) {
         return [];
       }
 
-      const kebunList = resKebun.data;
-      const { blockService } = await import('./blockService.ts');
-      const farmsWithBlocks = await Promise.all(
-        kebunList.map(async (kebun) => {
-          const farmId = getEntityId(kebun);
-          const blocks = await blockService.getBlocksByFarmId(farmId).catch(() => []);
-          return mapKebunToFarmItem(kebun, blocks);
-        })
-      );
-
-      return farmsWithBlocks;
+      return resKebun.data.map((kebun) => {
+        const blocks = mapBloksToBlockItems(kebun.bloks);
+        return mapKebunToFarmItem(kebun, blocks);
+      });
     } catch (error: unknown) {
       if (
         (error instanceof ApiError && error.status === 402) ||

@@ -31,6 +31,7 @@ export const HarvestEstimationPage: React.FC = () => {
         id: b.id,
         name: b.name,
         farmName: f.name,
+        farmId: f.id,
       }))
     );
   }, [farmsWithBlocks]);
@@ -41,6 +42,7 @@ export const HarvestEstimationPage: React.FC = () => {
   const [cycles, setCycles] = useState<HarvestCycle[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // State Filter & Pencarian
   const [activeTab, setActiveTab] = useState<HarvestTabFilter>('Semua');
@@ -59,6 +61,7 @@ export const HarvestEstimationPage: React.FC = () => {
   const loadCycles = useCallback(
     async (targetBlockId: string, currentBlocks: BlockOptionItem[]) => {
       setIsLoading(true);
+      setLoadError(null);
       try {
         if (targetBlockId === 'ALL') {
           const allCycles = await harvestService.getAllCycles(currentBlocks);
@@ -71,8 +74,10 @@ export const HarvestEstimationPage: React.FC = () => {
           });
           setCycles(singleCycles);
         }
-      } catch {
+      } catch (err: unknown) {
         setCycles([]);
+        const msg = err instanceof Error ? err.message : 'Gagal memuat data siklus panen dari server.';
+        setLoadError(msg);
       } finally {
         setIsLoading(false);
       }
@@ -111,6 +116,7 @@ export const HarvestEstimationPage: React.FC = () => {
         id: b.id,
         name: b.name,
         farmName: f.name,
+        farmId: f.id,
       }))
     );
     await loadCycles(selectedBlockId, refreshedBlocks);
@@ -270,14 +276,33 @@ export const HarvestEstimationPage: React.FC = () => {
         />
       </div>
 
-      {/* Tabel & Kartu Responsif Siklus Panen */}
-      <HarvestCycleTable
-        cycles={filteredCycles}
-        isLoading={isLoading}
-        onRecordFlower={(cycle) => setCycleForFlower(cycle)}
-        onRecordHarvest={(cycle) => setCycleForHarvest(cycle)}
-        onDeleteCycle={(cycle) => setCycleForDelete(cycle)}
-      />
+      {/* Tabel & Kartu Responsif Siklus Panen / Tampilan Galat Jelas */}
+      {loadError && !isLoading ? (
+        <div className="bg-white rounded-2xl border border-rose-200 p-8 text-center shadow-2xs">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 mx-auto mb-3">
+            <span className="text-xl font-bold">!</span>
+          </div>
+          <h3 className="text-base font-bold text-slate-800 mb-1">Gagal Memuat Siklus Panen</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto mb-4">{loadError}</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => loadCycles(selectedBlockId, blocks)}
+            className="mx-auto"
+          >
+            Coba Lagi
+          </Button>
+        </div>
+      ) : (
+        <HarvestCycleTable
+          cycles={filteredCycles}
+          isLoading={isLoading}
+          onRecordFlower={(cycle) => setCycleForFlower(cycle)}
+          onRecordHarvest={(cycle) => setCycleForHarvest(cycle)}
+          onDeleteCycle={(cycle) => setCycleForDelete(cycle)}
+        />
+      )}
 
       {/* Modal Mulai Siklus Panen Baru */}
       <CreateHarvestCycleModal
