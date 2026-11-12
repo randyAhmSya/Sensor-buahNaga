@@ -10,10 +10,6 @@ import type {
 } from '@/types/block.types';
 import { nodeService } from './nodeService';
 import { harvestService } from './harvestService';
-import { gatewayService } from './gatewayService';
-import { scheduleService } from './scheduleService';
-import { fetchTelemetri, type ReadSensor } from './telemetryService';
-import { fetchLogEnergy, type EnergyLogResponse } from './energyService';
 import type { NodeSensorBackend } from '@/types/node.types';
 
 export type { BlokStatusLampuResponse, BlokStatusLampuNode } from '@/types/block.types';
@@ -68,8 +64,8 @@ export const mapBlokToBlockItem = (blok: BlokBackend): BlockItem => {
   return {
     id: blokId,
     name: blok.nama_blok,
-    description: blok.keterangan || 'Blok produktif tanaman buah naga',
-    area: blok.luas_area ? `${blok.luas_area} m²` : '500 m²',
+    description: blok.keterangan || '',
+    area: blok.luas_area ? `${blok.luas_area} m²` : 'Belum diatur',
     nodeSensor: blok.node_sensor ? blok.node_sensor.kode_perangkat : 'Belum Terpasang',
     status,
     imageUrl: photoUrl,
@@ -233,11 +229,20 @@ export const blockService = {
     return [];
   },
 
-  getById: async (farmId: string, blockId: string): Promise<BlockDetailFull | null> => {
+  getById: async (
+    farmId: string,
+    blockId: string,
+    externalSensorId?: string
+  ): Promise<BlockDetailFull | null> => {
     if (!blockId || blockId === 'blk-1') return null;
     try {
       const cleanBlockId = blockId.trim();
-      const res = await apiClient.get<unknown>(`/petani/blok/${cleanBlockId}`);
+
+      // Jalankan fetch detail blok dan siklus panen paralel secara independen
+      const [res, cycles] = await Promise.all([
+        apiClient.get<unknown>(`/petani/blok/${cleanBlockId}`),
+        harvestService.getHarvestCycles(cleanBlockId).catch(() => []),
+      ]);
       
       let blok: BlokBackend | null = null;
       if (res && typeof res === 'object') {
@@ -267,7 +272,7 @@ export const blockService = {
           ? rawEstimate.trim()
           : '';
 
-      let targetFarmId =
+      const targetFarmId =
         blok.kebun_id ||
         blok.id_kebun ||
         blok.kebun?.id_kebun ||
@@ -275,124 +280,15 @@ export const blockService = {
         (farmId && farmId !== 'farm-1' && farmId !== 'undefined' ? farmId.trim() : '') ||
         '';
 
-      let farmName = blok.kebun?.nama_kebun || '';
-
-      if (!targetFarmId) {
-        try {
-          const resKebun = await apiClient.get<unknown>('/petani/kebun');
-          let kebunList: Record<string, unknown>[] = [];
-          if (resKebun && typeof resKebun === 'object') {
-            const r = resKebun as Record<string, unknown>;
-            if (Array.isArray(r.data)) kebunList = r.data as Record<string, unknown>[];
-            else if (Array.isArray(resKebun)) kebunList = resKebun as Record<string, unknown>[];
-          }
-          if (kebunList.length > 0) {
-            targetFarmId = String(kebunList[0].id_kebun || kebunList[0].id || '');
-            if (!farmName) farmName = String(kebunList[0].nama_kebun || '');
-          }
-        } catch {
-          // ignore
-        }
-      }
-      if (!farmName) farmName = 'Kebun Buah Naga';
-
-      // 1. Ambil daftar node sensor dari kebun terkait via GET /api/petani/node?kebun_id=${kebunId}
-      let nodes: NodeSensorBackend[] = [];
-      if (targetFarmId) {
-        try {
-          const resNodes = await nodeService.getAll(targetFarmId);
-          if (Array.isArray(resNodes)) {
-            nodes = resNodes;
-          }
-        } catch {
-          nodes = [];
-        }
-      }
-      // Fallback periksa semua kebun jika node belum ditemukan
-      if (nodes.length === 0) {
-        try {
-          const resKebun = await apiClient.get<unknown>('/petani/kebun');
-          let kebunList: Record<string, unknown>[] = [];
-          if (resKebun && typeof resKebun === 'object') {
-            const r = resKebun as Record<string, unknown>;
-            if (Array.isArray(r.data)) kebunList = r.data as Record<string, unknown>[];
-            else if (Array.isArray(resKebun)) kebunList = resKebun as Record<string, unknown>[];
-          }
-          for (const k of kebunList) {
-            const kId = String(k.id_kebun || k.id || '');
-            if (kId && kId !== targetFarmId) {
-              try {
-                const farmNodes = await nodeService.getAll(kId);
-                if (Array.isArray(farmNodes)) {
-                  nodes.push(...farmNodes);
-                }
-              } catch {
-                // abaikan error kebun lain
-              }
-            }
-          }
-        } catch {
-          // abaikan error
-        }
-      }
-
-      // 2. Cari apakah ada node yang terpasang pada blok ini:
-      const activeNode = Array.isArray(nodes)
-        ? nodes.find((n) => {
-            const raw = n as unknown as Record<string, unknown>;
-            const bId = cleanBlockId;
-            return (
-              (n.blok_id && String(n.blok_id).trim() === bId) ||
-              (raw.id_blok && String(raw.id_blok).trim() === bId) ||
-              (raw.block_id && String(raw.block_id).trim() === bId) ||
-              (n.blok?.id_blok && String(n.blok.id_blok).trim() === bId) ||
-              (n.blok?.id && String(n.blok.id).trim() === bId)
-            );
-          })
-        : undefined;
-
-      const deviceId =
-        activeNode?.kode_perangkat ||
-        blok.node_sensor?.kode_perangkat ||
-        'Belum Terpasang';
-
-      const isNodeConnected = deviceId !== 'Belum Terpasang';
-      const nodeStatusRaw = String(
-        activeNode?.status_koneksi ||
-        blok.node_sensor?.status_koneksi ||
-        ''
-      ).toLowerCase();
+      const farmName = blok.kebun?.nama_kebun || '';
+      const sensorId = externalSensorId || blok.node_sensor?.id_sensor || '';
+      const deviceId = blok.node_sensor?.kode_perangkat || 'Belum Terpasang';
+      const isNodeConnected = Boolean(sensorId && sensorId !== 'Belum Terpasang') || deviceId !== 'Belum Terpasang';
+      const nodeStatusRaw = String(blok.node_sensor?.status_koneksi || '').toLowerCase();
       const isOnline =
         isNodeConnected &&
         (nodeStatusRaw === 'aktif' || nodeStatusRaw === 'online' || nodeStatusRaw === 'terhubung');
 
-      let gateway =
-        activeNode?.gateway?.kode_perangkat ||
-        (activeNode as unknown as Record<string, unknown>)?.gateway_kode as string | undefined;
-
-      if (!gateway && activeNode?.gateway_id) {
-        try {
-          const gw = await gatewayService.getById(activeNode.gateway_id);
-          if (gw?.kode_perangkat) {
-            gateway = gw.kode_perangkat;
-          }
-        } catch {
-          // ignore
-        }
-      }
-      if (!gateway && activeNode?.gateway_id) {
-        gateway = `GW-${activeNode.gateway_id.substring(0, 4).toUpperCase()}`;
-      }
-      if (!gateway) {
-        gateway = 'GW-01';
-      }
-
-      const lastSeen = activeNode?.terakhir_terlihat
-        ? new Date(activeNode.terakhir_terlihat).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-        : 'Baru saja';
-
-      // 3. Ambil siklus panen aktif (status_siklus === "BERJALAN")
-      const cycles = await harvestService.getHarvestCycles(cleanBlockId).catch(() => []);
       const activeCycle = cycles.find((c) => {
         const st = String(c.status_siklus || '').toUpperCase();
         return st === 'BERJALAN' || st === 'AKTIF' || st === 'SEDANG BERJALAN';
@@ -415,96 +311,9 @@ export const blockService = {
         id: c.id_siklus_panen ? c.id_siklus_panen.substring(0, 8) : 'Siklus',
         startDate: c.tanggal_penyinaran || '-',
         actualHarvestDate: c.tanggal_panen || c.estimasi_tanggal_panen || '-',
-        durationDays: (c.target_hari_berbunga || 20) + (c.target_hari_panen_setelah_bunga || 30),
+        durationDays: (c.target_hari_berbunga ?? 0) + (c.target_hari_panen_setelah_bunga ?? 0),
         status: (String(c.status_siklus).toUpperCase() === 'SELESAI' ? 'Selesai' : 'Berjalan') as 'Selesai' | 'Berjalan',
       }));
-
-      // 4. Ambil jadwal pencahayaan aktif dari backend
-      let lightingSchedule = {
-        activeCycle: activeCycle ? 'Sedang Berjalan' : 'Belum Ada Jadwal',
-        intensity: isOnline ? '80%' : '0%',
-      };
-
-      try {
-        const sensorId = activeNode?.id_sensor || blok.node_sensor?.id_sensor;
-        if (sensorId) {
-          const activeSched = await scheduleService.getActive(sensorId);
-          if (activeSched && (activeSched.status_aktif === true || activeSched.status_aktif === 1)) {
-            const startStr = activeSched.jam_mulai || activeSched.jam_mulai_nyala || '18:00';
-            const endStr = activeSched.jam_selesai || activeSched.jam_akhir_nyala || '06:00';
-            lightingSchedule = {
-              activeCycle: activeSched.nama_jadwal || `${startStr.substring(0, 5)} - ${endStr.substring(0, 5)}`,
-              intensity: `${activeSched.instensitas_cahaya ?? activeSched.intensitas_cahaya ?? 80}%`,
-            };
-          }
-        }
-        if (lightingSchedule.activeCycle === 'Belum Ada Jadwal' && targetFarmId) {
-          const farmScheds = await scheduleService.getAll({ kebun_id: targetFarmId });
-          const activeFarmSched = farmScheds.find((s) => s.status_aktif === true || s.status_aktif === 1);
-          if (activeFarmSched) {
-            const startStr = activeFarmSched.jam_mulai || activeFarmSched.jam_mulai_nyala || '18:00';
-            const endStr = activeFarmSched.jam_selesai || activeFarmSched.jam_akhir_nyala || '06:00';
-            lightingSchedule = {
-              activeCycle: activeFarmSched.nama_jadwal || `${startStr.substring(0, 5)} - ${endStr.substring(0, 5)}`,
-              intensity: `${activeFarmSched.instensitas_cahaya ?? activeFarmSched.intensitas_cahaya ?? 80}%`,
-            };
-          }
-        }
-      } catch {
-        // Fallback default
-      }
-
-      // 5. Ambil data riil telemetri dan log energi jika sensor terpasang
-      let telemetriList: ReadSensor[] = [];
-      let energyData: EnergyLogResponse = { total_kwh: 0, riwayat: [] };
-      const sensorId = activeNode?.id_sensor || blok.node_sensor?.id_sensor;
-
-      if (sensorId && sensorId.trim() && sensorId !== 'Belum Terpasang') {
-        try {
-          const [resTelemetri, resEnergy] = await Promise.all([
-            fetchTelemetri(sensorId, 100).catch(() => []),
-            fetchLogEnergy(sensorId, 100).catch(() => ({ total_kwh: 0, riwayat: [] })),
-          ]);
-          telemetriList = resTelemetri;
-          energyData = resEnergy;
-        } catch {
-          // ignore
-        }
-      }
-
-      // Petakan log sensor dari pembacaan telemetri riil
-      const sensorLogs: SensorLogItem[] = telemetriList.map((t, idx) => {
-        const dt = t.dicatat_pada ? new Date(t.dicatat_pada) : null;
-        const timeStr = dt && !isNaN(dt.getTime())
-          ? dt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-          : (t.dicatat_pada || 'Baru saja');
-        return {
-          id: t.id || `${sensorId}-${idx}`,
-          timestamp: timeStr,
-          lux: `${t.nilai_lux ?? t.lux ?? 0} lx`,
-          temperature: `${t.suhu ?? t.temperature ?? 0}°C`,
-          humidity: `${t.kelembapan ?? t.humidity ?? '--'}%`,
-          battery: `${t.baterai ?? t.battery ?? 100}%`,
-          signalQuality: t.kualitas_sinyal || '-65 dBm',
-          gatewayStatus: 'Online / Synced',
-        };
-      });
-
-      const latestTelemetry = telemetriList.length > 0 ? telemetriList[telemetriList.length - 1] : null;
-      const displayLux = latestTelemetry
-        ? `${latestTelemetry.nilai_lux ?? latestTelemetry.lux ?? 0} lx`
-        : (isOnline ? '0 lx' : '0 lx');
-      const hasActualTemp = Boolean(
-        latestTelemetry &&
-        ((latestTelemetry.suhu !== undefined && latestTelemetry.suhu !== null) ||
-         (latestTelemetry.temperature !== undefined && latestTelemetry.temperature !== null))
-      );
-      const displayTemp = hasActualTemp
-        ? `${latestTelemetry?.suhu ?? latestTelemetry?.temperature}°C`
-        : '';
-      const displayLastSeen = latestTelemetry?.dicatat_pada
-        ? new Date(latestTelemetry.dicatat_pada).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-        : lastSeen;
 
       return {
         id: String(blok.id_blok || blok.id || cleanBlockId || '').trim(),
@@ -516,14 +325,17 @@ export const blockService = {
         bannerUrl: photoUrl,
         deviceId,
         nodeSensorId: sensorId,
-        deviceStatus: (isOnline ? 'Terhubung' : 'Offline') as 'Online' | 'Offline',
-        currentLux: displayLux,
-        temperature: displayTemp,
-        gateway,
-        lastSeen: displayLastSeen,
-        lightingSchedule,
+        deviceStatus: (isOnline ? 'Online' : 'Offline') as 'Online' | 'Offline',
+        currentLux: '- lx',
+        temperature: '',
+        gateway: 'Belum terpasang gateway',
+        lastSeen: 'Belum pernah terhubung',
+        lightingSchedule: {
+          activeCycle: 'Belum Ada Jadwal',
+          intensity: 'Belum ada jadwal',
+        },
         energyConsumption: {
-          kwh: energyData.total_kwh,
+          kwh: 0,
           period: 'Bulan Ini',
         },
         harvestCycle: {
@@ -533,7 +345,7 @@ export const blockService = {
           harvestEstimate,
         },
         cycleHistory,
-        sensorLogs,
+        sensorLogs: [],
       };
     } catch {
       // Tidak ada fallback ke mock

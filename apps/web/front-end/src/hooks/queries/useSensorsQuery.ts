@@ -5,11 +5,18 @@ import type { SensorNodeItem, SensorSummaryMetrics } from '@/types/sensor.types'
 import type { CreateNodePayload, UpdateNodePayload } from '@/types/node.types';
 import type { ApiError } from '@/services/api';
 
-export function useSensorsQuery(kebunId?: string) {
+export interface UseSensorsQueryOptions {
+  enabled?: boolean;
+}
+
+export function useSensorsQuery(kebunId?: string, options?: UseSensorsQueryOptions) {
+  const isEnabled = (options?.enabled ?? true) && Boolean(kebunId && kebunId !== 'Semua Kebun' && kebunId !== 'undefined');
+
   return useQuery<SensorNodeItem[], ApiError>({
     queryKey: sensorKeys.list(kebunId),
     queryFn: () => sensorService.getAll(kebunId),
-    enabled: Boolean(kebunId && kebunId !== 'Semua Kebun'),
+    enabled: isEnabled,
+    staleTime: 30_000,
   });
 }
 

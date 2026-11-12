@@ -102,7 +102,7 @@ export const useSensorMonitoring = () => {
       })
     },
     staleTime: 30_000,
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
     refetchIntervalInBackground: false,
   })
 
@@ -134,7 +134,7 @@ export const useSensorMonitoring = () => {
       const matchedByBlockId = sensor.blockId ? blockIdToFarmName.get(String(sensor.blockId)) : undefined
       const matchedByFarmId = sensor.farmId ? farmIdToName.get(String(sensor.farmId)) : undefined
       const matchedByBlockName = sensor.blockName ? blockNameToFarmName.get(sensor.blockName.trim().toLowerCase()) : undefined
-      const hasValidCustomName = sensor.farmName && sensor.farmName !== 'Kebun Buah Naga'
+      const hasValidCustomName = Boolean(sensor.farmName && sensor.farmName.trim() !== '' && sensor.farmName !== '--')
 
       const resolvedFarmName =
         matchedByBlockId ||
@@ -142,7 +142,7 @@ export const useSensorMonitoring = () => {
         matchedByBlockName ||
         (hasValidCustomName ? sensor.farmName : undefined) ||
         primaryFarmName ||
-        'Kebun Buah Naga'
+        ''
 
       return {
         ...sensor,

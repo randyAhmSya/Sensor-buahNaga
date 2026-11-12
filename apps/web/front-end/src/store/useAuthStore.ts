@@ -74,6 +74,8 @@ const getInitialAuthState = (): { user: UserProfile | null; token: string | null
 
 const initialState = getInitialAuthState();
 
+let inFlightValidatePromise: Promise<boolean> | null = null;
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: initialState.user,
   token: initialState.token,
@@ -109,35 +111,45 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   validateSession: async (): Promise<boolean> => {
-    const currentToken = get().token || (typeof window !== 'undefined' ? localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN) : null);
-    if (!currentToken) {
-      get().logout();
-      return false;
+    if (inFlightValidatePromise) {
+      return inFlightValidatePromise;
     }
 
-    set({ isCheckingSession: true });
-    try {
-      const { apiClient } = await import('@/services/api');
-      const response = await apiClient.get<{ status: string; data: BackendUser }>('/auth/me');
-      if (response && response.data) {
-        const profile = mapBackendUserToUserProfile(response.data);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(profile));
-        }
-        set({
-          user: profile,
-          token: currentToken,
-          isAuthenticated: true,
-          isCheckingSession: false,
-        });
-        return true;
+    inFlightValidatePromise = (async (): Promise<boolean> => {
+      const currentToken = get().token || (typeof window !== 'undefined' ? localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN) : null);
+      if (!currentToken) {
+        get().logout();
+        return false;
       }
-      return false;
-    } catch {
-      // Jika 401, interceptor di api.ts sudah memanggil handleUnauthorizedSession()
-      // Jika error offline / server down, biarkan data lokal tanpa logout paksa
-      set({ isCheckingSession: false });
-      return false;
-    }
+
+      set({ isCheckingSession: true });
+      try {
+        const { apiClient } = await import('@/services/api');
+        const response = await apiClient.get<{ status: string; data: BackendUser }>('/auth/me');
+        if (response && response.data) {
+          const profile = mapBackendUserToUserProfile(response.data);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(profile));
+          }
+          set({
+            user: profile,
+            token: currentToken,
+            isAuthenticated: true,
+            isCheckingSession: false,
+          });
+          return true;
+        }
+        return false;
+      } catch {
+        // Jika 401, interceptor di api.ts sudah memanggil handleUnauthorizedSession()
+        // Jika error offline / server down, biarkan data lokal tanpa logout paksa
+        set({ isCheckingSession: false });
+        return false;
+      } finally {
+        inFlightValidatePromise = null;
+      }
+    })();
+
+    return inFlightValidatePromise;
   },
 }));

@@ -4,7 +4,7 @@ import { Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Toast, type ToastType } from '@/components/feedback/Toast';
 import { formatDate } from '@/utils/formatters';
-import { farmService } from '@/services/farmService';
+import { useFarmsWithBlocksQuery } from '@/hooks/queries/useFarmsQuery';
 import { harvestService } from '@/services/harvestService';
 import type { HarvestCycle, HarvestMetrics } from '../types/harvest.types';
 import { HarvestSummaryCards } from '../components/HarvestSummaryCards';
@@ -22,9 +22,19 @@ interface PageToast {
 }
 
 export const HarvestEstimationPage: React.FC = () => {
+  // Query kebun beserta blok terdaftar (menggunakan cache bersama)
+  const { data: farmsWithBlocks = [], isLoading: isLoadingFarms, refetch: refetchFarms } = useFarmsWithBlocksQuery();
 
-  // State Data Kebun & Blok
-  const [blocks, setBlocks] = useState<BlockOptionItem[]>([]);
+  const blocks: BlockOptionItem[] = useMemo(() => {
+    return farmsWithBlocks.flatMap((f) =>
+      (f.blocks || []).map((b) => ({
+        id: b.id,
+        name: b.name,
+        farmName: f.name,
+      }))
+    );
+  }, [farmsWithBlocks]);
+
   const [selectedBlockId, setSelectedBlockId] = useState<string>('ALL');
 
   // State Data Siklus Panen
@@ -45,26 +55,7 @@ export const HarvestEstimationPage: React.FC = () => {
   // State Notifikasi Toast
   const [toast, setToast] = useState<PageToast | null>(null);
 
-  // 1. Ambil daftar kebun & blok terdaftar
-  const loadFarmsAndBlocks = useCallback(async () => {
-    try {
-      const farms = await farmService.getAllWithBlocks();
-      const extractedBlocks: BlockOptionItem[] = farms.flatMap((f) =>
-        (f.blocks || []).map((b) => ({
-          id: b.id,
-          name: b.name,
-          farmName: f.name,
-        }))
-      );
-      setBlocks(extractedBlocks);
-      return extractedBlocks;
-    } catch {
-      setBlocks([]);
-      return [];
-    }
-  }, []);
-
-  // 2. Ambil daftar siklus panen sesuai blok yang dipilih
+  // Ambil daftar siklus panen sesuai blok yang dipilih
   const loadCycles = useCallback(
     async (targetBlockId: string, currentBlocks: BlockOptionItem[]) => {
       setIsLoading(true);
@@ -89,20 +80,21 @@ export const HarvestEstimationPage: React.FC = () => {
     []
   );
 
-  // Inisialisasi data halaman
+  // Inisialisasi data siklus panen saat blocks tersedia
   useEffect(() => {
     let isMounted = true;
-    (async () => {
-      const loadedBlocks = await loadFarmsAndBlocks();
-      if (isMounted) {
-        await loadCycles('ALL', loadedBlocks);
-      }
-    })();
+    if (blocks.length > 0) {
+      loadCycles(selectedBlockId, blocks).then(() => {
+        if (!isMounted) return;
+      });
+    } else if (!isLoadingFarms) {
+      setIsLoading(false);
+    }
 
     return () => {
       isMounted = false;
     };
-  }, [loadFarmsAndBlocks, loadCycles]);
+  }, [blocks, selectedBlockId, isLoadingFarms, loadCycles]);
 
   // Perubahan pilihan blok
   const handleBlockChange = (blockId: string) => {
@@ -113,7 +105,14 @@ export const HarvestEstimationPage: React.FC = () => {
   // Manual Refresh
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    const refreshedBlocks = await loadFarmsAndBlocks();
+    const { data: refreshedFarms = [] } = await refetchFarms();
+    const refreshedBlocks: BlockOptionItem[] = refreshedFarms.flatMap((f) =>
+      (f.blocks || []).map((b) => ({
+        id: b.id,
+        name: b.name,
+        farmName: f.name,
+      }))
+    );
     await loadCycles(selectedBlockId, refreshedBlocks);
     setIsRefreshing(false);
     setToast({
