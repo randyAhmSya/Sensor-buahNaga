@@ -1,4 +1,4 @@
-export type BlockStatus = 'Online' | 'Offline' | 'Belum Terpasang'
+export type BlockStatus = 'Online' | 'Offline' | 'Belum Terpasang' | 'Tidak Diketahui'
 
 export interface BlokBackend {
   id_blok: string
@@ -135,4 +135,8 @@ export interface BlokStatusLampuResponse {
   watt_terpasang?: number | null
   batas_offline_detik: number
   nodes: BlokStatusLampuNode[]
+}
+
+export interface BlokStatusLampuPerBlok extends BlokStatusLampuResponse {
+  blok_id: string
 }

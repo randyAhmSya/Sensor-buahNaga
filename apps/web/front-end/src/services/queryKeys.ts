@@ -9,6 +9,7 @@ export const farmKeys = {
   withBlocks: () => ['kebun', 'with-blocks'] as const,
   details: () => ['kebun', 'detail'] as const,
   detail: (id: string) => ['kebun', 'detail', id] as const,
+  statusLampu: (id: string) => ['kebun', id, 'status-lampu'] as const,
 };
 
 export const blockKeys = {
@@ -18,6 +19,7 @@ export const blockKeys = {
   details: () => [...blockKeys.all, 'detail'] as const,
   detail: (id: string) => [...blockKeys.details(), id] as const,
   statusLampu: (id: string) => [...blockKeys.details(), id, 'status-lampu'] as const,
+  statusLampuKebun: (kebunId: string) => ['kebun', kebunId, 'status-lampu'] as const,
 };
 
 export const sensorKeys = {
@@ -41,6 +43,7 @@ export const harvestKeys = {
   all: ['harvests'] as const,
   lists: () => [...harvestKeys.all, 'list'] as const,
   list: (blokId: string) => [...harvestKeys.lists(), { blokId }] as const,
+  byKebun: (kebunId: string) => [...harvestKeys.lists(), { kebunId }] as const,
   details: () => [...harvestKeys.all, 'detail'] as const,
   detail: (id: string) => [...harvestKeys.details(), id] as const,
 };

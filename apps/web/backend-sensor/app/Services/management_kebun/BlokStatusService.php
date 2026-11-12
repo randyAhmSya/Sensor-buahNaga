@@ -2,6 +2,7 @@
 
 namespace App\Services\management_kebun;
 
+use App\Models\Blok;
 use App\Models\NodeSensor;
 use Carbon\Carbon;
 
@@ -9,10 +10,30 @@ class BlokStatusService
 {
     public function getRingkasanBlok(string $blokId): array
     {
+        return $this->susunRingkasan(NodeSensor::where('blok_id', $blokId)->get());
+    }
+
+    /**
+     * Ringkasan SEMUA blok dalam satu kebun. Jumlah query tetap (2) berapa pun
+     * jumlah blok, supaya web tidak perlu memanggil status-lampu satu per satu.
+     *
+     * @return array<int, array<string, mixed>> satu elemen per blok, memuat 'blok_id'
+     */
+    public function getRingkasanKebun(string $kebunId): array
+    {
+        $blokIds = Blok::where('kebun_id', $kebunId)->pluck('id_blok');
+        $nodePerBlok = NodeSensor::whereIn('blok_id', $blokIds)->get()->groupBy('blok_id');
+
+        return $blokIds
+            ->map(fn ($blokId) => ['blok_id' => $blokId] + $this->susunRingkasan($nodePerBlok->get($blokId, collect())))
+            ->values()
+            ->all();
+    }
+
+    private function susunRingkasan(\Illuminate\Support\Collection $nodes): array
+    {
         $batasDetik = (int) config('lampu.offline_setelah_detik', 90);
         $batasWaktu = Carbon::now()->subSeconds($batasDetik);
-
-        $nodes = NodeSensor::where('blok_id', $blokId)->get();
 
         $hasil = $nodes->map(function ($node) use ($batasWaktu) {
             $online = $node->terakhir_terlihat !== null

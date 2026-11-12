@@ -10,6 +10,7 @@ import { sensorKeys, blockKeys, farmKeys } from '@/services/queryKeys'
 import type { BlokStatusLampuResponse } from '@/types/block.types'
 import type { EditSensorFormData } from '../components/EditSensorModal'
 import { useNotify } from '@/context/NotificationContext'
+import { mapKebunStatusToBlockStatusMap } from '../utils/kebunStatusMapper'
 
 export const useSensorMonitoring = () => {
   const params = useParams<{ sensorId?: string; id?: string }>()
@@ -36,25 +37,18 @@ export const useSensorMonitoring = () => {
     queryFn: async (): Promise<SensorNodeItem[]> => {
       const nodes = await sensorService.getAll(activeFarmId)
 
-      // Ambil blockId unik untuk sinkronisasi status-lampu secara paralel
-      const uniqueBlockIds = Array.from(
-        new Set(nodes.map((n) => n.blockId).filter(Boolean))
-      )
-
-      const statusMap = new Map<string, BlokStatusLampuResponse>()
-
-      const fetchPromises = uniqueBlockIds.map(async (bId) => {
+      // Sinkronisasi status-lampu kebun dalam SATU request per kebun aktif
+      let statusMap = new Map<string, BlokStatusLampuResponse>()
+      if (activeFarmId) {
         try {
-          const res = await blockService.getStatusLampu(bId)
-          if (res) {
-            statusMap.set(bId, res)
-          }
+          const kebunStatusList = await blockService.getStatusLampuKebun(activeFarmId)
+          statusMap = mapKebunStatusToBlockStatusMap(kebunStatusList)
         } catch {
-          // Abaikan jika blok belum memiliki konfigurasi status lampu
+          // Jika status-lampu kebun gagal, fallback ke Map kosong
+          // useSensorMonitoring tetap menampilkan daftar node dengan status bawaan node
+          statusMap = new Map()
         }
-      })
-
-      await Promise.allSettled(fetchPromises)
+      }
 
       // Bangun lookup map untuk status node
       const nodeStatusLookup = new Map<

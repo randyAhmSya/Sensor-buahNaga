@@ -12,6 +12,7 @@ export interface BlockOptionItem {
   id: string; // UUID blok
   name: string; // nama blok
   farmName?: string; // nama kebun
+  farmId?: string; // UUID kebun
 }
 
 interface CreateHarvestCycleModalProps {

@@ -2,6 +2,7 @@
 
 namespace App\Services\management_kebun;
 
+use App\Models\Blok;
 use App\Models\SiklusPanen;
 use Carbon\Carbon;
 
@@ -10,6 +11,14 @@ class SiklusPanenService
     public function getAllSiklusByBlok(string $blokId)
     {
         return SiklusPanen::where('block_id', $blokId)->orderByDesc('tanggal_penyinaran')->get();
+    }
+
+    /** Siklus panen seluruh blok dalam satu kebun, dengan satu query. */
+    public function getAllSiklusByKebun(string $kebunId)
+    {
+        return SiklusPanen::whereIn('block_id', Blok::where('kebun_id', $kebunId)->select('id_blok'))
+            ->orderByDesc('tanggal_penyinaran')
+            ->get();
     }
 
     public function getSiklusById(string $id)

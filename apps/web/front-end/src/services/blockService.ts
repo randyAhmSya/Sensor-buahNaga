@@ -6,6 +6,7 @@ import type {
   BlockDetailFull,
   SensorLogItem,
   BlokStatusLampuResponse,
+  BlokStatusLampuPerBlok,
   BlockStatus,
 } from '@/types/block.types';
 import { nodeService } from './nodeService';
@@ -430,6 +431,27 @@ export const blockService = {
     } catch {
       return null;
     }
+  },
+
+  /**
+   * Mengambil status lampu seluruh blok dalam satu kebun dalam satu pemanggilan
+   * Endpoint: GET /api/petani/kebun/{id}/status-lampu
+   */
+  getStatusLampuKebun: async (kebunId: string): Promise<BlokStatusLampuPerBlok[]> => {
+    if (!kebunId || !kebunId.trim() || kebunId === 'farm-1' || kebunId === 'undefined') {
+      return [];
+    }
+    try {
+      const res = await apiClient.get<ApiResponse<BlokStatusLampuPerBlok[]>>(
+        `/petani/kebun/${kebunId.trim()}/status-lampu`
+      );
+      if (res && Array.isArray(res.data)) {
+        return res.data;
+      }
+    } catch {
+      // Abaikan jika endpoint gagal atau belum terkonfigurasi
+    }
+    return [];
   },
 
   getSensorLogs: async (

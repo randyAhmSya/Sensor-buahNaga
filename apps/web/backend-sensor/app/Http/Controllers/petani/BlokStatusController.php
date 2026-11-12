@@ -9,6 +9,7 @@ use App\Services\management_kebun\BlokStatusService;
 use App\Traits\ApiResponser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 
 class BlokStatusController extends Controller
 {
@@ -31,6 +32,26 @@ class BlokStatusController extends Controller
         return $this->successResponse(
             $this->blokStatusService->getRingkasanBlok($blokId),
             'Status lampu per blok berhasil diambil.'
+        );
+    }
+
+    public function statusLampuKebun(string $kebunId): JsonResponse
+    {
+        if (!Str::isUuid($kebunId)) {
+            return $this->errorResponse('ID kebun tidak valid.', 400);
+        }
+
+        $kebun = Kebun::find($kebunId);
+        if (!$kebun) {
+            return $this->errorResponse('Data kebun tidak ditemukan.', 404);
+        }
+        if (Gate::denies('view', $kebun)) {
+            return $this->errorResponse('Akses ditolak.', 403);
+        }
+
+        return $this->successResponse(
+            $this->blokStatusService->getRingkasanKebun($kebunId),
+            'Status lampu seluruh blok dalam kebun berhasil diambil.'
         );
     }
 }

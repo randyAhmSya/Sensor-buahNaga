@@ -9,7 +9,7 @@
     "test:qr": "node --experimental-strip-types --test src/features/qrcodes/utils/qrStickerMapper.test.ts",
     "test:watt": "node --experimental-strip-types --test src/features/blocks/utils/lampWattMapper.test.ts",
     "test:iot": "node --experimental-strip-types --test src/features/sensors/utils/iotConfigYamlMapper.test.ts",
-    "test": "node --experimental-strip-types --test src/features/qrcodes/utils/qrStickerMapper.test.ts src/features/blocks/utils/lampWattMapper.test.ts src/features/sensors/utils/iotConfigYamlMapper.test.ts src/features/sensors/utils/resetPairingErrorMapper.test.ts src/services/gatewayService.test.ts src/features/sensors/utils/sensorMapper.test.ts src/utils/formatRelativeTime.test.ts src/schemas/deviceCode.schema.test.ts src/features/sensors/utils/kebunGateway.test.ts src/constants/sensorType.test.ts src/services/farmService.test.ts src/features/blocks/utils/blockNodeMatcher.test.ts",
+    "test": "node --experimental-strip-types --test src/features/qrcodes/utils/qrStickerMapper.test.ts src/features/blocks/utils/lampWattMapper.test.ts src/features/sensors/utils/iotConfigYamlMapper.test.ts src/features/sensors/utils/resetPairingErrorMapper.test.ts src/services/gatewayService.test.ts src/features/sensors/utils/sensorMapper.test.ts src/utils/formatRelativeTime.test.ts src/schemas/deviceCode.schema.test.ts src/features/sensors/utils/kebunGateway.test.ts src/constants/sensorType.test.ts src/services/farmService.test.ts src/features/blocks/utils/blockNodeMatcher.test.ts src/features/blocks/utils/blockMapper.test.ts src/features/sensors/utils/kebunStatusMapper.test.ts src/features/harvests/utils/harvestCycleMapper.test.ts",
     "lint": "oxlint",
     "preview": "vite preview"
   },

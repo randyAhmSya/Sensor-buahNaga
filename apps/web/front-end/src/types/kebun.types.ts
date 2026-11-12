@@ -1,3 +1,5 @@
+import type { BlokBackend } from './block.types';
+
 /**
  * Definisi Tipe Entitas Kebun (Farms) Backend Laravel AgroLight
  */
@@ -12,6 +14,7 @@ export interface KebunBackend {
   status_kebun: boolean | number | string;
   keterangan?: string | null;
   bloks_count?: number;
+  bloks?: BlokBackend[];
   created_at?: string;
   updated_at?: string;
 }
