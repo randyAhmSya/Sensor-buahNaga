@@ -1,15 +1,16 @@
 import React, { useEffect, useRef } from "react";
 import { Alert, AppState, type AppStateStatus, Platform } from "react-native";
-import { Stack, router } from "expo-router";
+import { Stack, router, useSegments } from "expo-router";
 import "../css/global.css";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { focusManager, onlineManager } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import * as SplashScreen from "expo-splash-screen";
 import NetInfo from "@react-native-community/netinfo";
-import { queryClient, asyncStoragePersister } from "@/lib/queryClient";
+import { queryClient, asyncStoragePersister, clearAppCache } from "@/lib/queryClient";
 import { ErrorBoundary } from "@/component/ui/ErrorBoundary";
-import { onSubscriptionRequired } from "@/service/apiClient";
+import { onSubscriptionRequired, onAuthRequired } from "@/service/apiClient";
+import { useAuthState } from "@/service/authStorage";
 import { FITUR_LANGGANAN } from "@/config/features";
 
 // Tahan splash screen sampai inisialisasi awal siap
@@ -90,20 +91,68 @@ function SubscriptionAlertWatcher({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AuthNavigationWatcher({
+  isInitialized,
+  isAuthenticated,
+}: {
+  isInitialized: boolean;
+  isAuthenticated: boolean;
+}) {
+  const segments = useSegments();
+  const isHandling401 = useRef(false);
+
+  // 1. Guard rute berdasarkan status autentikasi reaktif
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const inAuthGroup = segments[0] === "login";
+
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace("/login");
+    } else if (isAuthenticated && inAuthGroup) {
+      router.replace("/(tabs)");
+    }
+  }, [isInitialized, isAuthenticated, segments]);
+
+  // 2. Tangani 401 unauthenticated listener dari apiClient (cegah loop / ganda)
+  useEffect(() => {
+    const unsubscribe = onAuthRequired(() => {
+      if (isHandling401.current) return;
+      isHandling401.current = true;
+      clearAppCache().finally(() => {
+        router.replace("/login");
+        setTimeout(() => {
+          isHandling401.current = false;
+        }, 1500);
+      });
+    });
+    return unsubscribe;
+  }, []);
+
+  return null;
+}
+
 export default function RootLayout() {
+  const { isInitialized, isAuthenticated } = useAuthState();
+
   useEffect(() => {
     const appStateSub = AppState.addEventListener("change", onAppStateChange);
-
-    // Sembunyikan splash screen dengan mulus setelah bootstrap selesai
-    const splashTimer = setTimeout(() => {
-      SplashScreen.hideAsync().catch(() => {});
-    }, 150);
-
     return () => {
       appStateSub.remove();
-      clearTimeout(splashTimer);
     };
   }, []);
+
+  // Sembunyikan splash screen hanya setelah authStorage.init() benar-benar selesai
+  useEffect(() => {
+    if (isInitialized) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [isInitialized]);
+
+  // Tahan rendering navigator sampai bootstrap storage selesai
+  if (!isInitialized) {
+    return null;
+  }
 
   return (
     <SafeAreaProvider>
@@ -125,6 +174,10 @@ export default function RootLayout() {
         <SafeAreaView style={{ flex: 1 }}>
           <ErrorBoundary>
             <SubscriptionAlertWatcher>
+              <AuthNavigationWatcher
+                isInitialized={isInitialized}
+                isAuthenticated={isAuthenticated}
+              />
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="login" />
                 <Stack.Screen name="(tabs)" />

@@ -91,7 +91,7 @@ export const NodeCard = memo(function NodeCard({
       </View>
 
       <Text className="mt-0.5 text-xs text-slate-600" numberOfLines={1}>
-        {node.location || "Blok Kebun"}
+        {node.location || "Blok belum diatur"}
       </Text>
 
       {/* Baris Pembacaan Sensor: Suhu & Lux */}

@@ -6,25 +6,10 @@ export type GardenStats = {
   activeCycles: number;
 };
 
-export type WeatherInfo = {
-  temperatureC: number;
-  condition: string;
-};
-
 export type QuickAction = {
   key: string;
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
-};
-
-export type ActivityItem = {
-  id: string;
-  nodeId: string;
-  location: string;
-  lightLux: number;
-  powerWh: number;
-  time: string;
-  thumbnailUrl?: string;
 };
 
 export type HarvestEstimate = {

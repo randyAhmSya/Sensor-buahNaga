@@ -33,15 +33,29 @@ export function mapToProfileData({
   const firstLocation =
     kebuns[0]?.lokasi_kebun ||
     currentUser?.location ||
-    "Banyuwangi, Jawa Timur";
+    "Lokasi belum diatur";
+
+  const formatRoleLabel = (rawRole?: string): string => {
+    if (!rawRole) return "";
+    const normalized = rawRole.toLowerCase().trim();
+    if (normalized === "superadmin" || normalized === "super_admin" || normalized === "super admin") {
+      return "Super Admin";
+    }
+    if (normalized === "admin") {
+      return "Admin";
+    }
+    if (normalized === "petani" || normalized === "petani_biasa") {
+      return "Petani";
+    }
+    return rawRole
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  };
 
   const user: UserProfile = {
-    name: currentUser?.nama_lengkap || "Petani Buah Naga",
+    name: currentUser?.nama_lengkap || "Pengguna",
     email: currentUser?.email,
-    role:
-      currentUser?.role === "superAdmin"
-        ? "Super Admin AgroLight"
-        : "Pemilik Kebun & Pengelola IoT",
+    role: formatRoleLabel(currentUser?.role),
     location: firstLocation,
     avatarUrl: undefined,
     totalGardens,

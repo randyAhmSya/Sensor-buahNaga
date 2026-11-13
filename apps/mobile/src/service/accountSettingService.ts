@@ -58,15 +58,15 @@ export async function fetchAccountProfile(): Promise<AccountProfile> {
         email: u.email,
       };
     }
-  } catch {
-    // Sesi offline
+  } catch (err) {
+    throw new Error(
+      err instanceof Error
+        ? err.message
+        : "Gagal memuat profil akun. Periksa koneksi internet Anda.",
+    );
   }
 
-  return {
-    fullName: "Petani Buah Naga",
-    phone: "-",
-    email: "-",
-  };
+  throw new Error("Sesi pengguna tidak ditemukan. Silakan login kembali.");
 }
 
 /**
@@ -76,14 +76,19 @@ export async function updateAccountProfile(
   payload: UpdateAccountPayload,
 ): Promise<void> {
   const current = authStorage.getUser();
+  if (!current) {
+    throw new Error(
+      "Sesi pengguna tidak ditemukan. Tidak dapat memperbarui profil tanpa autentikasi.",
+    );
+  }
 
   await authStorage.setUser({
-    id: current?.id || "user-local-1",
-    tenant_id: current?.tenant_id,
+    id: current.id,
+    tenant_id: current.tenant_id,
     nama_lengkap: payload.fullName,
     email: payload.email,
     phone: payload.phone,
-    role: current?.role || "petani_biasa",
+    role: current.role,
     is_aktif: true,
   });
 }
