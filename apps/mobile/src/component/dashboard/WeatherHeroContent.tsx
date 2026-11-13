@@ -3,6 +3,7 @@ import { Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { DashboardBacaanTerakhir } from "@/types/dashboard";
 import { formatJamMenit } from "@/utils/date";
+import { colors } from "@/theme/tokens";
 
 interface WeatherHeroContentProps {
   greetingName: string;
@@ -41,8 +42,8 @@ export function WeatherHeroContent({
       <View
         className="rounded-lg p-4 border"
         style={{
-          backgroundColor: "#064E3B", // Solid dark emerald
-          borderColor: "#047857",     // Border tegas emerald
+          backgroundColor: colors.hero.bg,
+          borderColor: colors.hero.border,
         }}
       >
         {/* Baris 1: Identitas Kebun & Status Sistem */}
@@ -50,12 +51,15 @@ export function WeatherHeroContent({
           <View
             className="flex-row items-center gap-1.5 px-2.5 py-1 rounded-md border"
             style={{
-              backgroundColor: "#065F46",
-              borderColor: "#047857",
+              backgroundColor: colors.hero.cardBg,
+              borderColor: colors.hero.cardBorder,
             }}
           >
-            <Ionicons name="leaf" size={12} color="#A7F3D0" />
-            <Text className="text-[11px] font-bold uppercase tracking-wider text-[#A7F3D0]">
+            <Ionicons name="leaf" size={12} color={colors.hero.icon} />
+            <Text
+              className="text-xs font-bold uppercase tracking-wider"
+              style={{ color: colors.hero.textAccent }}
+            >
               {farmName}
             </Text>
           </View>
@@ -63,8 +67,8 @@ export function WeatherHeroContent({
           <View
             className="flex-row items-center gap-1.5 px-2.5 py-1 rounded-md border"
             style={{
-              backgroundColor: "#065F46",
-              borderColor: "#047857",
+              backgroundColor: colors.hero.cardBg,
+              borderColor: colors.hero.cardBorder,
             }}
           >
             <View
@@ -72,7 +76,7 @@ export function WeatherHeroContent({
                 nodeStats.online > 0 ? "bg-emerald-400" : "bg-amber-400"
               }`}
             />
-            <Text className="text-[11px] font-bold text-emerald-100">
+            <Text className="text-xs font-bold text-emerald-100">
               {nodeStats.online > 0 ? "Sistem Aktif" : "Semua Offline"}
             </Text>
           </View>
@@ -94,15 +98,15 @@ export function WeatherHeroContent({
           <View
             className="flex-1 p-2.5 rounded-lg items-center border justify-center"
             style={{
-              backgroundColor: "#065F46",
-              borderColor: "#047857",
+              backgroundColor: colors.hero.cardBg,
+              borderColor: colors.hero.cardBorder,
             }}
           >
-            <Ionicons name="hardware-chip-outline" size={16} color="#A7F3D0" />
+            <Ionicons name="hardware-chip-outline" size={16} color={colors.hero.icon} />
             <Text className="text-sm font-black text-white mt-1">
               {nodeStats.online}/{nodeStats.total}
             </Text>
-            <Text className="text-[10px] font-semibold text-emerald-200 mt-0.5">
+            <Text className="text-xs font-semibold text-emerald-200 mt-0.5">
               Node Online
             </Text>
           </View>
@@ -111,15 +115,15 @@ export function WeatherHeroContent({
           <View
             className="flex-1 p-2.5 rounded-lg items-center border justify-center"
             style={{
-              backgroundColor: "#065F46",
-              borderColor: "#047857",
+              backgroundColor: colors.hero.cardBg,
+              borderColor: colors.hero.cardBorder,
             }}
           >
-            <Ionicons name="grid-outline" size={16} color="#A7F3D0" />
+            <Ionicons name="grid-outline" size={16} color={colors.hero.icon} />
             <Text className="text-sm font-black text-white mt-1">
               {jumlahBlok} Blok
             </Text>
-            <Text className="text-[10px] font-semibold text-emerald-200 mt-0.5">
+            <Text className="text-xs font-semibold text-emerald-200 mt-0.5">
               Blok Lahan
             </Text>
           </View>
@@ -128,26 +132,26 @@ export function WeatherHeroContent({
           <View
             className="flex-1 p-2.5 rounded-lg items-center border justify-center"
             style={{
-              backgroundColor: "#065F46",
-              borderColor: "#047857",
+              backgroundColor: colors.hero.cardBg,
+              borderColor: colors.hero.cardBorder,
             }}
           >
-            <Ionicons name="sunny-outline" size={16} color="#A7F3D0" />
+            <Ionicons name="sunny-outline" size={16} color={colors.hero.icon} />
             {!bacaanTerbaru ? (
               <>
                 <Text className="text-xs font-bold text-slate-300 mt-1 text-center">
                   Belum ada data
                 </Text>
-                <Text className="text-[10px] font-semibold text-emerald-200 mt-0.5">
+                <Text className="text-xs font-semibold text-emerald-200 mt-0.5">
                   Cahaya Terakhir
                 </Text>
               </>
             ) : bacaanTerbaru.basi ? (
               <>
-                <Text className="text-[11px] font-bold text-slate-200 mt-1 text-center">
+                <Text className="text-xs font-bold text-slate-200 mt-1 text-center">
                   Data terakhir {formatJamMenit(bacaanTerbaru.dicatat_pada)}
                 </Text>
-                <Text className="text-[10px] font-semibold text-emerald-200 mt-0.5">
+                <Text className="text-xs font-semibold text-emerald-200 mt-0.5">
                   Cahaya ({bacaanTerbaru.nilai_lux} lx)
                 </Text>
               </>
@@ -156,7 +160,7 @@ export function WeatherHeroContent({
                 <Text className="text-sm font-black text-white mt-1">
                   {bacaanTerbaru.nilai_lux.toLocaleString("id-ID")} lx
                 </Text>
-                <Text className="text-[10px] font-semibold text-emerald-200 mt-0.5">
+                <Text className="text-xs font-semibold text-emerald-200 mt-0.5">
                   Cahaya Node
                 </Text>
               </>
@@ -168,15 +172,15 @@ export function WeatherHeroContent({
             <View
               className="flex-1 p-2.5 rounded-lg items-center border justify-center"
               style={{
-                backgroundColor: "#065F46",
-                borderColor: "#047857",
+                backgroundColor: colors.hero.cardBg,
+                borderColor: colors.hero.cardBorder,
               }}
             >
-              <Ionicons name="thermometer-outline" size={16} color="#A7F3D0" />
+              <Ionicons name="thermometer-outline" size={16} color={colors.hero.icon} />
               <Text className="text-sm font-black text-white mt-1">
                 {Math.round(Number(bacaanTerbaru.suhu))}°C
               </Text>
-              <Text className="text-[10px] font-semibold text-emerald-200 mt-0.5">
+              <Text className="text-xs font-semibold text-emerald-200 mt-0.5">
                 Suhu Udara
               </Text>
             </View>

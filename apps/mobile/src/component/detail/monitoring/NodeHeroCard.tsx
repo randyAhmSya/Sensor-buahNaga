@@ -4,8 +4,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Card } from "@/component/ui/Card";
 import { StatusBadge } from "@/component/ui/StatusBadge";
 import type { NodeRingkasanNodeInfo } from "@/types/api/nodeRingkasan.dto";
-import type { BadgeTone } from "@/theme/tokens";
+import { colors, border, type BadgeTone } from "@/theme/tokens";
 import { formatWaktuRelatif } from "@/utils/date";
+import { formatWattTerpasang } from "@/utils/watt";
 
 interface Props {
   node: NodeRingkasanNodeInfo;
@@ -31,13 +32,26 @@ export function NodeHeroCard({ node }: Props) {
     ? `Terakhir aktif: ${formatWaktuRelatif(node.terakhir_terlihat)}`
     : "Belum pernah mengirim data";
 
+  const jumlahLampu = node.jumlah_lampu ?? 1;
+  const wattText = formatWattTerpasang(node.watt_terpasang);
+
   return (
     <Card className="mt-4 border border-slate-200 bg-white p-4">
       {/* Baris 1: Kode Perangkat & Satu Badge Status Solid */}
       <View className="flex-row items-center justify-between gap-2">
         <View className="flex-row items-center gap-2.5 flex-1 mr-2" style={{ flexShrink: 1 }}>
-          <View className="h-10 w-10 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400">
-            <Ionicons name="hardware-chip-outline" size={20} color="#334155" />
+          <View
+            className="h-10 w-10 items-center justify-center rounded-lg bg-white"
+            style={{
+              borderWidth: border.strong,
+              borderColor: colors.border.neutral,
+            }}
+          >
+            <Ionicons
+              name="hardware-chip-outline"
+              size={20}
+              color={colors.icon.neutral}
+            />
           </View>
 
           <View className="flex-1" style={{ flexShrink: 1 }}>
@@ -53,9 +67,23 @@ export function NodeHeroCard({ node }: Props) {
         <StatusBadge tone={tone} label={statusLabel} size="sm" />
       </View>
 
-      {/* Baris 2: Satu Keterangan Waktu Aktif Tunggal (Bebas Duplikasi Label) */}
-      <View className="mt-3 pt-3 border-t border-slate-200 flex-row items-center gap-1.5">
-        <Ionicons name="time-outline" size={14} color="#64748B" />
+      {/* Baris 2: Indikator Jumlah Lampu & Total Daya Terpasang */}
+      <View className="mt-3 pt-3 border-t border-slate-200 flex-row items-center justify-between">
+        <View className="flex-row items-center gap-1.5 flex-1 mr-2" style={{ flexShrink: 1 }}>
+          <Ionicons name="bulb-outline" size={15} color={colors.icon.neutral} />
+          <Text className="text-xs font-bold text-slate-800">
+            {jumlahLampu} lampu
+          </Text>
+          <Text className="text-xs text-slate-400">•</Text>
+          <Text className="text-xs font-semibold text-slate-700" numberOfLines={1}>
+            {wattText}
+          </Text>
+        </View>
+      </View>
+
+      {/* Baris 3: Satu Keterangan Waktu Aktif Tunggal (Bebas Duplikasi Label) */}
+      <View className="mt-2.5 pt-2.5 border-t border-slate-100 flex-row items-center gap-1.5">
+        <Ionicons name="time-outline" size={14} color={colors.icon.subtle} />
         <Text className="text-xs font-medium text-slate-600">
           {waktuAktifText}
         </Text>

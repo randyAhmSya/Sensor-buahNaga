@@ -3,6 +3,7 @@ import { Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Card } from "@/component/ui/Card";
 import type { GardenStats } from "@/constant/dashboard";
+import { colors, border } from "@/theme/tokens";
 
 interface StatsCardsProps {
   stats: GardenStats;
@@ -22,9 +23,9 @@ export function StatsCards({ stats }: StatsCardsProps) {
         value={String(stats.activeNodes)}
       />
       <StatCard
-        icon="shield-checkmark-outline"
-        label="Kesehatan"
-        value={`${stats.avgHealthPercent}%`}
+        icon="sync-outline"
+        label="Siklus Panen"
+        value={String(stats.activeCycles)}
       />
     </View>
   );
@@ -41,10 +42,13 @@ const StatCard = memo(function StatCard({
 }) {
   return (
     <Card className="flex-1 items-center gap-1.5 p-3.5">
-      <View className="h-10 w-10 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400">
-        <Ionicons name={icon} size={20} color="#334155" />
+      <View
+        className="h-10 w-10 items-center justify-center rounded-lg bg-white"
+        style={{ borderWidth: border.strong, borderColor: colors.border.neutral }}
+      >
+        <Ionicons name={icon} size={20} color={colors.icon.neutral} />
       </View>
-      <Text className="text-center text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+      <Text className="text-center text-xs font-semibold uppercase tracking-wider text-slate-600">
         {label}
       </Text>
       <Text className="text-lg font-extrabold text-slate-900">{value}</Text>

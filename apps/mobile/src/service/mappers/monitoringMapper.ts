@@ -4,39 +4,16 @@ import {
   type MonitoringNode,
   type NodeStatus,
 } from "@/constant/monitoring";
+import type { DashboardData } from "@/service/dashboardService";
 import type { MonitoringData, NodeSummaryStats } from "@/service/monitoringService";
+import {
+  formatJamWib,
+  formatTanggalGrupWib,
+  formatWaktuRelatifWib,
+  parseUtcDate,
+} from "@/utils/date";
 
-export function formatTanggalGrup(date: Date): string {
-  const sekarang = new Date();
-  const selisihHari = Math.floor(
-    (sekarang.setHours(0, 0, 0, 0) - new Date(date).setHours(0, 0, 0, 0)) /
-      (1000 * 60 * 60 * 24),
-  );
-
-  const options: Intl.DateTimeFormatOptions = {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  };
-  const strTgl = date.toLocaleDateString("id-ID", options);
-
-  if (selisihHari === 0) return `Hari Ini, ${strTgl}`;
-  if (selisihHari === 1) return `Kemarin, ${strTgl}`;
-  return strTgl;
-}
-
-export function formatJamWib(dateStr?: string | null): string {
-  if (!dateStr) return "Belum ada data";
-  try {
-    const d = new Date(dateStr);
-    return (
-      d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) +
-      " WIB"
-    );
-  } catch {
-    return dateStr;
-  }
-}
+export { formatJamWib, formatTanggalGrupWib as formatTanggalGrup };
 
 export interface MonitoringNodeItemPayload {
   id_sensor?: string;
@@ -45,11 +22,111 @@ export interface MonitoringNodeItemPayload {
   blokNama?: string;
   status_koneksi: string;
   terakhir_terlihat?: string | null;
-  suhu: number;
-  lux?: number;
-  waktuCatat: string;
+  suhu?: number | null;
+  lux?: number | null;
+  waktuCatat?: string | null;
+  isBasi?: boolean;
 }
 
+/**
+ * Memetakan data dari agregasi Dashboard (blok dan ringkasan kebun aktif)
+ * menjadi struktur data layar Monitoring tanpa request jaringan baru.
+ */
+export function mapDashboardToMonitoringData(dashboard: DashboardData): MonitoringData {
+  const summary: NodeSummaryStats = {
+    total: dashboard.ringkasan.jumlah_node,
+    online: dashboard.ringkasan.node_online,
+    offline: dashboard.ringkasan.node_offline,
+    belumTerlihat: dashboard.ringkasan.node_belum_terlihat,
+  };
+
+  if (!dashboard.blok || dashboard.blok.length === 0) {
+    return {
+      groups: [],
+      filters: FILTER_OPTIONS,
+      summary,
+    };
+  }
+
+  const nodesWithTime: Array<{ node: MonitoringNode; timestamp: number }> = [];
+
+  for (const blok of dashboard.blok) {
+    for (const item of blok.node) {
+      const isOnline = item.status === "online" || item.status_online === true;
+      const isProblem: boolean = !isOnline;
+      const nodeStatus: NodeStatus = isProblem ? "problem" : "normal";
+
+      const dTerakhir = parseUtcDate(item.terakhir_terlihat);
+      const dBacaan = parseUtcDate(item.bacaan_terakhir?.dicatat_pada);
+
+      // Titik waktu acuan grouping: bacaan terbaru atau waktu terakhir terlihat
+      const refDate = dBacaan || dTerakhir || new Date(0);
+      const timestamp = refDate.getTime();
+
+      const displayTime = item.terakhir_terlihat
+        ? formatJamWib(item.terakhir_terlihat)
+        : "Belum ada data";
+
+      const isBasi = item.bacaan_terakhir ? item.bacaan_terakhir.basi : false;
+      const waktuRelatif = item.bacaan_terakhir?.dicatat_pada
+        ? formatWaktuRelatifWib(item.bacaan_terakhir.dicatat_pada)
+        : null;
+
+      const node: MonitoringNode = {
+        id: item.id_sensor || item.kode_perangkat,
+        code: item.kode_perangkat,
+        location: `${dashboard.kebunInfo.nama_kebun} - ${blok.nama_blok}`,
+        time: displayTime,
+        temperatureC: item.bacaan_terakhir?.suhu ?? null,
+        lightLux: item.bacaan_terakhir?.nilai_lux ?? null,
+        isBasi,
+        waktuRelatif,
+        dicatatPada: item.bacaan_terakhir?.dicatat_pada ?? item.terakhir_terlihat ?? null,
+        status: nodeStatus,
+        statusKoneksi: item.status,
+      };
+
+      nodesWithTime.push({ node, timestamp });
+    }
+  }
+
+  // Urutkan node dari yang paling mutakhir
+  nodesWithTime.sort((a, b) => b.timestamp - a.timestamp);
+
+  // Kelompokkan node ke dalam grup tanggal kalender WIB murni
+  const groupsMap = new Map<string, MonitoringNode[]>();
+
+  for (const item of nodesWithTime) {
+    // Jika belum pernah terlihat / belum ada data waktu, kelompokkan tersendiri atau dengan tanggal fallback
+    const dateLabel = item.timestamp === 0
+      ? "Belum Ada Riwayat"
+      : formatTanggalGrupWib(item.timestamp);
+
+    const existing = groupsMap.get(dateLabel);
+    if (existing) {
+      existing.push(item.node);
+    } else {
+      groupsMap.set(dateLabel, [item.node]);
+    }
+  }
+
+  const groups: MonitoringGroup[] = Array.from(groupsMap.entries()).map(
+    ([dateLabel, nodes]) => ({
+      dateLabel,
+      nodes,
+    }),
+  );
+
+  return {
+    groups,
+    filters: FILTER_OPTIONS,
+    summary,
+  };
+}
+
+/**
+ * Mapper payload lama (dipertahankan untuk kompatibilitas pengujian/backward compatibility).
+ */
 export function mapToMonitoringData(
   rawItems: MonitoringNodeItemPayload[],
 ): MonitoringData {
@@ -91,18 +168,11 @@ export function mapToMonitoringData(
         item.status_koneksi === "online" ||
         item.status_koneksi === "terhubung";
 
-      const isProblem: boolean =
-        !isOnline ||
-        item.status_koneksi === "offline" ||
-        item.status_koneksi === "terputus" ||
-        item.suhu > 38;
-
+      const isProblem: boolean = !isOnline;
       const nodeStatus: NodeStatus = isProblem ? "problem" : "normal";
 
-      const parsedDate = new Date(item.waktuCatat);
-      const timestamp = isNaN(parsedDate.getTime())
-        ? Date.now()
-        : parsedDate.getTime();
+      const parsedDate = parseUtcDate(item.waktuCatat);
+      const timestamp = parsedDate ? parsedDate.getTime() : Date.now();
 
       return {
         timestamp,
@@ -111,21 +181,21 @@ export function mapToMonitoringData(
           code: item.kode_perangkat,
           location: `${item.kebunNama}${item.blokNama ? ` - ${item.blokNama}` : ""}`,
           time: formatJamWib(item.terakhir_terlihat),
-          temperatureC: item.suhu,
-          lightLux: item.lux,
+          temperatureC: item.suhu ?? null,
+          lightLux: item.lux ?? null,
+          isBasi: item.isBasi ?? false,
+          waktuRelatif: item.waktuCatat ? formatWaktuRelatifWib(item.waktuCatat) : null,
+          dicatatPada: item.waktuCatat ?? null,
           status: nodeStatus,
           statusKoneksi: item.status_koneksi || (isOnline ? "online" : "offline"),
         },
       };
     });
 
-  // Kelompokkan node ke dalam grup tanggal (MonitoringGroup[])
   const groupsMap = new Map<string, MonitoringNode[]>();
 
   for (const item of monitoringNodes) {
-    const d = new Date(item.timestamp);
-    const dateLabel = formatTanggalGrup(d);
-
+    const dateLabel = formatTanggalGrupWib(item.timestamp);
     const existing = groupsMap.get(dateLabel);
     if (existing) {
       existing.push(item.node);

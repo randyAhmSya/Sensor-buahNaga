@@ -8,6 +8,7 @@ import { useQrScanLogs } from "@/hooks/useQrScanLogs";
 import type { QrScanLogItem } from "@/service/qrScanService";
 import type { ActivityItem } from "@/constant/dashboard";
 import { ActivityCard } from "./ActivityCard";
+import { colors, border } from "@/theme/tokens";
 
 interface ActivityListProps {
   activities?: ActivityItem[];
@@ -59,7 +60,7 @@ export const ActivityList = memo(function ActivityList({
     <View className="pt-1 mb-4">
       <View className="mb-3 flex-row items-center justify-between">
         <View className="flex-row items-center gap-2">
-          <Ionicons name="document-text-outline" size={20} color="#059669" />
+          <Ionicons name="document-text-outline" size={20} color={colors.icon.neutral} />
           <Text className="text-lg font-bold text-slate-900">
             Aktivitas Pemindaian QR
           </Text>
@@ -77,7 +78,7 @@ export const ActivityList = memo(function ActivityList({
 
       {isPending ? (
         <View className="items-center justify-center py-8">
-          <ActivityIndicator size="small" color="#059669" />
+          <ActivityIndicator size="small" color={colors.status.success.bg} />
           <Text className="mt-2 text-xs text-slate-600">
             Memuat riwayat pemindaian...
           </Text>
@@ -86,10 +87,20 @@ export const ActivityList = memo(function ActivityList({
         <View
           key="activity-empty-container"
           className="items-center justify-center rounded-lg bg-white p-6 my-2"
-          style={{ borderStyle: "dashed", borderWidth: 1, borderColor: "#CBD5E1" }}
+          style={{
+            borderStyle: "dashed",
+            borderWidth: border.strong,
+            borderColor: colors.border.neutral,
+          }}
         >
-          <View className="h-12 w-12 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400 mb-2">
-            <Ionicons name="qr-code-outline" size={24} color="#047857" />
+          <View
+            className="h-12 w-12 items-center justify-center rounded-lg bg-white mb-2"
+            style={{
+              borderWidth: border.strong,
+              borderColor: colors.border.neutral,
+            }}
+          >
+            <Ionicons name="qr-code-outline" size={24} color={colors.icon.neutral} />
           </View>
           <Text className="text-center text-sm font-bold text-slate-900">
             Belum Ada Riwayat Pemindaian

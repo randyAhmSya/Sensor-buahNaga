@@ -12,9 +12,10 @@ import { QuickActions } from "@/component/dashboard/QuickActions";
 import { ActivityList } from "@/component/dashboard/ActivityList";
 import { ActionNeededList } from "@/component/dashboard/ActionNeededList";
 import { HarvestEstimateList } from "@/component/dashboard/HarvestEstimateList";
+import { colors, border } from "@/theme/tokens";
 
 export default function DashboardScreen() {
-  const { userName, greetingName, today, state, refetch, isOffline } = useDashboard();
+  const { greetingName, today, state, refetch, isOffline } = useDashboard();
   const { data: unreadCount, refetch: refetchUnreadCount } = useUnreadNotificationCount();
 
   const [activeSection, setActiveSection] = useState("activity");
@@ -71,7 +72,7 @@ export default function DashboardScreen() {
   return (
     <View className="flex-1 bg-slate-50">
       <WeatherHero
-        appName={userName}
+        appName="AgroLight"
         greetingName={greetingName}
         today={today}
         farmName={kebunInfo.nama_kebun}
@@ -87,8 +88,11 @@ export default function DashboardScreen() {
 
       {/* Banner Offline Tegas saat Menampilkan Data Cache */}
       {isOffline && (
-        <View className="mx-4 mt-2 px-3.5 py-2.5 rounded-lg bg-white border-[1.5px] border-amber-500 flex-row items-center gap-2">
-          <Ionicons name="cloud-offline" size={16} color="#B45309" />
+        <View
+          className="mx-4 mt-2 px-3.5 py-2.5 rounded-lg bg-white flex-row items-center gap-2"
+          style={{ borderWidth: border.strong, borderColor: colors.border.warning }}
+        >
+          <Ionicons name="cloud-offline" size={16} color={colors.status.warning.border} />
           <Text className="text-xs font-bold text-amber-800 flex-1">
             Sedang offline, menampilkan data terakhir
           </Text>
@@ -99,7 +103,7 @@ export default function DashboardScreen() {
         className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: 100,
+          paddingBottom: 128,
           paddingTop: 8,
         }}
         refreshControl={

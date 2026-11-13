@@ -1,5 +1,6 @@
 import type { NodeDetail } from "@/constant/NodeDetails";
 import type { BackendSensorDTO, BackendReadSensorDTO } from "@/types/api";
+import { formatWaktuLengkapWib } from "@/utils/date";
 
 export function mapToNodeDetail(
   backendNode: BackendSensorDTO,
@@ -66,16 +67,5 @@ export function mapToNodeDetail(
 }
 
 function formatLastSeen(isoDate: string): string {
-  try {
-    const d = new Date(isoDate);
-    if (isNaN(d.getTime())) return isoDate;
-    return d.toLocaleString("id-ID", {
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return isoDate;
-  }
+  return formatWaktuLengkapWib(isoDate);
 }

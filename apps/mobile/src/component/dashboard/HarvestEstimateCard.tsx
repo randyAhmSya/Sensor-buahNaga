@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ListRowCard } from "@/component/ui/ListRowCard";
 import { ProgressBar } from "@/component/ui/ProgressBar";
 import type { HarvestEstimate } from "@/constant/dashboard";
+import { colors, border } from "@/theme/tokens";
 
 interface HarvestEstimateCardProps {
   item: HarvestEstimate;
@@ -18,14 +19,17 @@ export const HarvestEstimateCard = memo(function HarvestEstimateCard({
     <ListRowCard
       onPress={onPress}
       leading={
-        <View className="h-11 w-11 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400">
-          <Ionicons name="leaf-outline" size={20} color="#047857" />
+        <View
+          className="h-11 w-11 items-center justify-center rounded-lg bg-white"
+          style={{ borderWidth: border.strong, borderColor: colors.border.neutral }}
+        >
+          <Ionicons name="leaf-outline" size={20} color={colors.icon.neutral} />
         </View>
       }
       trailing={
         <View className="items-end gap-1">
           <Text className="text-xs font-semibold text-slate-600">{item.daysRemaining}</Text>
-          <Ionicons name="chevron-forward" size={16} color="#64748B" />
+          <Ionicons name="chevron-forward" size={16} color={colors.icon.subtle} />
         </View>
       }
     >

@@ -23,7 +23,7 @@ export function FloatingTabBar({ state, navigation }: FloatingTabBarProps) {
       pointerEvents="box-none"
     >
       <View
-        className="flex-1 flex-row justify-between rounded-full bg-white px-3 py-2.5"
+        className="flex-1 flex-row items-center rounded-full bg-white px-2 py-2"
         style={Floating_Shadow}
       >
         {state.routes.map((route, index) => {
@@ -91,14 +91,15 @@ const TabButton = memo(function TabButton({
       accessibilityState={{ selected: isActive }}
       accessibilityLabel={label}
     >
-      <View className="items-center gap-1">
+      <View className="items-center gap-0.5 w-full">
         <Ionicons
           name={isActive ? activeIcon : icon}
-          size={22}
+          size={20}
           color={isActive ? TAB_COLORS.active : TAB_COLORS.inactive}
         />
         <Text
-          className="text-[11px] font-medium"
+          numberOfLines={1}
+          className="text-xs font-semibold text-center"
           style={{ color: isActive ? TAB_COLORS.active : TAB_COLORS.inactive }}
         >
           {label}

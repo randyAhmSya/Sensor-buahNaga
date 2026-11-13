@@ -37,17 +37,12 @@ export function mapToDashboardData({
   const activeNodesCount = allNodes.filter(
     (n) => n.status_koneksi === 'online' || n.status_koneksi === 'terhubung',
   ).length;
-  const avgHealthPercent =
-    allNodes.length > 0
-      ? Math.round((activeNodesCount / allNodes.length) * 100)
-      : totalGardens > 0
-        ? 100
-        : 0;
+  const activeCyclesCount = siklusList.filter((s) => s.status_siklus === 'BERJALAN').length;
 
   const stats: GardenStats = {
     totalGardens,
     activeNodes: activeNodesCount,
-    avgHealthPercent,
+    activeCycles: activeCyclesCount,
   };
 
   // 2. Bacaan terbaru dari telemetri aktual (bila ada)
@@ -108,12 +103,20 @@ export function mapToDashboardData({
     status_kebun: kebuns[0]?.status_kebun ? String(kebuns[0].status_kebun) : 'aktif',
   };
 
+  const totalLampu = blokLampuSummaries.reduce((acc, b) => acc + b.jumlahLampu, 0);
+  const totalLampuOnline = blokLampuSummaries.reduce((acc, b) => acc + b.jumlahOnline, 0);
+  const totalLampuOffline = blokLampuSummaries.reduce((acc, b) => acc + b.jumlahOffline, 0);
+
   const ringkasan = {
     jumlah_blok: blokLampuSummaries.length,
     jumlah_node: allNodes.length,
     node_online: activeNodesCount,
     node_offline: offlineNodes.length,
     node_belum_terlihat: Math.max(0, allNodes.length - activeNodesCount - offlineNodes.length),
+    jumlah_lampu: totalLampu,
+    lampu_online: totalLampuOnline,
+    lampu_offline: totalLampuOffline,
+    watt_terpasang: null,
     siklus_berjalan: harvestEstimates.length,
     bacaan_terbaru: bacaanTerbaru,
   };
@@ -126,5 +129,6 @@ export function mapToDashboardData({
     harvestEstimates,
     actionIssueGroups,
     blokLampuSummaries,
+    blok: [],
   };
 }

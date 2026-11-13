@@ -7,6 +7,7 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { colors } from "@/theme/tokens";
 import { PressableOpacity } from "@/component/ui/PressableOpacity";
 import { useOverrideJadwalManualMutation } from "@/hooks/useJadwalLampu";
 import type { JadwalLampuAktif, JadwalErrorDetails } from "@/types/jadwalLampu";
@@ -188,9 +189,13 @@ export function ManualDimmingModal({
               <PressableOpacity
                 onPress={handleDecrease}
                 disabled={brightness <= 0 || isButtonDisabled}
+                accessibilityState={{
+                  disabled: brightness <= 0 || isButtonDisabled,
+                }}
+                accessibilityRole="button"
                 className={`w-12 h-12 rounded-lg items-center justify-center border ${
                   brightness <= 0 || isButtonDisabled
-                    ? "bg-gray-100 border-gray-200 opacity-40"
+                    ? "bg-slate-100 border-[1.5px] border-slate-300"
                     : "bg-white border-[1.5px] border-slate-400"
                 }`}
               >
@@ -198,7 +203,9 @@ export function ManualDimmingModal({
                   name="remove"
                   size={24}
                   color={
-                    brightness <= 0 || isButtonDisabled ? "#9CA3AF" : "#047857"
+                    brightness <= 0 || isButtonDisabled
+                      ? colors.icon.muted
+                      : colors.icon.neutral
                   }
                 />
               </PressableOpacity>
@@ -214,9 +221,13 @@ export function ManualDimmingModal({
               <PressableOpacity
                 onPress={handleIncrease}
                 disabled={brightness >= 100 || isButtonDisabled}
+                accessibilityState={{
+                  disabled: brightness >= 100 || isButtonDisabled,
+                }}
+                accessibilityRole="button"
                 className={`w-12 h-12 rounded-lg items-center justify-center border ${
                   brightness >= 100 || isButtonDisabled
-                    ? "bg-gray-100 border-gray-200 opacity-40"
+                    ? "bg-slate-100 border-[1.5px] border-slate-300"
                     : "bg-white border-[1.5px] border-slate-400"
                 }`}
               >
@@ -224,7 +235,9 @@ export function ManualDimmingModal({
                   name="add"
                   size={24}
                   color={
-                    brightness >= 100 || isButtonDisabled ? "#9CA3AF" : "#047857"
+                    brightness >= 100 || isButtonDisabled
+                      ? colors.icon.muted
+                      : colors.icon.neutral
                   }
                 />
               </PressableOpacity>
@@ -287,6 +300,8 @@ export function ManualDimmingModal({
             <PressableOpacity
               onPress={onClose}
               disabled={overrideMutation.isPending}
+              accessibilityState={{ disabled: overrideMutation.isPending }}
+              accessibilityRole="button"
               className="flex-1 py-3.5 rounded-lg bg-white items-center justify-center border-[1.5px] border-slate-400"
             >
               <Text className="text-sm font-semibold text-gray-700">Batal</Text>
@@ -295,21 +310,23 @@ export function ManualDimmingModal({
             <PressableOpacity
               onPress={handleConfirm}
               disabled={isButtonDisabled}
+              accessibilityState={{ disabled: isButtonDisabled }}
+              accessibilityRole="button"
               className={`flex-1 py-3.5 rounded-lg items-center justify-center ${
                 isButtonDisabled
-                  ? "bg-emerald-300 opacity-70"
+                  ? "bg-slate-300 border border-slate-400"
                   : "bg-emerald-700 active:bg-emerald-800"
               }`}
             >
               {overrideMutation.isPending ? (
                 <View className="flex-row items-center gap-2">
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                  <Text className="text-sm font-semibold text-white">
+                  <ActivityIndicator size="small" color={colors.icon.neutral} />
+                  <Text className="text-sm font-semibold text-slate-800">
                     Menyimpan...
                   </Text>
                 </View>
               ) : cooldownSeconds > 0 ? (
-                <Text className="text-sm font-semibold text-white">
+                <Text className="text-sm font-semibold text-slate-800">
                   Tunggu ({cooldownSeconds}s)
                 </Text>
               ) : (

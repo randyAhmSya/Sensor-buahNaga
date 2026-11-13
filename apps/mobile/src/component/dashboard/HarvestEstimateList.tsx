@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import type { HarvestEstimate } from '@/constant/dashboard';
 import { StatusBadge } from '@/component/ui/StatusBadge';
 import { HarvestEstimateCard } from './HarvestEstimateCard';
+import { colors, border } from '@/theme/tokens';
 
 interface HarvestEstimateListProps {
   items: HarvestEstimate[];
@@ -27,16 +28,19 @@ export const HarvestEstimateList = memo(function HarvestEstimateList({
 
         <Pressable
           onPress={() => router.push('/harvest/create')}
-          className="flex-row items-center gap-1 rounded-lg bg-emerald-700 px-3 py-1.5 active:bg-emerald-800"
+          className="flex-row items-center gap-1 rounded-lg bg-emerald-700 px-3.5 py-2.5 min-h-[44px] justify-center active:bg-emerald-800"
         >
-          <Ionicons name="add" size={16} color="#FFFFFF" />
+          <Ionicons name="add" size={16} color={colors.icon.inverse} />
           <Text className="text-xs font-bold text-white">Mulai Siklus</Text>
         </Pressable>
       </View>
 
       {items.length === 0 ? (
-        <View className="items-center justify-center rounded-lg bg-white p-6 border border-slate-200">
-          <Ionicons name="leaf-outline" size={36} color="#059669" />
+        <View
+          className="items-center justify-center rounded-lg bg-white p-6"
+          style={{ borderWidth: border.strong, borderColor: colors.border.neutral }}
+        >
+          <Ionicons name="leaf-outline" size={36} color={colors.icon.neutral} />
           <Text className="mt-2 text-sm font-bold text-slate-800">
             Belum Ada Siklus Panen Aktif
           </Text>
@@ -45,7 +49,7 @@ export const HarvestEstimateList = memo(function HarvestEstimateList({
           </Text>
           <Pressable
             onPress={() => router.push('/harvest/create')}
-            className="rounded-lg bg-emerald-700 px-4 py-2"
+            className="rounded-lg bg-emerald-700 px-4 py-2.5 min-h-[44px] justify-center"
           >
             <Text className="text-xs font-bold text-white">+ Mulai Siklus Sekarang</Text>
           </Pressable>

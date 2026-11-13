@@ -20,6 +20,9 @@ export interface DashboardNodeItem {
   status: NodeStatusType;
   status_online: boolean;
   terakhir_terlihat: string | null; // ISO string
+  jumlah_lampu?: number;
+  watt_per_lampu?: number | null;
+  watt_terpasang?: number | null;
   bacaan_terakhir?: DashboardBacaanTerakhir | null;
 }
 
@@ -59,6 +62,7 @@ export interface DashboardBlokItem {
   luas_area: string | number | null;
   url_foto: string | null;
   jumlah_node: number;
+  jumlah_lampu?: number;
   node: DashboardNodeItem[];
   siklus_aktif: DashboardSiklusAktif | null;
   jadwal: DashboardJadwalItem;
@@ -70,6 +74,10 @@ export interface DashboardRingkasan {
   node_online: number;
   node_offline: number;
   node_belum_terlihat: number;
+  jumlah_lampu?: number;
+  lampu_online?: number;
+  lampu_offline?: number;
+  watt_terpasang?: number | null;
   siklus_berjalan: number;
   batas_offline_detik: number;
   bacaan_terbaru: DashboardBacaanTerakhir | null;

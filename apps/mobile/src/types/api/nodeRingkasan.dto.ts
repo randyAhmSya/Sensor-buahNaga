@@ -28,6 +28,9 @@ export interface NodeRingkasanNodeInfo {
   status: NodeRingkasanStatus;
   status_online: boolean;
   terakhir_terlihat: string | null; // ISO string atau null
+  jumlah_lampu?: number;
+  watt_per_lampu?: number | null;
+  watt_terpasang?: number | null;
   blok: NodeRingkasanBlok;
   kebun: NodeRingkasanKebun;
   gateway: NodeRingkasanGateway | null;

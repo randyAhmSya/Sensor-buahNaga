@@ -5,6 +5,8 @@ import { Card } from "@/component/ui/Card";
 import { PressableOpacity } from "@/component/ui/PressableOpacity";
 import { StatusBadge } from "@/component/ui/StatusBadge";
 import type { QrScanLogItem } from "@/service/qrScanService";
+import { colors } from "@/theme/tokens";
+import { formatWaktuLengkapWib } from "@/utils/date";
 
 interface ActivityCardProps {
   log: QrScanLogItem;
@@ -12,23 +14,7 @@ interface ActivityCardProps {
 }
 
 export function formatDicatatPada(dateStr?: string | null): string {
-  if (!dateStr) return "-";
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    const datePart = d.toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-    const timePart = d.toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    return `${datePart}, ${timePart} WIB`;
-  } catch {
-    return dateStr;
-  }
+  return formatWaktuLengkapWib(dateStr);
 }
 
 export const ActivityCard = memo(function ActivityCard({
@@ -41,7 +27,7 @@ export const ActivityCard = memo(function ActivityCard({
   const statusLabel = isSuccess ? "Berhasil" : "Gagal";
   const tone: "success" | "danger" = isSuccess ? "success" : "danger";
   const iconName = isSuccess ? "qr-code-outline" : "close-circle-outline";
-  const iconColor = isSuccess ? "#047857" : "#DC2626";
+  const iconColor = colors.icon.neutral;
 
   const qrText = log.teks_kode_qr || "QR Node";
   const nodeText = log.kode_perangkat
@@ -84,12 +70,12 @@ export const ActivityCard = memo(function ActivityCard({
 
           <View className="mt-1 flex-row items-center gap-3">
             <View className="flex-row items-center gap-1">
-              <Ionicons name="phone-portrait-outline" size={12} color="#475569" />
+              <Ionicons name="phone-portrait-outline" size={12} color={colors.icon.muted} />
               <Text className="text-xs text-slate-600">{platformText}</Text>
             </View>
 
             <View className="flex-row items-center gap-1">
-              <Ionicons name="time-outline" size={12} color="#475569" />
+              <Ionicons name="time-outline" size={12} color={colors.icon.muted} />
               <Text className="text-xs text-slate-600">
                 {formatDicatatPada(log.dicatat_pada)}
               </Text>
@@ -98,7 +84,7 @@ export const ActivityCard = memo(function ActivityCard({
         </View>
 
         {/* Trailing Chevron */}
-        <Ionicons name="chevron-forward" size={16} color="#64748B" />
+        <Ionicons name="chevron-forward" size={16} color={colors.icon.subtle} />
       </Card>
     </PressableOpacity>
   );

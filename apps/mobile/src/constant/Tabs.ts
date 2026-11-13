@@ -16,7 +16,7 @@ export const TAB_CONFIG: Record<
     icon: "server-outline",
     activeIcon: "server",
   },
-  profile: { label: "profile", icon: "person-outline", activeIcon: "person" },
+  profile: { label: "Profil", icon: "person-outline", activeIcon: "person" },
   // setting: {
   //   label: "Setting",
   //   icon: "settings-outline",
@@ -25,9 +25,9 @@ export const TAB_CONFIG: Record<
 };
 
 export const TAB_COLORS = {
-  active: "#14532D", // green-900, dark green
-  inactive: "#9CA3AF", // gray-400
-  scanBackground: "#14532D",
+  active: "#047857", // emerald-700
+  inactive: "#475569", // Slate-600
+  scanBackground: "#047857",
   scanIcon: "#FFFFFF",
   subTitles: "#151C25",
   subIcons: "#717970",
