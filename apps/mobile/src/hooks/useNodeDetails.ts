@@ -4,11 +4,19 @@ import type { NodeDetail } from "@/constant/NodeDetails";
 import { fetchNodeDetail } from "@/service/nodeDetailService";
 import { QUERY_KEYS } from "@/constant/queryKeys";
 
-// Regex validasi: mendukung format UUID standar 36-karakter, format kode fisik QR-NODE-XXXXXX, atau kode perangkat alfanumerik (3-64 karakter)
-const UUID_REGEX =
+// Regex validasi: mendukung format UUID standar 36-karakter (8-4-4-4-12 heksadesimal), format kode fisik QR-NODE-XXXXXX, atau kode perangkat alfanumerik (3-64 karakter)
+export const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const NODE_CODE_REGEX = /^QR-NODE-[A-Za-z0-9_-]+$/i;
-const ALPHANUMERIC_ID_REGEX = /^[A-Za-z0-9_-]{3,64}$/;
+export const NODE_CODE_REGEX = /^QR-NODE-[A-Za-z0-9_-]+$/i;
+export const ALPHANUMERIC_ID_REGEX = /^[A-Za-z0-9_-]{3,64}$/;
+
+/**
+ * Memvalidasi apakah id string merupakan format UUID standar 8-4-4-4-12 heksadesimal.
+ */
+export function isUuid(id?: string): boolean {
+  if (!id) return false;
+  return UUID_REGEX.test(id.trim());
+}
 
 export function isValidNodeIdentifier(id?: string): boolean {
   if (!id) return false;

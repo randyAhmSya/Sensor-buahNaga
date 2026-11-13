@@ -36,14 +36,14 @@ export function NodeDetailScreen({ nodeId }: NodeDetailScreenProps) {
     );
   }
 
-  // 2. Jika format QR Code tidak sesuai
+  // 2. Jika format ID node tidak sesuai
   if (isInvalidIdentifier) {
     return (
       <View className="flex-1 bg-gray-50">
-        <NodeDetailHeader nodeId="QR Code Tidak Sesuai" />
+        <NodeDetailHeader nodeId="ID Tidak Sesuai" />
         <EmptyNodeScanState
-          title="Format QR Code Tidak Sesuai"
-          description="Kode QR yang dipindai bukan ID atau kode serial node yang valid. Silakan gunakan tombol Scan pada menu navigasi bawah untuk memindai ulang."
+          title="Format ID Node Tidak Sesuai"
+          description="ID node sensor harus berupa kode UUID 36-karakter yang valid. Silakan gunakan tombol Scan pada menu navigasi bawah untuk memindai ulang node sensor."
           isError={true}
         />
       </View>
