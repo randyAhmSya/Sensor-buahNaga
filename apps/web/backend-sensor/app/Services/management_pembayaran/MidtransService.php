@@ -15,7 +15,6 @@ class MidtransService
         Config::$isSanitized  = true;
         Config::$is3ds        = true;
 
-         \Log::info('Server key length: ' . strlen(config('services.midtrans.server_key')));
     }
 
     public function buatSnapToken(TransaksiLangganan $transaksi, int $grossAmount, string $namaPaket): string
