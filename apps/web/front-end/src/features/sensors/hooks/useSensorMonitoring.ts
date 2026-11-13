@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { SensorNodeItem, SensorSummaryMetrics } from '@/types/sensor.types'
@@ -17,6 +17,13 @@ export const useSensorMonitoring = () => {
   const routeSensorId = params.sensorId ?? params.id
   const queryClient = useQueryClient()
   const notify = useNotify()
+  const notifyRef = useRef(notify)
+  useEffect(() => {
+    notifyRef.current = notify
+  })
+
+  const lastFarmsErrorRef = useRef<string | null>(null)
+  const lastSensorsErrorRef = useRef<string | null>(null)
 
   const [searchTerm, setSearchTerm] = useState(routeSensorId || '')
   const [selectedFarm, setSelectedFarm] = useState('Semua Kebun')
@@ -24,14 +31,22 @@ export const useSensorMonitoring = () => {
   const [isActionLoading, setIsActionLoading] = useState(false)
 
   // 1. Shared Query Farms With Blocks (Daftar kebun beserta blok riil untuk dropdown modal)
-  const { data: farms = [] } = useFarmsWithBlocksQuery()
+  const {
+    data: farms = [],
+    isLoading: isFarmsLoading,
+    isError: isFarmsError,
+    error: farmsError,
+    refetch: refetchFarms,
+  } = useFarmsWithBlocksQuery()
   const activeFarmId = farms[0]?.id
 
-  // 2. Query Utama Monitoring Sensor (Single Screen-Level Polling 30s saat tab aktif)
+  // 2. Query Utama Monitoring Sensor (Single Screen-Level Polling 60s saat tab aktif)
   const {
     data: sensors = [],
     isLoading: isSensorsLoading,
-    refetch,
+    isError: isSensorsError,
+    error: sensorsError,
+    refetch: refetchSensors,
   } = useQuery<SensorNodeItem[]>({
     queryKey: sensorKeys.list(activeFarmId),
     queryFn: async (): Promise<SensorNodeItem[]> => {
@@ -95,10 +110,49 @@ export const useSensorMonitoring = () => {
         }
       })
     },
+    enabled: Boolean(activeFarmId),
     staleTime: 30_000,
     refetchInterval: 60_000,
     refetchIntervalInBackground: false,
   })
+
+  // Tangani error useFarmsWithBlocksQuery secara eksplisit agar tidak diam (referensi stabil & id deduplikasi)
+  useEffect(() => {
+    if (isFarmsError && farmsError) {
+      const errorMsg = farmsError.message || 'Terjadi kesalahan saat memuat data kebun dari server.'
+      if (lastFarmsErrorRef.current !== errorMsg) {
+        lastFarmsErrorRef.current = errorMsg
+        notifyRef.current.error('Gagal Memuat Data Kebun', errorMsg, { id: 'monitoring-farms-error' })
+      }
+    } else if (!isFarmsError) {
+      lastFarmsErrorRef.current = null
+    }
+  }, [isFarmsError, farmsError])
+
+  // Tangani error query sensor monitoring (referensi stabil & id deduplikasi)
+  useEffect(() => {
+    if (isSensorsError && sensorsError) {
+      const errorMsg = sensorsError.message || 'Terjadi kesalahan saat memuat data sensor dari server.'
+      if (lastSensorsErrorRef.current !== errorMsg) {
+        lastSensorsErrorRef.current = errorMsg
+        notifyRef.current.error('Gagal Memuat Data Sensor', errorMsg, { id: 'monitoring-sensors-error' })
+      }
+    } else if (!isSensorsError) {
+      lastSensorsErrorRef.current = null
+    }
+  }, [isSensorsError, sensorsError])
+
+  // Loading gabungan: loading kebun awal atau loading sensor (hanya bila akun memiliki kebun)
+  const isLoading = isFarmsLoading || (Boolean(activeFarmId) && isSensorsLoading)
+
+  // Refetch gabungan yang memperbarui kebun dan data sensor
+  const refetch = useCallback(async () => {
+    const farmsResult = await refetchFarms()
+    if (farmsResult.data && farmsResult.data.length > 0) {
+      return await refetchSensors()
+    }
+    return farmsResult
+  }, [refetchFarms, refetchSensors])
 
   // Dropdown Opsi Kebun (Deduplikasi ketat)
   const farmOptions = useMemo(() => {
@@ -301,7 +355,9 @@ export const useSensorMonitoring = () => {
     setSelectedFarm,
     selectedStatus,
     setSelectedStatus,
-    isLoading: isSensorsLoading,
+    isLoading,
+    isError: isFarmsError || isSensorsError,
+    error: farmsError || sensorsError,
     isActionLoading,
     refetch,
     createSensor,
