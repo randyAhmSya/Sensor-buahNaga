@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -6,21 +6,28 @@ import {
   RefreshControl,
   Pressable,
   TextInput,
+  Alert,
 } from "react-native";
 import { Stack, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { isAxiosError } from "axios";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQrScanLogs } from "@/hooks/useQrScanLogs";
 import { ActivityCard } from "@/component/dashboard/ActivityCard";
 import { AsyncStateView } from "@/component/ui/AsyncStateView";
 import { Card } from "@/component/ui/Card";
 import type { QrScanLogItem } from "@/service/qrScanService";
+import { fetchNodeDetail } from "@/service/nodeDetailService";
+import { scanHistoryStorage } from "@/service/storage/scanHistoryStorage";
+import { isUuid } from "@/hooks/useNodeDetails";
+import type { EnhancedApiError } from "@/service/apiClient";
 
 type FilterStatus = "all" | "success" | "failed";
 
 export default function ActivityScreen() {
   const { logs, isPending, isError, error, refetch } = useQrScanLogs();
 
+  const isResolvingRef = useRef(false);
   const [refreshing, setRefreshing] = useState(false);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -59,20 +66,92 @@ export default function ActivityScreen() {
     return result;
   }, [logs, filterStatus, searchQuery]);
 
-  const handleCardPress = useCallback((log: QrScanLogItem) => {
-    const targetId =
-      log.kode_qr?.node_sensor?.id_sensor ||
-      log.kode_perangkat ||
-      log.teks_kode_qr;
+  const handleCardPress = useCallback(async (log: QrScanLogItem) => {
+    if (isResolvingRef.current) {
+      return;
+    }
 
-    if (
-      targetId &&
-      (log.status_scan === "berhasil" || log.status_scan === "sukses")
-    ) {
+    // 1. Cek apakah status pemindaian berhasil
+    const isSuccess =
+      log.status_scan === "berhasil" || log.status_scan === "sukses";
+    if (!isSuccess) {
+      Alert.alert(
+        "Pemindaian Tidak Berhasil",
+        "Riwayat pemindaian ini berstatus gagal dan tidak memiliki data node sensor terkait.",
+      );
+      return;
+    }
+
+    // 2. Jika sudah memiliki UUID id_sensor valid, langsung buka rute monitoring
+    const existingSensorId = log.kode_qr?.node_sensor?.id_sensor;
+    if (existingSensorId && isUuid(existingSensorId)) {
       router.push({
         pathname: "/monitoring/[id]",
-        params: { id: targetId },
+        params: { id: existingSensorId },
       });
+      return;
+    }
+
+    // 3. Tentukan identifier pencarian dari teks QR atau kode perangkat
+    const lookupId = log.teks_kode_qr || log.kode_perangkat;
+    if (!lookupId) {
+      Alert.alert(
+        "Node Tidak Ditemukan",
+        "Informasi kode QR atau identitas perangkat tidak ditemukan pada riwayat ini.",
+      );
+      return;
+    }
+
+    // 4. Terjemahkan identifier via GET /api/petani/node/{id} (fetchNodeDetail)
+    try {
+      isResolvingRef.current = true;
+      const node = await fetchNodeDetail(lookupId);
+      const resolvedSensorId =
+        node?.sensorId || (node && isUuid(node.id) ? node.id : undefined);
+
+      if (resolvedSensorId && isUuid(resolvedSensorId)) {
+        // Perbarui record di penyimpanan lokal agar tidak perlu diterjemahkan lagi
+        if (log.teks_kode_qr) {
+          await scanHistoryStorage.updateLogSensorId(
+            log.teks_kode_qr,
+            resolvedSensorId,
+            node?.name,
+          );
+        }
+
+        router.push({
+          pathname: "/monitoring/[id]",
+          params: { id: resolvedSensorId },
+        });
+      } else {
+        Alert.alert(
+          "Node Tidak Ditemukan",
+          "Data node sensor tidak ditemukan atau kode QR belum terpasang ke sensor aktif.",
+        );
+      }
+    } catch (err: unknown) {
+      const status =
+        (err as EnhancedApiError)?.status ??
+        (isAxiosError(err) ? err.response?.status : undefined);
+
+      if (status === 404) {
+        Alert.alert(
+          "Node Tidak Ditemukan",
+          "Data node sensor tidak ditemukan di sistem atau kode QR sudah tidak aktif.",
+        );
+      } else if (status === 403) {
+        Alert.alert(
+          "Akses Ditolak",
+          "Anda tidak memiliki akses ke data kebun atau sensor terkait.",
+        );
+      } else {
+        Alert.alert(
+          "Gagal Terhubung",
+          "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.",
+        );
+      }
+    } finally {
+      isResolvingRef.current = false;
     }
   }, []);
 

@@ -60,6 +60,33 @@ export const scanHistoryStorage = {
     return newRecord;
   },
 
+  async updateLogSensorId(teksKodeQr: string, idSensor: string, kodePerangkat?: string): Promise<void> {
+    await loadFromDisk();
+    const trimmedQr = teksKodeQr.trim();
+    if (!trimmedQr || !idSensor) return;
+
+    let changed = false;
+    inMemoryLogs = inMemoryLogs.map((log) => {
+      if (log.teks_kode_qr === trimmedQr && log.id_sensor !== idSensor) {
+        changed = true;
+        return {
+          ...log,
+          id_sensor: idSensor,
+          kode_perangkat: kodePerangkat || log.kode_perangkat,
+        };
+      }
+      return log;
+    });
+
+    if (changed) {
+      try {
+        await storage.setItem(STORAGE_KEY, JSON.stringify(inMemoryLogs));
+      } catch {
+        // Abaikan error disk
+      }
+    }
+  },
+
   async clear(): Promise<void> {
     inMemoryLogs = [];
     try {

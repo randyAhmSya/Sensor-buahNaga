@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "AgroLight",
+    "slug": "agrolight",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "agrolight",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/images/logo/logo.png"
@@ -46,7 +46,20 @@
       ],
       "expo-image",
       "expo-status-bar",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true,
+            "buildArchs": [
+              "arm64-v8a"
+            ],
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

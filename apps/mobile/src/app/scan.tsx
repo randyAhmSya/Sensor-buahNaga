@@ -22,6 +22,7 @@ import { TAB_COLORS } from "@/constant/Tabs";
 import { PressableOpacity } from "@/component/ui/PressableOpacity";
 import { submitScanQr } from "@/service/qrScanService";
 import { nodeStore } from "@/store/useNodeStore";
+import { isUuid } from "@/hooks/useNodeDetails";
 
 const FRAME_SIZE = 260;
 const FRAME_RADIUS = 28;
@@ -245,21 +246,44 @@ function ScannerView({
 
         try {
           const response = await submitScanQr(extractedId);
-          const resolvedNodeId =
-            response.data?.id_sensor || extractedId;
+          const sensorUuid = response.data?.id_sensor;
 
-          console.log("[Scanner] Berhasil verifikasi node sensor:", {
-            extractedId,
-            resolvedNodeId,
-          });
+          if (sensorUuid && isUuid(sensorUuid)) {
+            console.log("[Scanner] Berhasil verifikasi node sensor:", {
+              extractedId,
+              resolvedNodeId: sensorUuid,
+            });
 
-          // Simpan ke global store agar tetap aktif saat berpindah tab
-          await nodeStore.setActiveNodeId(resolvedNodeId);
+            // Simpan ke global store agar tetap aktif saat berpindah tab
+            await nodeStore.setActiveNodeId(sensorUuid);
 
-          router.replace({
-            pathname: "/monitoring/[id]",
-            params: { id: resolvedNodeId },
-          });
+            router.replace({
+              pathname: "/monitoring/[id]",
+              params: { id: sensorUuid },
+            });
+          } else {
+            // id_sensor tidak ada atau bukan UUID yang valid
+            isSubmitting.current = false;
+            setIsSubmittingState(false);
+            setIsStabilizing(false);
+            candidateRef.current = null;
+
+            Alert.alert(
+              "Sensor Tidak Ditemukan",
+              "Kode QR berhasil dipindai, namun belum terhubung ke node sensor yang valid di sistem.",
+              [
+                {
+                  text: "Pindai Ulang",
+                  onPress: resetScannerState,
+                },
+                {
+                  text: "Tutup",
+                  style: "cancel",
+                  onPress: onClose,
+                },
+              ],
+            );
+          }
         } catch (error: unknown) {
           const err = error as { message?: string };
           console.warn("[Scanner] Gagal verifikasi scan QR:", err?.message);
