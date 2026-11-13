@@ -21,7 +21,7 @@ interface WeatherHeroContentProps {
 export function WeatherHeroContent({
   greetingName,
   today,
-  farmName = "Kebun Buah Naga",
+  farmName = "Kebun",
   nodeStats = { online: 0, total: 0 },
   jumlahBlok = 0,
   bacaanTerbaru = null,

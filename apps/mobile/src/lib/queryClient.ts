@@ -58,6 +58,23 @@ export const asyncStoragePersister = createAsyncStoragePersister({
   key: "AGROLIGHT_OFFLINE_CACHE_V2",
 });
 
+/**
+ * Membersihkan seluruh cache query di memori dan storage fisik (AsyncStorage),
+ * serta memastikan persister tidak menulis ulang data sesi lama.
+ */
+export async function clearAppCache(): Promise<void> {
+  try {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    if (asyncStoragePersister && typeof asyncStoragePersister.removeClient === "function") {
+      await asyncStoragePersister.removeClient();
+    }
+    await safeAsyncStorage.removeItem("AGROLIGHT_OFFLINE_CACHE_V2");
+  } catch (err) {
+    console.warn("[clearAppCache] Gagal membersihkan cache aplikasi:", err);
+  }
+}
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

@@ -5,7 +5,6 @@ import type {
   PaginationMeta,
   TandaiSemuaDibacaResponse,
 } from '@/types/notification';
-import { type NotificationSetting } from '@/constant/NotificationSetting';
 
 export interface GetNotifikasiParams {
   belum_dibaca?: boolean;
@@ -80,62 +79,5 @@ export const notificationService = {
     return res.data?.data?.jumlah_ditandai ?? 0;
   },
 };
-
-// ==========================================
-// LEGACY SETTINGS COMPATIBILITY
-// ==========================================
-const DEFAULT_NOTIFICATION_SETTINGS: NotificationSetting[] = [
-  {
-    id: 'temperature-critical',
-    title: 'Suhu Kritis / Peringatan Panas',
-    description: 'Kirim alert jika suhu kebun melebihi batas aman.',
-    active: true,
-  },
-  {
-    id: 'node-offline',
-    title: 'Perangkat Node Offline',
-    description: 'Kirim alert jika hardware ESP32 terputus dari internet.',
-    active: true,
-  },
-  {
-    id: 'auto-dimming',
-    title: 'Perubahan Mode Auto-Dimming',
-    description: 'Notifikasi saat sistem lampu beralih ke kontrol manual.',
-    active: false,
-  },
-  {
-    id: 'harvest-summary',
-    title: 'Ringkasan Estimasi Panen',
-    description: 'Pengingat mingguan mendekati tanggal panen.',
-    active: true,
-  },
-];
-
-let currentSettings: NotificationSetting[] = [...DEFAULT_NOTIFICATION_SETTINGS];
-
-export async function fetchNotificationSettings(): Promise<NotificationSetting[]> {
-  try {
-    await apiClient.get('/petani/notifikasi', { params: { per_page: 1 } });
-  } catch {
-    // Graceful offline fallback
-  }
-  return [...currentSettings];
-}
-
-export async function updateNotificationSetting(
-  id: string,
-  active: boolean,
-): Promise<NotificationSetting> {
-  const index = currentSettings.findIndex((item) => item.id === id);
-  if (index === -1) {
-    throw new Error('Pengaturan notifikasi tidak ditemukan.');
-  }
-  const updated: NotificationSetting = {
-    ...currentSettings[index],
-    active,
-  };
-  currentSettings[index] = updated;
-  return updated;
-}
 
 export default notificationService;

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { storage } from "@/lib/storage";
 
 export interface AuthUser {
@@ -12,12 +13,70 @@ export interface AuthUser {
   avatarUrl?: string;
 }
 
+export type AuthState = {
+  isInitialized: boolean;
+  isAuthenticated: boolean;
+  token: string | null;
+  user: AuthUser | null;
+};
+
 const STORAGE_KEY_TOKEN = "agrolight_auth_token";
 const STORAGE_KEY_USER = "agrolight_auth_user";
 
 let inMemoryToken: string | null = null;
 let inMemoryUser: AuthUser | null = null;
+let isInitialized = false;
 let initPromise: Promise<void> | null = null;
+
+type AuthListener = (state: AuthState) => void;
+const authListeners = new Set<AuthListener>();
+
+function notifyAuthListeners(): void {
+  const state: AuthState = {
+    isInitialized,
+    isAuthenticated: !!inMemoryToken,
+    token: inMemoryToken,
+    user: inMemoryUser,
+  };
+  authListeners.forEach((listener) => {
+    try {
+      listener(state);
+    } catch (err) {
+      console.warn("[authStorage] Error pada auth listener:", err);
+    }
+  });
+}
+
+export function onAuthStateChanged(listener: AuthListener): () => void {
+  authListeners.add(listener);
+  listener({
+    isInitialized,
+    isAuthenticated: !!inMemoryToken,
+    token: inMemoryToken,
+    user: inMemoryUser,
+  });
+  return () => {
+    authListeners.delete(listener);
+  };
+}
+
+export function useAuthState(): AuthState {
+  const [state, setState] = useState<AuthState>(() => ({
+    isInitialized,
+    isAuthenticated: !!inMemoryToken,
+    token: inMemoryToken,
+    user: inMemoryUser,
+  }));
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged((newState) => {
+      setState(newState);
+    });
+    return unsubscribe;
+  }, []);
+
+  return state;
+}
 
 export const authStorage = {
   /**
@@ -42,10 +101,17 @@ export const authStorage = {
           }
         } catch (err) {
           console.warn("[authStorage] Gagal menginisialisasi dari storage:", err);
+        } finally {
+          isInitialized = true;
+          notifyAuthListeners();
         }
       })();
     }
     return initPromise;
+  },
+
+  isInitialized(): boolean {
+    return isInitialized;
   },
 
   /**
@@ -54,7 +120,6 @@ export const authStorage = {
    * 1. inMemoryToken (langsung return jika sudah tersedia)
    * 2. Menunggu initPromise jika sedang berjalan
    * 3. storage.getItem(STORAGE_KEY_TOKEN) (persistent fallback)
-   * 4. process.env.EXPO_PUBLIC_AUTH_TOKEN
    */
   async getToken(): Promise<string | null> {
     if (inMemoryToken) {
@@ -70,14 +135,11 @@ export const authStorage = {
       const storedToken = await storage.getItem(STORAGE_KEY_TOKEN);
       if (storedToken) {
         inMemoryToken = storedToken;
+        notifyAuthListeners();
         return storedToken;
       }
     } catch (err) {
       console.warn("[authStorage] Gagal mengambil token langsung dari storage:", err);
-    }
-
-    if (process.env.EXPO_PUBLIC_AUTH_TOKEN) {
-      return process.env.EXPO_PUBLIC_AUTH_TOKEN;
     }
 
     return null;
@@ -101,14 +163,15 @@ export const authStorage = {
    * Mengambil token secara sinkron untuk pengecekan cepat di runtime.
    */
   getTokenSync(): string | null {
-    return inMemoryToken || (process.env.EXPO_PUBLIC_AUTH_TOKEN ?? null);
+    return inMemoryToken;
   },
 
   /**
    * Menyimpan token secara persisten dan mengupdate in-memory cache secara instan.
    */
   async saveToken(token: string | null): Promise<void> {
-    inMemoryToken = token; // Langsung update variabel in-memory secara instan
+    inMemoryToken = token;
+    notifyAuthListeners();
     try {
       if (token) {
         await storage.setItem(STORAGE_KEY_TOKEN, token);
@@ -139,6 +202,7 @@ export const authStorage = {
 
   async setUser(user: AuthUser | null): Promise<void> {
     inMemoryUser = user;
+    notifyAuthListeners();
     if (user) {
       await storage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
     } else {
@@ -153,12 +217,13 @@ export const authStorage = {
   async clear(): Promise<void> {
     inMemoryToken = null;
     inMemoryUser = null;
+    notifyAuthListeners();
     await storage.removeItem(STORAGE_KEY_TOKEN);
     await storage.removeItem(STORAGE_KEY_USER);
   },
 
   isAuthenticated(): boolean {
-    return !!(inMemoryToken || process.env.EXPO_PUBLIC_AUTH_TOKEN);
+    return !!inMemoryToken;
   },
 };
 

@@ -96,8 +96,8 @@ function getEmptyDashboardData(farmName: string, farmLocation: string): Dashboar
  */
 export async function fetchDashboardData(specificKebunId?: string): Promise<DashboardData> {
   let kebunId = specificKebunId;
-  let farmName = "Kebun Buah Naga";
-  let farmLocation = "Banyuwangi";
+  let farmName = "";
+  let farmLocation = "";
 
   // 1. Ambil kebun pertama jika ID belum ditentukan (via deduplikasi TanStack Query)
   if (!kebunId) {
@@ -105,12 +105,12 @@ export async function fetchDashboardData(specificKebunId?: string): Promise<Dash
     if (kebuns.length > 0) {
       kebunId = kebuns[0].id_kebun;
       farmName = kebuns[0].nama_kebun;
-      farmLocation = kebuns[0].lokasi_kebun || farmLocation;
+      farmLocation = kebuns[0].lokasi_kebun || "Lokasi belum diatur";
     }
   }
 
   if (!kebunId) {
-    return getEmptyDashboardData(farmName, farmLocation);
+    return getEmptyDashboardData(farmName || "Belum Ada Kebun", farmLocation || "Lokasi belum diatur");
   }
 
   // 2. Request tunggal ke endpoint agregasi dashboard backend

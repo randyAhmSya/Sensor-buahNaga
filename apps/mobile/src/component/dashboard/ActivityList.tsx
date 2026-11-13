@@ -6,12 +6,10 @@ import { TAB_COLORS } from "@/constant/Tabs";
 import { PressableOpacity } from "@/component/ui/PressableOpacity";
 import { useQrScanLogs } from "@/hooks/useQrScanLogs";
 import type { QrScanLogItem } from "@/service/qrScanService";
-import type { ActivityItem } from "@/constant/dashboard";
 import { ActivityCard } from "./ActivityCard";
 import { colors, border } from "@/theme/tokens";
 
 interface ActivityListProps {
-  activities?: ActivityItem[];
   onSeeAllPress?: () => void;
   onItemPress?: (id: string) => void;
 }

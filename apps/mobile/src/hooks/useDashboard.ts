@@ -76,7 +76,7 @@ export function useDashboard(kebunId?: string) {
   // Ambil profil user aktif secara dinamis dari persistent authStorage
   const user: AuthUser | null = authStorage.getUser();
 
-  const userName = user?.nama_lengkap || "Petani Buah Naga";
+  const userName = user?.nama_lengkap || "Pengguna";
   const greetingName = user?.nama_lengkap
     ? user.nama_lengkap.trim().split(" ")[0]
     : "Petani";

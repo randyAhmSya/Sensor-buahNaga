@@ -24,7 +24,7 @@ export function HarvestNodeCard({ data }: HarvestNodeCardProps) {
   }
 
   const namaBlok = data.blok?.nama_blok || `Blok Lahan (${data.block_id.slice(0, 8)})`;
-  const namaKebun = data.blok?.kebun?.nama_kebun || 'Kebun Buah Naga';
+  const namaKebun = data.blok?.kebun?.nama_kebun || '-';
 
   return (
     <View className="mt-4 rounded-lg bg-white p-4 shadow-sm border border-slate-200">

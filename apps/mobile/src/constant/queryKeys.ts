@@ -32,9 +32,6 @@ export const QUERY_KEYS = {
   accountSettings: {
     all: ['accountSettings'] as const,
   },
-  notificationSettings: {
-    all: ['notificationSettings'] as const,
-  },
   notifications: {
     all: ['notifications'] as const,
     list: (filters?: Record<string, unknown>) =>

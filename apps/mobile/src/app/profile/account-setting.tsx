@@ -29,6 +29,18 @@ export default function AccountSetting() {
     return <AsyncStateView status="loading" />;
   }
 
+  if (state.status === "error") {
+    return (
+      <View className="flex-1 bg-slate-50">
+        <AccountHeader title="Account Settings" />
+        <AsyncStateView
+          status="error"
+          errorMessage={state.message}
+        />
+      </View>
+    );
+  }
+
   const handleSave = async () => {
     if (newPassword && newPassword !== confirmPassword) {
       Alert.alert("Validasi", "Konfirmasi kata sandi baru tidak cocok.");

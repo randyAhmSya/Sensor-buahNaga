@@ -24,7 +24,10 @@ export function DeviceInfoCard({ node }: Props) {
     node.blok.luas_area ? `${node.blok.luas_area} m²` : "Luas belum diatur"
   })`;
 
-  const jumlahLampuText = `${node.jumlah_lampu ?? 1} lampu`;
+  const jumlahLampuText =
+    node.jumlah_lampu !== undefined && node.jumlah_lampu !== null
+      ? `${node.jumlah_lampu} lampu`
+      : "-";
   const dayaTerpasangText = formatWattTerpasang(node.watt_terpasang);
 
   return (
@@ -72,7 +75,7 @@ export function DeviceInfoCard({ node }: Props) {
           <View className="flex-row justify-between items-center">
             <Text className="text-xs font-medium text-slate-600">Tipe Sensor</Text>
             <Text className="text-xs font-bold text-slate-900">
-              {node.tipe_sensor || "Sensor Buah Naga"}
+              {node.tipe_sensor || "Tipe sensor belum diatur"}
             </Text>
           </View>
 

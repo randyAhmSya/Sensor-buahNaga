@@ -6,6 +6,29 @@ import { authStorage } from "./authStorage";
 export type SubscriptionRequiredListener = (message: string) => void;
 const subscriptionListeners = new Set<SubscriptionRequiredListener>();
 
+export type AuthRequiredListener = () => void;
+const authRequiredListeners = new Set<AuthRequiredListener>();
+
+/**
+ * Mendaftarkan callback saat backend mengembalikan 401 Unauthenticated (sesi kadaluarsa/tidak valid).
+ */
+export function onAuthRequired(listener: AuthRequiredListener): () => void {
+  authRequiredListeners.add(listener);
+  return () => {
+    authRequiredListeners.delete(listener);
+  };
+}
+
+export function notifyAuthRequired(): void {
+  authRequiredListeners.forEach((listener) => {
+    try {
+      listener();
+    } catch (e) {
+      console.warn("[apiClient] Error inside authRequired listener:", e);
+    }
+  });
+}
+
 export class EnhancedApiError extends Error {
   status?: number;
   response?: unknown;
@@ -148,10 +171,11 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Jika 401 Unauthenticated di luar endpoint login, hapus token kadaluarsa
+    // Jika 401 Unauthenticated di luar endpoint login, hapus token kadaluarsa dan picu listener
     if (error.response?.status === 401 && !error.config?.url?.includes("/auth/login")) {
       console.warn("[apiClient] 401 Unauthenticated terdeteksi pada", error.config?.url, "- membersihkan sesi lokal.");
       authStorage.clear().catch((e) => console.warn("[apiClient] Gagal membersihkan authStorage:", e));
+      notifyAuthRequired();
     }
 
     // Jika 402 Payment Required (langganan kadaluarsa / nonaktif)

@@ -1,5 +1,6 @@
 import apiClient, { EnhancedApiError } from "./apiClient";
 import { authStorage, type AuthUser } from "./authStorage";
+import { clearAppCache } from "@/lib/queryClient";
 
 export interface LoginResponseData {
   user: AuthUser;
@@ -72,6 +73,12 @@ export const authService = {
       const user = resData?.data?.user || resData?.user || null;
       const role = resData?.data?.role || resData?.role || user?.role || "user";
 
+      // Bersihkan cache aplikasi jika login sebagai pengguna berbeda atau login baru
+      const previousUser = authStorage.getUser();
+      if (!previousUser || previousUser.id !== user?.id || previousUser.email !== user?.email) {
+        await clearAppCache();
+      }
+
       // Pastikan token dan data user benar-benar tersimpan ke persistent storage (SecureStore/LocalStorage)
       await authStorage.saveToken(token);
       if (user) {
@@ -104,7 +111,7 @@ export const authService = {
   },
 
   /**
-   * Melakukan logout ke Laravel Sanctum dan membersihkan sesi lokal:
+   * Melakukan logout ke Laravel Sanctum dan membersihkan sesi lokal serta cache aplikasi:
    * POST /api/auth/logout
    */
   async logout(): Promise<void> {
@@ -118,6 +125,7 @@ export const authService = {
       console.warn("[authService] Warning saat logout dari server:", err);
     } finally {
       await authStorage.clear();
+      await clearAppCache();
     }
   },
 

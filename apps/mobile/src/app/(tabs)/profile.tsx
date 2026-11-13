@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ScrollView, View, Alert } from 'react-native';
 import { AsyncStateView } from '@/component/ui/AsyncStateView';
 import { ProfileHeader } from '@/component/profile/ProfileHeader';
@@ -9,12 +9,10 @@ import { ProfileMenu } from '@/component/profile/ProfileMenu';
 import { LogoutButton } from '@/component/profile/LogoutButton';
 import { router } from 'expo-router';
 import { authService } from '@/service/authService';
-import { queryClient } from '@/lib/queryClient';
 import { FITUR_LANGGANAN } from '@/config/features';
 
 export default function ProfileScreen() {
   const { state, refetch } = useProfile();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -27,16 +25,9 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              setIsLoggingOut(true);
               await authService.logout();
-              queryClient.clear();
-              router.replace('/login');
             } catch (e) {
               console.warn('[ProfileScreen] Logout error:', e);
-              queryClient.clear();
-              router.replace('/login');
-            } finally {
-              setIsLoggingOut(false);
             }
           },
         },
