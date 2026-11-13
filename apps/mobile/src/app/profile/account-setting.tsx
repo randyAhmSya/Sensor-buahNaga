@@ -1,6 +1,7 @@
 import React from "react";
 import { ScrollView, Text, TextInput, View, Pressable, ActivityIndicator, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { colors } from "@/theme/tokens";
 import { AccountHeader } from "@/component/profile/AccountHeader";
 import { useAccountSettings } from "@/hooks/useAccountSetting";
 import { AsyncStateView } from "@/component/ui/AsyncStateView";
@@ -112,13 +113,17 @@ export default function AccountSetting() {
 
           <Pressable
             disabled={isSaving}
-            className={`mt-6 rounded-lg bg-emerald-700 py-3.5 active:bg-emerald-800 ${
-              isSaving ? "opacity-70" : ""
+            accessibilityState={{ disabled: isSaving }}
+            accessibilityRole="button"
+            className={`mt-6 rounded-lg py-3.5 items-center justify-center ${
+              isSaving
+                ? "bg-slate-300 border border-slate-400"
+                : "bg-emerald-700 active:bg-emerald-800"
             }`}
             onPress={handleSave}
           >
             {isSaving ? (
-              <ActivityIndicator color="#ffffff" />
+              <ActivityIndicator color={colors.icon.neutral} />
             ) : (
               <Text className="text-center font-bold text-white text-sm">
                 Simpan Perubahan

@@ -40,6 +40,10 @@ export interface DashboardData {
     node_online: number;
     node_offline: number;
     node_belum_terlihat: number;
+    jumlah_lampu: number;
+    lampu_online: number;
+    lampu_offline: number;
+    watt_terpasang: number | null;
     siklus_berjalan: number;
     bacaan_terbaru: DashboardBacaanTerakhir | null;
   };
@@ -48,6 +52,7 @@ export interface DashboardData {
   harvestEstimates: HarvestEstimate[];
   actionIssueGroups: ActionIssueGroup[];
   blokLampuSummaries: BlokLampuSummary[];
+  blok: BackendDashboardData['blok'];
 }
 
 function getEmptyDashboardData(farmName: string, farmLocation: string): DashboardData {
@@ -64,18 +69,23 @@ function getEmptyDashboardData(farmName: string, farmLocation: string): Dashboar
       node_online: 0,
       node_offline: 0,
       node_belum_terlihat: 0,
+      jumlah_lampu: 0,
+      lampu_online: 0,
+      lampu_offline: 0,
+      watt_terpasang: null,
       siklus_berjalan: 0,
       bacaan_terbaru: null,
     },
     stats: {
       totalGardens: 0,
       activeNodes: 0,
-      avgHealthPercent: 100,
+      activeCycles: 0,
     },
     quickActions: QUICK_ACTIONS,
     harvestEstimates: [],
     actionIssueGroups: [],
     blokLampuSummaries: [],
+    blok: [],
   };
 }
 
@@ -124,12 +134,19 @@ export async function fetchDashboardData(specificKebunId?: string): Promise<Dash
     });
   });
 
-  // 4. Ringkasan status lampu blok
+  // 4. Ringkasan status lampu blok murni dari data lampu per node & blok
   const blokLampuSummaries: BlokLampuSummary[] = raw.blok.map((b) => {
-    const total = b.jumlah_node;
-    const online = b.node.filter((n) => n.status === "online").length;
-    const offline = b.node.filter((n) => n.status === "offline").length;
-    const batas = raw.ringkasan.batas_offline_detik || 90;
+    // b.jumlah_lampu dari backend, fallback ke sum jumlah_lampu tiap node (default 1)
+    const fallbackLampu = b.node.reduce(
+      (sum, n) => sum + (n.jumlah_lampu ?? 1),
+      0,
+    );
+    const total = b.jumlah_lampu ?? fallbackLampu;
+    const online = b.node
+      .filter((n) => n.status_online || n.status === "online")
+      .reduce((sum, n) => sum + (n.jumlah_lampu ?? 1), 0);
+    const offline = Math.max(0, total - online);
+    const batas = raw.ringkasan.batas_offline_detik || 20;
     const persentase = total > 0 ? Math.round((online / total) * 100) : 0;
 
     let statusKoneksi: "optimal" | "sebagian_offline" | "semua_offline" | "kosong" =
@@ -185,10 +202,7 @@ export async function fetchDashboardData(specificKebunId?: string): Promise<Dash
 
   const totalGardens = 1;
   const activeNodesCount = raw.ringkasan.node_online;
-  const avgHealthPercent =
-    raw.ringkasan.jumlah_node > 0
-      ? Math.round((raw.ringkasan.node_online / raw.ringkasan.jumlah_node) * 100)
-      : 100;
+  const activeCyclesCount = raw.ringkasan.siklus_berjalan || 0;
 
   return {
     kebunInfo: {
@@ -198,22 +212,33 @@ export async function fetchDashboardData(specificKebunId?: string): Promise<Dash
       status_kebun: raw.kebun.status_kebun || "aktif",
     },
     ringkasan: {
-      jumlah_blok: raw.ringkasan.jumlah_blok,
-      jumlah_node: raw.ringkasan.jumlah_node,
-      node_online: raw.ringkasan.node_online,
-      node_offline: raw.ringkasan.node_offline,
-      node_belum_terlihat: raw.ringkasan.node_belum_terlihat,
-      siklus_berjalan: raw.ringkasan.siklus_berjalan,
+      jumlah_blok: raw.ringkasan.jumlah_blok ?? raw.blok.length,
+      jumlah_node: raw.ringkasan.jumlah_node ?? 0,
+      node_online: raw.ringkasan.node_online ?? 0,
+      node_offline: raw.ringkasan.node_offline ?? 0,
+      node_belum_terlihat: raw.ringkasan.node_belum_terlihat ?? 0,
+      jumlah_lampu:
+        raw.ringkasan.jumlah_lampu ??
+        blokLampuSummaries.reduce((acc, b) => acc + b.jumlahLampu, 0),
+      lampu_online:
+        raw.ringkasan.lampu_online ??
+        blokLampuSummaries.reduce((acc, b) => acc + b.jumlahOnline, 0),
+      lampu_offline:
+        raw.ringkasan.lampu_offline ??
+        blokLampuSummaries.reduce((acc, b) => acc + b.jumlahOffline, 0),
+      watt_terpasang: raw.ringkasan.watt_terpasang ?? null,
+      siklus_berjalan: raw.ringkasan.siklus_berjalan ?? 0,
       bacaan_terbaru: raw.ringkasan.bacaan_terbaru ?? null,
     },
     stats: {
       totalGardens,
       activeNodes: activeNodesCount,
-      avgHealthPercent,
+      activeCycles: activeCyclesCount,
     },
     quickActions: QUICK_ACTIONS,
     harvestEstimates,
     actionIssueGroups,
     blokLampuSummaries,
+    blok: raw.blok,
   };
 }

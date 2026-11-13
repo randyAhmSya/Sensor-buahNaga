@@ -32,6 +32,31 @@ export const borderColors = {
   card: "#E2E8F0", // Slate-200 untuk border kartu 1px
 } as const;
 
+export const iconColors = {
+  neutral: "#334155", // Slate-700 untuk seluruh ikon wadah & konten standar
+  muted: "#475569",   // Slate-600 untuk metadata sekunder (lokasi, jam)
+  subtle: "#64748B",  // Slate-500 untuk chevron navigasi
+  inverse: "#FFFFFF", // Putih solid
+  hero: "#A7F3D0",    // Emerald-200 untuk ikon dalam hero banner
+} as const;
+
+export const heroColors = {
+  bg: "#064E3B",         // Solid dark emerald
+  border: "#047857",     // Border tegas emerald
+  cardBg: "#065F46",     // Solid medium emerald untuk kotak metrik
+  cardBorder: "#047857", // Border kotak metrik hero
+  icon: "#A7F3D0",       // Emerald-200
+  textAccent: "#A7F3D0", // Teks identitas lahan & aksen hero
+} as const;
+
+export const textColors = {
+  primary: "#0F172A",   // Slate-900
+  secondary: "#334155", // Slate-700
+  muted: "#475569",     // Slate-600
+  subtle: "#64748B",    // Slate-500
+  inverse: "#FFFFFF",
+} as const;
+
 export type BadgeTone = "success" | "danger" | "warning" | "neutral" | "info";
 
 export interface StatusColorStyle {
@@ -45,31 +70,31 @@ export interface StatusColorStyle {
  * Seluruh kombinasi teks terhadap latar telah diverifikasi memenuhi rasio kontras WCAG >= 4.5:1.
  */
 export const statusColors: Record<BadgeTone, StatusColorStyle> = {
-  // Online / Berhasil / Aktif / Auto-dimming (Kontras 6.0:1)
+  // Online / Berhasil / Aktif / Auto-dimming (Kontras 5.48:1)
   success: {
     bg: "#047857",
     text: "#FFFFFF",
     border: "#065F46",
   },
-  // Offline / Gagal / Bahaya / Terputus (Kontras 4.6:1)
+  // Offline / Gagal / Bahaya / Terputus (Kontras 4.83:1)
   danger: {
     bg: "#DC2626",
     text: "#FFFFFF",
     border: "#B91C1C",
   },
-  // Peringatan / Menunggu (Teks Slate-900 kontras tinggi 8.5:1)
+  // Peringatan / Menunggu (Teks Slate-900 kontras tinggi 8.31:1)
   warning: {
     bg: "#F59E0B",
     text: "#0F172A",
     border: "#D97706",
   },
-  // Belum Pernah Terlihat / Nonaktif / Netral (Kontras 5.5:1)
+  // Belum Pernah Terlihat / Nonaktif / Netral (Kontras 7.58:1)
   neutral: {
     bg: "#475569",
     text: "#FFFFFF",
     border: "#334155",
   },
-  // Info / Mode Manual / Siklus Selesai (Kontras 4.7:1)
+  // Info / Mode Manual / Siklus Selesai (Kontras 5.17:1)
   info: {
     bg: "#2563EB",
     text: "#FFFFFF",
@@ -79,4 +104,8 @@ export const statusColors: Record<BadgeTone, StatusColorStyle> = {
 
 export const colors = {
   status: statusColors,
+  border: borderColors,
+  icon: iconColors,
+  hero: heroColors,
+  text: textColors,
 } as const;

@@ -50,9 +50,12 @@ const safeAsyncStorage = {
   },
 };
 
+// Pembersihan satu kali (one-time purge) untuk key cache lama agar tidak meninggalkan sampah di AsyncStorage ponsel
+safeAsyncStorage.removeItem("AGROLIGHT_OFFLINE_CACHE").catch(() => {});
+
 export const asyncStoragePersister = createAsyncStoragePersister({
   storage: safeAsyncStorage,
-  key: "AGROLIGHT_OFFLINE_CACHE",
+  key: "AGROLIGHT_OFFLINE_CACHE_V2",
 });
 
 export const queryClient = new QueryClient({

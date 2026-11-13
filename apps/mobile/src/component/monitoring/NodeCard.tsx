@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ListRowCard } from "@/component/ui/ListRowCard";
 import { StatusBadge } from "@/component/ui/StatusBadge";
 import type { MonitoringNode } from "@/constant/monitoring";
+import { colors, border } from "@/theme/tokens";
 
 interface NodeCardProps {
   node: MonitoringNode;
@@ -24,16 +25,13 @@ export const NodeCard = memo(function NodeCard({
 
   let tone: "success" | "danger" | "neutral" = "danger";
   let statusLabel = "Offline";
-  let iconColor = "#DC2626";
 
   if (isOnline) {
     statusLabel = "Online";
     tone = "success";
-    iconColor = "#047857";
   } else if (isBelumTerlihat) {
     statusLabel = "Belum Terlihat";
     tone = "neutral";
-    iconColor = "#475569";
   }
 
   const displayTime =
@@ -41,13 +39,31 @@ export const NodeCard = memo(function NodeCard({
       ? "Belum ada data"
       : node.time;
 
+  const isBasi = !!node.isBasi;
+
+  // Nilai pembacaan sensor aktual atau tanda strip
+  const tempText =
+    node.temperatureC !== null && node.temperatureC !== undefined
+      ? `${node.temperatureC}°C`
+      : "-";
+
+  const luxText =
+    node.lightLux !== null && node.lightLux !== undefined
+      ? `${node.lightLux} Lux`
+      : "-";
+
   return (
     <ListRowCard
       onPress={onPress}
       leading={
         <View
-          className="h-10 w-10 items-center justify-center rounded-lg border-[1.5px] border-slate-400 bg-white"
+          className="h-10 w-10 items-center justify-center rounded-lg bg-white"
+          style={{
+            borderWidth: border.strong,
+            borderColor: colors.border.neutral,
+          }}
         >
+          {/* Ikon wadah selalu netral solid (slate-700); status semantik dikomunikasikan lewat badge */}
           <Ionicons
             name={
               isOnline
@@ -57,7 +73,7 @@ export const NodeCard = memo(function NodeCard({
                   : "alert-circle-outline"
             }
             size={20}
-            color={iconColor}
+            color={colors.icon.neutral}
           />
         </View>
       }
@@ -78,28 +94,69 @@ export const NodeCard = memo(function NodeCard({
         {node.location || "Blok Kebun"}
       </Text>
 
-      <View className="mt-1.5 flex-row items-center gap-3">
+      {/* Baris Pembacaan Sensor: Suhu & Lux */}
+      <View className="mt-2 flex-row items-center gap-3">
         <View className="flex-row items-center gap-1">
-          <Ionicons name="thermometer-outline" size={12} color="#475569" />
-          <Text className="text-xs font-semibold text-slate-700">
-            {node.temperatureC != null ? `${node.temperatureC}°C` : "-"}
+          <Ionicons
+            name="thermometer-outline"
+            size={13}
+            color={colors.icon.muted}
+          />
+          <Text
+            className={
+              isBasi
+                ? "text-xs font-medium text-slate-500"
+                : "text-xs font-semibold text-slate-700"
+            }
+          >
+            {tempText}
           </Text>
         </View>
 
         <View className="flex-row items-center gap-1">
-          <Ionicons name="sunny-outline" size={12} color="#475569" />
-          <Text className="text-xs font-semibold text-slate-700">
-            {node.lightLux != null ? `${node.lightLux} Lux` : "-"}
+          <Ionicons
+            name="sunny-outline"
+            size={13}
+            color={colors.icon.muted}
+          />
+          <Text
+            className={
+              isBasi
+                ? "text-xs font-medium text-slate-500"
+                : "text-xs font-semibold text-slate-700"
+            }
+          >
+            {luxText}
           </Text>
         </View>
 
         <View className="flex-row items-center gap-1 ml-auto">
-          <Ionicons name="time-outline" size={11} color="#64748B" />
-          <Text className="text-[11px] font-medium text-slate-600">
+          <Ionicons
+            name="time-outline"
+            size={12}
+            color={colors.icon.subtle}
+          />
+          <Text className="text-xs font-medium text-slate-600">
             {displayTime}
           </Text>
         </View>
       </View>
+
+      {/* Keterangan Data Basi bila status bacaan basi */}
+      {isBasi && (
+        <View className="mt-1 flex-row items-center gap-1">
+          <Ionicons
+            name="alert-circle-outline"
+            size={11}
+            color={colors.icon.subtle}
+          />
+          <Text className="text-xs font-medium text-slate-500">
+            {node.waktuRelatif
+              ? `terakhir diperbarui ${node.waktuRelatif}`
+              : "data lama (sensor tidak aktif)"}
+          </Text>
+        </View>
+      )}
     </ListRowCard>
   );
 });

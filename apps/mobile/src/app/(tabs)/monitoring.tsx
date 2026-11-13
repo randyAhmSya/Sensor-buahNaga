@@ -16,6 +16,7 @@ import { NodeSection } from "@/component/monitoring/NodeSection";
 import { EmptyNodeScanState } from "@/component/detail/monitoring/EmptyNodeScanState";
 import { AsyncStateView } from "@/component/ui/AsyncStateView";
 import type { MonitoringGroup } from "@/constant/monitoring";
+import { colors, border } from "@/theme/tokens";
 
 export default function MonitoringScreen() {
   const {
@@ -27,6 +28,7 @@ export default function MonitoringScreen() {
     setActiveFilter,
     filteredGroups,
     summary,
+    kebunNama,
     isOffline,
   } = useMonitoring();
 
@@ -69,29 +71,53 @@ export default function MonitoringScreen() {
             </Text>
             <Text className="mt-0.5 text-xs text-slate-600">
               {summary.total > 0
-                ? `${summary.total} node sensor terhubung kebun`
-                : "Memantau telemetri seluruh node sensor"}
+                ? `${summary.total} node sensor aktif di ${kebunNama || "kebun"}`
+                : "Memantau telemetri seluruh node sensor di kebun aktif"}
             </Text>
           </View>
         </View>
 
         {/* Node Status Summary Strip Utilitarian - Latar Putih Solid + Border 1.5px Tegas */}
         <View className="mt-3 flex-row gap-2">
-          <View className="flex-1 rounded-lg bg-white border-[1.5px] border-slate-400 p-2 items-center">
+          <View
+            className="flex-1 rounded-lg bg-white p-2 items-center"
+            style={{
+              borderWidth: border.strong,
+              borderColor: colors.border.neutral,
+            }}
+          >
             <Text className="text-xs font-black text-slate-900">{summary.total}</Text>
-            <Text className="text-[10px] font-semibold text-slate-700">Total Node</Text>
+            <Text className="text-xs font-semibold text-slate-700">Total</Text>
           </View>
-          <View className="flex-1 rounded-lg bg-white border-[1.5px] border-[#047857] p-2 items-center">
+          <View
+            className="flex-1 rounded-lg bg-white p-2 items-center"
+            style={{
+              borderWidth: border.strong,
+              borderColor: colors.border.success,
+            }}
+          >
             <Text className="text-xs font-black text-emerald-800">{summary.online}</Text>
-            <Text className="text-[10px] font-semibold text-emerald-700">Online</Text>
+            <Text className="text-xs font-semibold text-emerald-700">Online</Text>
           </View>
-          <View className="flex-1 rounded-lg bg-white border-[1.5px] border-[#DC2626] p-2 items-center">
+          <View
+            className="flex-1 rounded-lg bg-white p-2 items-center"
+            style={{
+              borderWidth: border.strong,
+              borderColor: colors.border.danger,
+            }}
+          >
             <Text className="text-xs font-black text-rose-800">{summary.offline}</Text>
-            <Text className="text-[10px] font-semibold text-rose-700">Offline</Text>
+            <Text className="text-xs font-semibold text-rose-700">Offline</Text>
           </View>
-          <View className="flex-1 rounded-lg bg-white border-[1.5px] border-slate-400 p-2 items-center">
+          <View
+            className="flex-1 rounded-lg bg-white p-2 items-center"
+            style={{
+              borderWidth: border.strong,
+              borderColor: colors.border.neutral,
+            }}
+          >
             <Text className="text-xs font-black text-slate-900">{summary.belumTerlihat}</Text>
-            <Text className="text-[10px] font-semibold text-slate-700">Belum Terlihat</Text>
+            <Text className="text-xs font-semibold text-slate-700">Belum Terlihat</Text>
           </View>
         </View>
 
@@ -112,7 +138,7 @@ export default function MonitoringScreen() {
               : [
                   { key: "all", label: "Semua" },
                   { key: "active", label: "Aktif" },
-                  { key: "inactive", label: "Inactive" },
+                  { key: "inactive", label: "Nonaktif" },
                 ]
           }
           activeKey={activeFilter}
@@ -122,8 +148,14 @@ export default function MonitoringScreen() {
 
       {/* Banner Offline Tegas - Latar Putih Solid + Border 1.5px Amber */}
       {isOffline && (
-        <View className="mx-4 mt-2 px-3.5 py-2 rounded-lg bg-white border-[1.5px] border-amber-500 flex-row items-center gap-2">
-          <Ionicons name="cloud-offline" size={16} color="#B45309" />
+        <View
+          className="mx-4 mt-2 px-3.5 py-2 rounded-lg bg-white flex-row items-center gap-2"
+          style={{
+            borderWidth: border.strong,
+            borderColor: colors.border.warning,
+          }}
+        >
+          <Ionicons name="cloud-offline" size={16} color={colors.icon.muted} />
           <Text className="text-xs font-bold text-amber-900 flex-1">
             Sedang offline, menampilkan data terakhir
           </Text>

@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 export type GardenStats = {
   totalGardens: number;
   activeNodes: number;
-  avgHealthPercent: number;
+  activeCycles: number;
 };
 
 export type WeatherInfo = {

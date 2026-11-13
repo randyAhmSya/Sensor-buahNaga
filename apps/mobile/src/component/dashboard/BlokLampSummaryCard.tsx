@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { BlokLampuSummary } from '@/types/notification';
 import { StatusBadge } from '@/component/ui/StatusBadge';
-import type { BadgeTone } from '@/theme/tokens';
+import { colors, border, type BadgeTone } from '@/theme/tokens';
 
 interface BlokLampSummaryCardProps {
   summaries: BlokLampuSummary[];
@@ -18,8 +18,11 @@ export function BlokLampSummaryCard({ summaries }: BlokLampSummaryCardProps) {
     <View className="mb-4 rounded-lg bg-white p-4 border border-slate-200">
       <View className="flex-row items-center justify-between mb-3 border-b border-slate-200 pb-2.5">
         <View className="flex-row items-center gap-2">
-          <View className="h-7 w-7 items-center justify-center rounded-md bg-amber-500">
-            <Ionicons name="bulb-outline" size={16} color="#0F172A" />
+          <View
+            className="h-7 w-7 items-center justify-center rounded-md bg-white"
+            style={{ borderWidth: border.strong, borderColor: colors.border.neutral }}
+          >
+            <Ionicons name="bulb-outline" size={16} color={colors.icon.neutral} />
           </View>
           <Text className="text-sm font-bold text-slate-900">
             Status Lampu per Blok
@@ -27,7 +30,7 @@ export function BlokLampSummaryCard({ summaries }: BlokLampSummaryCardProps) {
         </View>
 
         <Text className="text-xs font-semibold text-slate-600">
-          {summaries.length} Blok Aktif
+          {summaries.length} Blok Lahan
         </Text>
       </View>
 
@@ -50,14 +53,15 @@ export function BlokLampSummaryCard({ summaries }: BlokLampSummaryCardProps) {
           return (
             <View
               key={blok.idBlok}
-              className="flex-row items-center justify-between bg-white rounded-lg p-3 border-[1.5px] border-slate-400"
+              className="flex-row items-center justify-between bg-white rounded-lg p-3"
+              style={{ borderWidth: border.strong, borderColor: colors.border.neutral }}
             >
               <View className="flex-1 mr-2" style={{ flexShrink: 1 }}>
                 <Text className="text-xs font-bold text-slate-900" numberOfLines={1}>
                   {blok.namaBlok}
                 </Text>
-                <Text className="text-[11px] font-medium text-slate-600 mt-0.5" numberOfLines={1}>
-                  {blok.namaKebun} • {blok.jumlahOnline}/{blok.jumlahLampu} Lampu Menyala
+                <Text className="text-xs font-medium text-slate-600 mt-0.5" numberOfLines={1}>
+                  {blok.namaKebun} • {blok.jumlahOnline}/{blok.jumlahLampu} lampu online
                 </Text>
               </View>
 

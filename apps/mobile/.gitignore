@@ -42,6 +42,15 @@ yarn-error.*
 .ai-cache
 docs
 example
+DOKUMENTASI_LAPORAN_MAGANG.md
+LOGBOOK_HARIAN.csv
+LOGBOOK_HARIAN.md
+LOGBOOK_LAPORAN_CETAK.csv
+LOGBOOK_LAPORAN_CETAK.md
+LOGBOOK_NOTION.csv
+logbook/
+AGENTS.md
+*eas.json
 
 # generated native folders
 /ios

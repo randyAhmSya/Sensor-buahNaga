@@ -4,6 +4,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Card } from "@/component/ui/Card";
 import { PressableOpacity } from "@/component/ui/PressableOpacity";
 import type { NodeRingkasanNodeInfo } from "@/types/api/nodeRingkasan.dto";
+import { colors, border } from "@/theme/tokens";
+import { formatWattTerpasang } from "@/utils/watt";
 
 interface Props {
   node: NodeRingkasanNodeInfo;
@@ -22,6 +24,9 @@ export function DeviceInfoCard({ node }: Props) {
     node.blok.luas_area ? `${node.blok.luas_area} m²` : "Luas belum diatur"
   })`;
 
+  const jumlahLampuText = `${node.jumlah_lampu ?? 1} lampu`;
+  const dayaTerpasangText = formatWattTerpasang(node.watt_terpasang);
+
   return (
     <Card className="border border-slate-200 bg-white p-4">
       {/* Header Info Perangkat (Dapat Ditekan untuk Lipat/Buka) */}
@@ -30,14 +35,24 @@ export function DeviceInfoCard({ node }: Props) {
         className="flex-row items-center justify-between"
       >
         <View className="flex-row items-center gap-2">
-          <View className="h-9 w-9 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400">
-            <Ionicons name="information-circle-outline" size={20} color="#334155" />
+          <View
+            className="h-9 w-9 items-center justify-center rounded-lg bg-white"
+            style={{
+              borderWidth: border.strong,
+              borderColor: colors.border.neutral,
+            }}
+          >
+            <Ionicons
+              name="information-circle-outline"
+              size={20}
+              color={colors.icon.neutral}
+            />
           </View>
           <View>
             <Text className="text-sm font-bold text-slate-900">
               Informasi Perangkat
             </Text>
-            <Text className="text-[11px] text-slate-500">
+            <Text className="text-xs text-slate-500">
               {isExpanded ? "Sembunyikan detail fisik node" : "Ketuk untuk melihat detail fisik node"}
             </Text>
           </View>
@@ -46,7 +61,7 @@ export function DeviceInfoCard({ node }: Props) {
         <Ionicons
           name={isExpanded ? "chevron-up" : "chevron-down"}
           size={18}
-          color="#64748B"
+          color={colors.icon.subtle}
         />
       </PressableOpacity>
 
@@ -58,6 +73,22 @@ export function DeviceInfoCard({ node }: Props) {
             <Text className="text-xs font-medium text-slate-600">Tipe Sensor</Text>
             <Text className="text-xs font-bold text-slate-900">
               {node.tipe_sensor || "Sensor Buah Naga"}
+            </Text>
+          </View>
+
+          {/* Jumlah Lampu Dikendalikan */}
+          <View className="flex-row justify-between items-center">
+            <Text className="text-xs font-medium text-slate-600">Jumlah Lampu</Text>
+            <Text className="text-xs font-bold text-slate-900">
+              {jumlahLampuText}
+            </Text>
+          </View>
+
+          {/* Daya Terpasang */}
+          <View className="flex-row justify-between items-center">
+            <Text className="text-xs font-medium text-slate-600">Daya Terpasang</Text>
+            <Text className="text-xs font-bold text-slate-900">
+              {dayaTerpasangText}
             </Text>
           </View>
 
@@ -85,4 +116,3 @@ export function DeviceInfoCard({ node }: Props) {
     </Card>
   );
 }
-

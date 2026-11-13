@@ -5,15 +5,18 @@ export type MonitoringNode = {
   code: string; // kode_perangkat (misal: "NODE-01" atau "QR-NODE-2BLOEF")
   name?: string;
   location: string; // "Kebun Banyuwangi - Blok A"
-  time: string; // "10:30 WIB"
-  temperatureC?: number;
-  lightLux?: number;
+  time: string; // "05.47 WIB"
+  temperatureC?: number | null;
+  lightLux?: number | null;
+  isBasi?: boolean;
+  waktuRelatif?: string | null;
+  dicatatPada?: string | null;
   status: NodeStatus;
-  statusKoneksi: string; // "online" | "offline" | "terhubung" | "terputus"
+  statusKoneksi: string; // "online" | "offline" | "belum_pernah_terlihat"
 };
 
 export type MonitoringGroup = {
-  dateLabel: string; // "Hari Ini, 28 Juli 2026"
+  dateLabel: string; // "Hari Ini, 4 November 2026"
   nodes: MonitoringNode[];
 };
 
@@ -25,6 +28,5 @@ export type FilterOption = {
 export const FILTER_OPTIONS: FilterOption[] = [
   { key: "all", label: "Semua" },
   { key: "active", label: "Aktif" },
-  { key: "inactive", label: "Inactive" },
+  { key: "inactive", label: "Nonaktif" },
 ];
-
