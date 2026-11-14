@@ -17,12 +17,14 @@ import MaskedView from "@react-native-masked-view/masked-view";
 import Svg, { Path } from "react-native-svg";
 import { useRouter } from "expo-router";
 import { useIsFocused } from "expo-router/react-navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { TAB_COLORS } from "@/constant/Tabs";
 import { PressableOpacity } from "@/component/ui/PressableOpacity";
 import { submitScanQr } from "@/service/qrScanService";
 import { nodeStore } from "@/store/useNodeStore";
 import { isUuid } from "@/hooks/useNodeDetails";
+import { QUERY_KEYS } from "@/constant/queryKeys";
 
 const FRAME_SIZE = 260;
 const FRAME_RADIUS = 28;
@@ -158,6 +160,7 @@ function ScannerView({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { width, height } = useWindowDimensions();
   const [isStabilizing, setIsStabilizing] = useState(false);
   const [isSubmittingState, setIsSubmittingState] = useState(false);
@@ -246,6 +249,7 @@ function ScannerView({
 
         try {
           const response = await submitScanQr(extractedId);
+          void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.qr.logs });
           const sensorUuid = response.data?.id_sensor;
 
           if (sensorUuid && isUuid(sensorUuid)) {
@@ -285,6 +289,7 @@ function ScannerView({
             );
           }
         } catch (error: unknown) {
+          void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.qr.logs });
           const err = error as { message?: string };
           console.warn("[Scanner] Gagal verifikasi scan QR:", err?.message);
 
@@ -322,7 +327,7 @@ function ScannerView({
         timer,
       };
     },
-    [width, height, router, onClose, resetScannerState],
+    [width, height, router, onClose, resetScannerState, queryClient],
   );
 
   return (

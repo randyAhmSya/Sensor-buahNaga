@@ -112,7 +112,7 @@ export const DimmingHistoryChartCard = memo(function DimmingHistoryChartCard({
         ) : isError || !hasData ? (
           <View className="h-28 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400 w-full p-4">
             <Text className="text-xs text-slate-600 text-center font-medium">
-              Belum ada data peredupan lampu tercatat dalam 12 jam terakhir.
+              Belum ada data peredupan. Lihat kartu Kesiapan Auto-Dimming di atas.
             </Text>
           </View>
         ) : (
