@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { dashboardService } from '@/services/dashboardService';
 import { dashboardKeys } from '@/services/queryKeys';
 import type { PetaniDashboardData } from '@/types/dashboard.types';
+import { POLLING_SENSOR_OPTIONS } from '@/constants/polling'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -24,9 +25,7 @@ export function useDashboard(kebunId?: string) {
       return await dashboardService.getPetaniDashboard(cleanId);
     },
     enabled: isValidId,
-    staleTime: 30_000,
-    refetchInterval: 60_000,
-    refetchIntervalInBackground: false,
+    ...POLLING_SENSOR_OPTIONS,
   });
 }
 

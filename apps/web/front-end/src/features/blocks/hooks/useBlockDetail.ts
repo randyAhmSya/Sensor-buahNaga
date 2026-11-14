@@ -8,6 +8,7 @@ import { gatewayService } from '@/services/gatewayService'
 import { scheduleService } from '@/services/scheduleService'
 import { useSensorsQuery } from '@/hooks/queries/useSensorsQuery'
 import { findNodeForBlock } from '../utils/blockNodeMatcher'
+import { POLLING_SENSOR_OPTIONS } from '@/constants/polling'
 import {
   blockKeys,
   scheduleKeys,
@@ -77,9 +78,7 @@ export const useBlockDetail = (farmId: string, blockId: string) => {
     queryKey: blockKeys.statusLampu(cleanBlockId),
     queryFn: () => blockService.getStatusLampu(cleanBlockId),
     enabled: isValidBlock,
-    staleTime: 30_000,
-    refetchInterval: 60_000,
-    refetchIntervalInBackground: false,
+    ...POLLING_SENSOR_OPTIONS,
   })
 
   // 7. Query Live Telemetri (Polling 60s)
@@ -87,9 +86,7 @@ export const useBlockDetail = (farmId: string, blockId: string) => {
     queryKey: telemetryKeys.history(effectiveSensorId || '', 100),
     queryFn: () => (effectiveSensorId ? fetchTelemetri(effectiveSensorId, 100) : Promise.resolve([])),
     enabled: hasValidSensor,
-    staleTime: 30_000,
-    refetchInterval: 60_000,
-    refetchIntervalInBackground: false,
+    ...POLLING_SENSOR_OPTIONS,
   })
 
   // 8. Query Live Log Energi (Polling 60s)
@@ -97,9 +94,7 @@ export const useBlockDetail = (farmId: string, blockId: string) => {
     queryKey: energyKeys.logs(effectiveSensorId || ''),
     queryFn: () => (effectiveSensorId ? fetchLogEnergy(effectiveSensorId, 100) : Promise.resolve({ total_kwh: 0, riwayat: [] })),
     enabled: hasValidSensor,
-    staleTime: 30_000,
-    refetchInterval: 60_000,
-    refetchIntervalInBackground: false,
+    ...POLLING_SENSOR_OPTIONS,
   })
 
   // 9. Agregasi data statis dan live ke dalam BlockDetailFull

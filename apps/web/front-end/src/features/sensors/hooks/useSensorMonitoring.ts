@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { POLLING_SENSOR_OPTIONS } from '@/constants/polling'
 import { useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { SensorNodeItem, SensorSummaryMetrics } from '@/types/sensor.types'
@@ -111,9 +112,7 @@ export const useSensorMonitoring = () => {
       })
     },
     enabled: Boolean(activeFarmId),
-    staleTime: 30_000,
-    refetchInterval: 60_000,
-    refetchIntervalInBackground: false,
+    ...POLLING_SENSOR_OPTIONS,
   })
 
   // Tangani error useFarmsWithBlocksQuery secara eksplisit agar tidak diam (referensi stabil & id deduplikasi)
