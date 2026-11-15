@@ -13,6 +13,7 @@ import type {
 } from "@/service/monitoringService";
 import type { MonitoringGroup } from "@/constant/monitoring";
 import { QUERY_KEYS } from "@/constant/queryKeys";
+import { POLLING_LIST_MS } from "@/constant/polling";
 
 export type MonitoringState =
   | { status: "loading" }
@@ -57,14 +58,14 @@ export function useMonitoring(kebunId?: string): UseMonitoringReturn {
   } = useQuery<DashboardData, Error>({
     queryKey,
     queryFn: () => fetchDashboardData(kebunId),
-    staleTime: 30000,
-    refetchOnMount: false,
+    staleTime: POLLING_LIST_MS,
+    refetchOnMount: "always",
     refetchInterval: () => {
       // Polling hemat: hanya saat layar monitoring difokuskan & aplikasi aktif di foreground
       if (!isFocused || AppState.currentState !== "active") {
         return false;
       }
-      return 30000; // 30 detik
+      return POLLING_LIST_MS;
     },
     refetchIntervalInBackground: false,
   });

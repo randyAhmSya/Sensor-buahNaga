@@ -260,6 +260,9 @@ function ScannerView({
 
             // Simpan ke global store agar tetap aktif saat berpindah tab
             await nodeStore.setActiveNodeId(sensorUuid);
+            void queryClient.invalidateQueries({
+              queryKey: QUERY_KEYS.nodeRingkasan(sensorUuid),
+            });
 
             router.replace({
               pathname: "/monitoring/[id]",
