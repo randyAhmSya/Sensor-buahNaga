@@ -12,7 +12,8 @@ export function useQrScanLogs() {
   } = useQuery<QrScanLogItem[], Error>({
     queryKey: QUERY_KEYS.qr.logs,
     queryFn: fetchQrScanLogs,
-    staleTime: 60 * 1000, // 1 menit
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   return {

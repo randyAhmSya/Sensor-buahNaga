@@ -8,6 +8,7 @@ import { PressableOpacity } from "@/component/ui/PressableOpacity";
 import { NodeHeroCard } from "./NodeHeroCard";
 import { SensorGrid } from "./SensorGrid";
 import { LightingScheduleCard } from "./LightingScheduleCard";
+import { DimmingReadinessCard } from "./DimmingReadinessCard";
 import { DimmingHistoryChartCard } from "./DimmingHistoryChartCard";
 import { DeviceInfoCard } from "./DeviceInfoCard";
 import { NodeDetailHeader } from "./NodeDetailHeader";
@@ -131,6 +132,11 @@ export function NodeDetailScreen({ nodeId }: NodeDetailScreenProps) {
             jadwalInfo={ringkasan.jadwal}
             onRefresh={refetch}
           />
+        </View>
+
+        {/* Kesiapan Auto-Dimming */}
+        <View className="mt-4">
+          <DimmingReadinessCard ringkasan={ringkasan} />
         </View>
 
         {/* Grafik Riwayat Auto-Dimming: Dimuat Setelah Ringkasan Selesai */}

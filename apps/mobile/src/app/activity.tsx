@@ -274,26 +274,12 @@ export default function ActivityScreen() {
         {/* Content */}
         {isPending ? (
           <AsyncStateView status="loading" />
-        ) : isError ? (
+        ) : isError && logs.length === 0 ? (
           <AsyncStateView
             status="error"
             errorMessage={error?.message || "Gagal memuat log aktivitas"}
             onRetry={refetch}
           />
-        ) : filteredLogs.length === 0 ? (
-          <View className="flex-1 items-center justify-center p-8">
-            <View className="h-16 w-16 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400 mb-3">
-              <Ionicons name="document-text-outline" size={32} color="#047857" />
-            </View>
-            <Text className="text-base font-bold text-gray-900 text-center">
-              Tidak Ada Catatan Aktivitas
-            </Text>
-            <Text className="mt-1 text-xs text-gray-500 text-center max-w-xs">
-              {searchQuery || filterStatus !== "all"
-                ? "Tidak ada data riwayat yang cocok dengan filter atau pencarian Anda."
-                : "Semua data scan QR fisik node sensor akan otomatis terekam di layar ini. Gunakan tombol Scan pada menu navigasi bawah untuk mulai memindai."}
-            </Text>
-          </View>
         ) : (
           <ScrollView
             className="flex-1 px-4 pt-3"
@@ -304,13 +290,29 @@ export default function ActivityScreen() {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
           >
-            {filteredLogs.map((log) => (
-              <ActivityCard
-                key={log.id_scan_log}
-                log={log}
-                onPress={() => handleCardPress(log)}
-              />
-            ))}
+            {filteredLogs.length === 0 ? (
+              <View className="flex-1 items-center justify-center p-8 mt-12">
+                <View className="h-16 w-16 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400 mb-3">
+                  <Ionicons name="document-text-outline" size={32} color="#047857" />
+                </View>
+                <Text className="text-base font-bold text-gray-900 text-center">
+                  Tidak Ada Catatan Aktivitas
+                </Text>
+                <Text className="mt-1 text-xs text-gray-500 text-center max-w-xs">
+                  {searchQuery || filterStatus !== "all"
+                    ? "Tidak ada data riwayat yang cocok dengan filter atau pencarian Anda."
+                    : "Semua data scan QR fisik node sensor akan otomatis terekam di layar ini. Gunakan tombol Scan pada menu navigasi bawah untuk mulai memindai."}
+                </Text>
+              </View>
+            ) : (
+              filteredLogs.map((log) => (
+                <ActivityCard
+                  key={log.id_scan_log}
+                  log={log}
+                  onPress={() => handleCardPress(log)}
+                />
+              ))
+            )}
           </ScrollView>
         )}
       </SafeAreaView>

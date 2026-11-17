@@ -8,6 +8,7 @@ import {
   type GetNotifikasiResult,
 } from '@/service/notificationService';
 import { QUERY_KEYS } from '@/constant/queryKeys';
+import { POLLING_NOTIF_MS } from '@/constant/polling';
 import type { NotifikasiItem } from '@/types/notification';
 
 function isPaymentRequiredError(error: unknown): boolean {
@@ -53,7 +54,7 @@ export function useUnreadNotificationCount() {
       if (!isFocused || AppState.currentState !== 'active') {
         return false;
       }
-      return 60000; // 60 detik
+      return POLLING_NOTIF_MS;
     },
     refetchIntervalInBackground: false,
   });

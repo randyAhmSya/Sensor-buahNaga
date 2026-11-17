@@ -1,5 +1,9 @@
+import { useState, useEffect } from "react";
+import { AppState, type AppStateStatus } from "react-native";
 import { useQuery } from "@tanstack/react-query";
+import { useIsFocused } from "expo-router";
 import apiClient from "@/service/apiClient";
+import { POLLING_CHART_MS } from "@/constant/polling";
 
 export interface LogPeredupanPoint {
   waktu: string;
@@ -21,6 +25,26 @@ export function useLogPeredupan(
   jam: number = 12,
   enabled: boolean = true,
 ) {
+  const isFocused = useIsFocused();
+  const [isAppActive, setIsAppActive] = useState<boolean>(() => {
+    return AppState.currentState === "active";
+  });
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener(
+      "change",
+      (nextAppState: AppStateStatus) => {
+        setIsAppActive(nextAppState === "active");
+      },
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  const shouldPoll = isFocused && isAppActive;
+
   return useQuery<LogPeredupanResponse, Error>({
     queryKey: ["log-peredupan", sensorId, jam],
     queryFn: async () => {
@@ -38,7 +62,9 @@ export function useLogPeredupan(
       return res.data.data;
     },
     enabled: Boolean(sensorId && enabled),
-    staleTime: 60_000,
+    staleTime: Math.floor(POLLING_CHART_MS / 2),
+    refetchOnMount: "always",
+    refetchInterval: () => (!shouldPoll ? false : POLLING_CHART_MS),
     refetchIntervalInBackground: false,
   });
 }

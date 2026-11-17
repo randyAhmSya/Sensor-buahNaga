@@ -8,6 +8,7 @@ import type { EnhancedApiError } from "@/service/apiClient";
 import type { BackendNodeRingkasanDTO } from "@/types/api/nodeRingkasan.dto";
 import { isUuid } from "./useNodeDetails";
 import { QUERY_KEYS } from "@/constant/queryKeys";
+import { POLLING_NODE_MS } from "@/constant/polling";
 
 export interface UseNodeRingkasanReturn {
   ringkasan: BackendNodeRingkasanDTO | null;
@@ -53,9 +54,9 @@ export function useNodeRingkasan(idSensor?: string): UseNodeRingkasanReturn {
     queryKey: QUERY_KEYS.nodeRingkasan(trimmedId),
     queryFn: () => fetchNodeRingkasan(trimmedId),
     enabled: isValid,
-    staleTime: 30_000,
-    refetchOnMount: false,
-    refetchInterval: () => (!shouldPoll ? false : 30_000),
+    staleTime: Math.floor(POLLING_NODE_MS / 3),
+    refetchOnMount: "always",
+    refetchInterval: () => (!shouldPoll ? false : POLLING_NODE_MS),
     refetchIntervalInBackground: false,
     retry: (failureCount, error) => {
       // Matikan retry jika HTTP 404 (Not Found) atau 403 (Forbidden)

@@ -8,6 +8,7 @@ import {
   type DashboardData,
 } from "@/service/dashboardService";
 import { QUERY_KEYS } from "@/constant/queryKeys";
+import { POLLING_LIST_MS } from "@/constant/polling";
 import { authStorage, type AuthUser } from "@/service/authStorage";
 
 // Discriminated union: status loading, success (dengan flag isOffline bila membaca cache saat sinyal buruk), dan error.
@@ -42,14 +43,14 @@ export function useDashboard(kebunId?: string) {
       }
       return failureCount < 2;
     },
-    staleTime: 30000,
-    refetchOnMount: false,
+    staleTime: POLLING_LIST_MS,
+    refetchOnMount: "always",
     refetchInterval: () => {
       // Polling hemat: hanya aktif bila layar sedang difokuskan dan aplikasi aktif di foreground
       if (!isFocused || AppState.currentState !== "active") {
         return false;
       }
-      return 30000; // 30 detik
+      return POLLING_LIST_MS;
     },
     refetchIntervalInBackground: false,
   });
