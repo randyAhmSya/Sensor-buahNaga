@@ -61,7 +61,7 @@ Route::middleware(['auth:sanctum', EnsureTenantAktif::class, EnsureLanggananAkti
     Route::post('gateway/{id}/reset-pairing', [GatewayController::class, 'resetPairing'])->whereUuid('id');
     Route::get('qr/logs', [KodeQrController::class, 'logs']);
     Route::apiResource('qr', KodeQrController::class)->except(['destroy']);
-    Route::post('qr/scan', [KodeQrController::class, 'scan']);
+    Route::post('qr/scan', [KodeQrController::class, 'scan'])->middleware('throttle:30,1');
     Route::apiResource('siklus-panen', SiklusPanenController::class);
     Route::get('jadwal-lampu/aktif', [JadwalLampuController::class, 'aktif']);
     Route::get('jadwal-lampu/ringkasan', [JadwalRingkasanController::class, 'index']);
