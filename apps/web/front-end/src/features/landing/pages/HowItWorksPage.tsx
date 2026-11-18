@@ -1,8 +1,8 @@
 import { MapPin, QrCode, Lightbulb, Calendar } from 'lucide-react'
 import { SectionContainer } from '../../../components/common/SectionContainer'
-import { Card } from '../../../components/ui/Card'
 import { ScrollReveal } from '../components/ScrollReveal'
 import { CtaBanner } from '../components/CtaBanner'
+import { LANDING_STYLES } from '../styles'
 
 export function HowItWorksPage() {
   const stages = [
@@ -61,7 +61,7 @@ export function HowItWorksPage() {
       <section className="bg-white border-b border-slate-200 py-16 sm:py-20 px-4 md:px-8">
         <div className="max-w-4xl mx-auto text-center space-y-4">
           <ScrollReveal direction="up" delay={50}>
-            <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+            <div className={LANDING_STYLES.eyebrow}>
               TAHAPAN IMPLEMENTASI
             </div>
           </ScrollReveal>
@@ -82,7 +82,7 @@ export function HowItWorksPage() {
       <SectionContainer className="py-16 md:py-20">
         <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
           <ScrollReveal direction="up" delay={50}>
-            <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+            <div className={LANDING_STYLES.eyebrow}>
               ALUR LENGKAP
             </div>
           </ScrollReveal>
@@ -103,13 +103,13 @@ export function HowItWorksPage() {
             const Icon = stage.icon
             return (
               <ScrollReveal key={stage.step} direction="up" delay={100 + idx * 75}>
-                <Card className="h-full bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 flex flex-col justify-between space-y-6 shadow-sm">
+                <div className="h-full bg-white rounded-2xl p-6 sm:p-8 flex flex-col justify-between space-y-6 shadow-xs hover:shadow-md transition-shadow">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <div className="h-14 w-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-sm">
-                        <Icon className="w-7 h-7" strokeWidth={2.25} />
+                      <div className={LANDING_STYLES.iconContainer}>
+                        <Icon className={LANDING_STYLES.icon} strokeWidth={2.25} />
                       </div>
-                      <span className="text-2xl font-bold text-slate-300">
+                      <span className="text-3xl font-bold text-slate-300 tracking-tight select-none">
                         {stage.step}
                       </span>
                     </div>
@@ -123,13 +123,11 @@ export function HowItWorksPage() {
                     </p>
                   </div>
 
-                  <div className="pt-4 border-t border-slate-100 text-xs text-slate-600 leading-relaxed">
-                    <span className="font-semibold text-emerald-700 block mb-0.5">
-                      Hasil Tahapan:
-                    </span>
-                    {stage.output}
+                  <div className="pt-4 text-xs text-slate-500 leading-relaxed">
+                    <span className="font-semibold text-slate-700">Output: </span>
+                    <span>{stage.output}</span>
                   </div>
-                </Card>
+                </div>
               </ScrollReveal>
             )
           })}
@@ -141,7 +139,7 @@ export function HowItWorksPage() {
         <div className="max-w-6xl mx-auto space-y-10">
           <div className="text-center space-y-3">
             <ScrollReveal direction="up" delay={50}>
-              <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+              <div className={LANDING_STYLES.eyebrow}>
                 PERSIAPAN AWAL
               </div>
             </ScrollReveal>
@@ -160,9 +158,9 @@ export function HowItWorksPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {checklistItems.map((item, idx) => (
               <ScrollReveal key={item.title} direction="up" delay={100 + idx * 75}>
-                <div className="h-full p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
+                <div className="h-full p-6 rounded-2xl bg-slate-50 flex flex-col justify-between">
                   <div>
-                    <span className="font-mono text-sm font-bold text-emerald-600 mb-3 block">
+                    <span className="text-xl font-bold text-slate-300 mb-2 block select-none">
                       {String(idx + 1).padStart(2, '0')}
                     </span>
                     <h3 className="text-lg font-bold text-slate-900 mb-2">

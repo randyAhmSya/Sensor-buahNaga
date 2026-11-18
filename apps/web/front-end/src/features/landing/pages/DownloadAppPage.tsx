@@ -1,8 +1,8 @@
 import { Download, QrCode, WifiOff, BellRing } from 'lucide-react'
 import { SectionContainer } from '../../../components/common/SectionContainer'
-import { Card } from '../../../components/ui/Card'
 import { ScrollReveal } from '../components/ScrollReveal'
 import { CtaBanner } from '../components/CtaBanner'
+import { LANDING_BUTTONS, LANDING_STYLES } from '../styles'
 
 export function DownloadAppPage() {
   const advantages = [
@@ -53,7 +53,7 @@ export function DownloadAppPage() {
       <section className="bg-white border-b border-slate-200 py-16 sm:py-20 px-4 md:px-8">
         <div className="max-w-4xl mx-auto text-center space-y-4">
           <ScrollReveal direction="up" delay={50}>
-            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+            <div className={LANDING_STYLES.eyebrow}>
               APLIKASI LAPANGAN ANDROID
             </div>
           </ScrollReveal>
@@ -76,7 +76,7 @@ export function DownloadAppPage() {
           <div className="rounded-3xl bg-slate-900 border border-slate-800 p-8 sm:p-12 text-white shadow-xl max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="space-y-4 text-center md:text-left">
-                <div className="inline-flex items-center px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-emerald-400 text-xs font-semibold">
+                <div className="inline-flex items-center px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-brand-400 text-xs font-semibold">
                   <span>Rilis Resmi Android</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
@@ -86,7 +86,7 @@ export function DownloadAppPage() {
                   Berkas APK terverifikasi aman untuk smartphone Android versi 8.0 ke atas. Dilengkapi panduan instalasi langkah demi langkah.
                 </p>
 
-                {/* Spesifikasi Teknis Bersih (Grid terstruktur tanpa tumpukan pill badge) */}
+                {/* Spesifikasi Teknis Bersih */}
                 <div className="pt-3 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
                   <div>
                     <span className="text-slate-400 block text-[11px] font-medium uppercase tracking-wider mb-0.5">
@@ -119,7 +119,7 @@ export function DownloadAppPage() {
                 <a
                   href="/agrolight.apk"
                   download="AgroLight.apk"
-                  className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base transition-colors shadow-lg active:scale-95"
+                  className={`${LANDING_BUTTONS.primaryDark} gap-2.5 px-8 py-4 text-base active:scale-95`}
                 >
                   <Download className="w-5 h-5" />
                   <span>Unduh Aplikasi</span>
@@ -138,7 +138,7 @@ export function DownloadAppPage() {
         <div className="max-w-7xl mx-auto space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <ScrollReveal direction="up" delay={50}>
-              <div className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+              <div className={LANDING_STYLES.eyebrow}>
                 FITUR KHUSUS OPERASIONAL LAPANGAN
               </div>
             </ScrollReveal>
@@ -159,9 +159,9 @@ export function DownloadAppPage() {
               const Icon = adv.icon
               return (
                 <ScrollReveal key={adv.title} direction="up" delay={100 + idx * 75}>
-                  <Card className="h-full bg-slate-50 rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-4 shadow-sm">
-                    <div className="h-14 w-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-sm mb-4">
-                      <Icon className="w-7 h-7" strokeWidth={2.25} />
+                  <div className="h-full bg-slate-50 rounded-2xl p-6 sm:p-8 space-y-4">
+                    <div className={`${LANDING_STYLES.iconContainer} mb-4`}>
+                      <Icon className={LANDING_STYLES.icon} strokeWidth={2.25} />
                     </div>
                     <h3 className="text-base sm:text-lg font-semibold text-slate-900">
                       {adv.title}
@@ -169,7 +169,7 @@ export function DownloadAppPage() {
                     <p className="text-sm text-slate-600 leading-relaxed">
                       {adv.description}
                     </p>
-                  </Card>
+                  </div>
                 </ScrollReveal>
               )
             })}
@@ -181,7 +181,7 @@ export function DownloadAppPage() {
       <SectionContainer className="py-16 md:py-20">
         <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
           <ScrollReveal direction="up" delay={50}>
-            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+            <div className={LANDING_STYLES.eyebrow}>
               PANDUAN INSTALASI
             </div>
           </ScrollReveal>
@@ -200,8 +200,8 @@ export function DownloadAppPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
           {installSteps.map((item, idx) => (
             <ScrollReveal key={item.step} direction="up" delay={100 + idx * 75}>
-              <div className="p-6 sm:p-8 rounded-2xl bg-white border border-slate-200 space-y-4 shadow-sm">
-                <span className="font-mono text-sm font-bold text-emerald-600 block">
+              <div className="p-6 sm:p-8 rounded-2xl bg-white space-y-4 shadow-xs hover:shadow-md transition-shadow">
+                <span className="text-xl font-bold text-slate-300 block select-none">
                   {item.step}
                 </span>
                 <h3 className="text-base sm:text-lg font-semibold text-slate-900">

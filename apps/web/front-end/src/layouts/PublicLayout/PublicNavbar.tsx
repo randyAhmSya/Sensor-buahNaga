@@ -3,19 +3,20 @@ import { Link, NavLink } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { NAV_LINKS } from '../../constants/landing.constants'
 import { BrandLogo } from '../../components/common/BrandLogo'
+import { LANDING_BUTTONS } from '../../features/landing/styles'
 
 export function PublicNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const getDesktopNavLinkClass = (isActive: boolean) =>
     isActive
-      ? 'text-emerald-700 font-bold border-b-2 border-emerald-700 pb-1 transition-colors'
-      : 'text-slate-600 font-medium hover:text-emerald-700 pb-1 transition-colors'
+      ? 'text-brand-700 font-bold border-b-2 border-brand-700 pb-1 transition-colors'
+      : 'text-slate-600 font-medium hover:text-brand-700 pb-1 transition-colors'
 
   const getMobileNavLinkClass = (isActive: boolean) =>
     isActive
-      ? 'text-emerald-700 font-bold border-b-2 border-emerald-700 pb-1 w-fit transition-colors'
-      : 'text-slate-600 font-medium hover:text-emerald-700 py-1 transition-colors'
+      ? 'text-brand-700 font-bold border-b-2 border-brand-700 pb-1 w-fit transition-colors'
+      : 'text-slate-600 font-medium hover:text-brand-700 py-1 transition-colors'
 
   return (
     <nav className="fixed top-0 w-full z-50 border-b border-slate-200 bg-white shadow-xs transition-all">
@@ -40,13 +41,13 @@ export function PublicNavbar() {
         <div className="hidden md:flex items-center space-x-3">
           <Link
             to="/login"
-            className="text-slate-700 font-semibold hover:text-emerald-700 transition-colors text-sm px-4 py-2 rounded-xl border border-slate-300 hover:border-slate-400"
+            className={`${LANDING_BUTTONS.secondaryLight} text-sm px-4 py-2 select-none`}
           >
             Masuk Dashboard
           </Link>
           <Link
             to="/unduh-aplikasi"
-            className="bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-emerald-700 transition-all text-sm shadow-xs inline-flex items-center"
+            className={`${LANDING_BUTTONS.primaryLight} text-sm px-4 py-2 select-none`}
           >
             <span>Unduh Aplikasi</span>
           </Link>
@@ -84,14 +85,14 @@ export function PublicNavbar() {
             <Link
               to="/login"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-center py-2.5 text-slate-700 font-semibold hover:text-emerald-700 border border-slate-200 rounded-xl text-sm"
+              className={`${LANDING_BUTTONS.secondaryLight} w-full py-2.5 text-sm select-none`}
             >
               Masuk Dashboard
             </Link>
             <Link
               to="/unduh-aplikasi"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-center py-2.5 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 text-sm shadow-xs"
+              className={`${LANDING_BUTTONS.primaryLight} w-full py-2.5 text-sm select-none`}
             >
               <span>Unduh Aplikasi</span>
             </Link>

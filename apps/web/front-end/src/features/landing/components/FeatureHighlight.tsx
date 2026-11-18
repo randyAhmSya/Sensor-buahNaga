@@ -1,4 +1,5 @@
 import { Activity, Sun, QrCode, Shield, Layers, BarChart3 } from 'lucide-react'
+import { LANDING_STYLES } from '../styles'
 
 export function FeatureHighlight() {
   const features = [
@@ -8,7 +9,7 @@ export function FeatureHighlight() {
       desc: 'Otomatis menghitung dosis radiasi harian dan musiman pohon buah naga untuk memicu induksi pembungaan serentak di luar musim (off-season).',
     },
     {
-      icon: <Activity className="h-6 w-6 text-emerald-500" />,
+      icon: <Activity className="h-6 w-6 text-brand-600" />,
       title: 'Monitoring Kesehatan Sensor Telemetri',
       desc: 'Deteksi dini degradasi baterai, penurunan tegangan panel surya, anomali fotodioda sensor, dan kualitas sinyal LoRaWAN.',
     },
@@ -38,7 +39,7 @@ export function FeatureHighlight() {
     <div id="fitur" className="py-20 bg-slate-50 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-2">
+          <h2 className={`${LANDING_STYLES.eyebrow} mb-2`}>
             Kapabilitas Unggulan
           </h2>
           <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -53,9 +54,9 @@ export function FeatureHighlight() {
           {features.map((f, idx) => (
             <div
               key={idx}
-              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs hover:border-emerald-300 hover:shadow-md transition-all group"
+              className="rounded-2xl bg-white p-6 shadow-xs hover:shadow-md transition-shadow group"
             >
-              <div className="p-3 rounded-xl bg-slate-50 w-fit mb-4 group-hover:scale-110 transition-transform">
+              <div className="p-3 rounded-xl bg-slate-50 w-fit mb-4 group-hover:scale-105 transition-transform">
                 {f.icon}
               </div>
               <h3 className="text-lg font-bold text-slate-900 mb-2">{f.title}</h3>

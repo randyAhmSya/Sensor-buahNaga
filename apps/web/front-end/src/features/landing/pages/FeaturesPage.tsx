@@ -2,6 +2,7 @@ import { Lightbulb, Activity, Layers, Calendar } from 'lucide-react'
 import { FeatureDetailItem } from '../components/FeatureDetailItem'
 import { CtaBanner } from '../components/CtaBanner'
 import { ScrollReveal } from '../components/ScrollReveal'
+import { LANDING_STYLES } from '../styles'
 
 const featuresData = [
   {
@@ -101,7 +102,7 @@ export const FeaturesPage = () => {
       <section className="bg-white border-b border-slate-200 py-16 sm:py-20 px-4 md:px-8">
         <div className="max-w-4xl mx-auto text-center space-y-4">
           <ScrollReveal direction="up" delay={50}>
-            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+            <div className={LANDING_STYLES.eyebrow}>
               FITUR UTAMA AGROLIGHT
             </div>
           </ScrollReveal>

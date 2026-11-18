@@ -2,31 +2,32 @@ import { Link } from 'react-router-dom'
 import { QrCode, Sun, BarChart3, ArrowUpRight } from 'lucide-react'
 import { SectionContainer } from '../../../components/common/SectionContainer'
 import { ScrollReveal } from './ScrollReveal'
+import { LANDING_BUTTONS, LANDING_STYLES } from '../styles'
 
 const workflowSteps = [
   {
-    stepNumber: 'LANGKAH 01',
+    stepNumber: '01',
     icon: QrCode,
     title: 'Pemasangan & Pemindaian QR',
     description:
       'Petani memasang node sensor dan gateway di blok kebun buah naga, lalu memindai kode QR fisik untuk mendaftarkan node ke dashboard secara instan.',
-    outputLabel: 'Output: Node terdaftar & terhubung ke broker MQTT',
+    outputLabel: 'Node terdaftar & terhubung ke broker MQTT',
   },
   {
-    stepNumber: 'LANGKAH 02',
+    stepNumber: '02',
     icon: Sun,
     title: 'Otomasi Penyinaran & Auto-Dimming',
     description:
       'Sistem mengontrol lampu LED tambahan pada malam hari secara otomatis menyesuaikan nilai lux target untuk merangsang pembungaan di luar musim.',
-    outputLabel: 'Output: Penyesuaian daya lampu sesuai kebutuhan lux',
+    outputLabel: 'Penyesuaian daya lampu sesuai kebutuhan lux',
   },
   {
-    stepNumber: 'LANGKAH 03',
+    stepNumber: '03',
     icon: BarChart3,
     title: 'Telemetri & Estimasi Panen',
     description:
       'Data intensitas lux, suhu udara, dan durasi penyinaran terakumulasi otomatis ke grafik analitik untuk membantu petani memprediksi jadwal panen.',
-    outputLabel: 'Output: Laporan siap unduh dan estimasi panen presisi',
+    outputLabel: 'Laporan siap unduh dan estimasi panen presisi',
   },
 ]
 
@@ -35,7 +36,7 @@ export function HowItWorksSection() {
     <SectionContainer className="py-20 md:py-24" id="how-it-works">
       <ScrollReveal direction="up" delay={50}>
         <div className="text-center mb-16 max-w-2xl mx-auto space-y-3">
-          <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+          <div className={LANDING_STYLES.eyebrow}>
             ALUR OPERASIONAL TERSTRUKTUR
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
@@ -58,20 +59,20 @@ export function HowItWorksSection() {
               delay={100 + idx * 150}
               className="h-full"
             >
-              <div className="group relative h-full rounded-2xl bg-white border border-slate-200 p-7 shadow-sm hover:border-emerald-600 transition-colors duration-300 flex flex-col justify-between text-left">
+              <div className="group relative h-full rounded-2xl bg-white p-7 shadow-xs hover:shadow-md transition-shadow duration-300 flex flex-col justify-between text-left">
                 {/* Header: Step Number & Focal Icon */}
                 <div>
-                  <div className="flex items-center justify-between pb-5 border-b border-slate-100">
-                    <span className="text-2xl font-bold text-emerald-700 font-mono tracking-tight">
+                  <div className="flex items-center justify-between pb-4">
+                    <span className="text-3xl font-bold text-slate-300 tracking-tight select-none">
                       {step.stepNumber}
                     </span>
-                    <div className="h-14 w-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-sm shrink-0">
-                      <IconComponent className="w-7 h-7" strokeWidth={2.25} />
+                    <div className={LANDING_STYLES.iconContainer}>
+                      <IconComponent className={LANDING_STYLES.icon} strokeWidth={2.25} />
                     </div>
                   </div>
 
                   {/* Middle: Title & Description */}
-                  <div className="pt-5 space-y-2.5">
+                  <div className="space-y-2.5">
                     <h3 className="font-semibold text-base sm:text-lg text-slate-900 leading-snug">
                       {step.title}
                     </h3>
@@ -81,8 +82,9 @@ export function HowItWorksSection() {
                   </div>
                 </div>
 
-                {/* Footer: Concrete Output Indicator (Minimalist typography without decorative icons) */}
-                <div className="pt-6 mt-6 border-t border-slate-100 text-xs font-semibold text-emerald-800">
+                {/* Footer: Concrete Output Indicator without divider */}
+                <div className="pt-4 text-xs text-slate-500 leading-relaxed">
+                  <span className="font-semibold text-slate-700">Output: </span>
                   <span>{step.outputLabel}</span>
                 </div>
               </div>
@@ -96,15 +98,13 @@ export function HowItWorksSection() {
         <ScrollReveal direction="up" delay={200}>
           <Link
             to="/cara-kerja"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm transition-all shadow-sm select-none"
+            className={`${LANDING_BUTTONS.secondaryLight} gap-2 px-6 py-3 text-sm select-none`}
           >
             <span>Pelajari Alur Lengkap</span>
-            <ArrowUpRight className="w-4 h-4 text-emerald-400" strokeWidth={2.25} />
+            <ArrowUpRight className="w-4 h-4 text-brand-700" strokeWidth={2.25} />
           </Link>
         </ScrollReveal>
       </div>
     </SectionContainer>
   )
 }
-
-

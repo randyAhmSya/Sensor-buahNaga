@@ -1,6 +1,6 @@
 import type { ElementType } from 'react'
-import { Card } from '../../../components/ui/Card'
 import { ScrollReveal } from './ScrollReveal'
+import { LANDING_STYLES } from '../styles'
 
 export interface FeaturePoint {
   title: string
@@ -29,8 +29,8 @@ export function FeatureDetailItem({
     : 'bg-white py-16 sm:py-20 px-4 md:px-8'
 
   const cardClasses = isBgSlate
-    ? 'rounded-2xl bg-white border border-slate-200 p-5 shadow-sm space-y-1.5'
-    : 'rounded-2xl bg-slate-50 border border-slate-200 p-5 space-y-1.5'
+    ? 'rounded-2xl bg-white p-5 shadow-xs hover:shadow-md transition-shadow space-y-1.5'
+    : 'rounded-2xl bg-slate-50 p-5 space-y-1.5'
 
   return (
     <section className={containerClasses}>
@@ -41,12 +41,12 @@ export function FeatureDetailItem({
           delay={100}
           className="lg:col-span-5 space-y-5"
         >
-          <div className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+          <div className={LANDING_STYLES.eyebrow}>
             {badge}
           </div>
 
-          <div className="h-14 w-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-sm shrink-0 mb-4">
-            <Icon className="w-7 h-7" strokeWidth={2.25} />
+          <div className={`${LANDING_STYLES.iconContainer} mb-4`}>
+            <Icon className={LANDING_STYLES.icon} strokeWidth={2.25} />
           </div>
 
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight leading-tight">
@@ -65,14 +65,14 @@ export function FeatureDetailItem({
           className="lg:col-span-7 grid grid-cols-1 gap-4"
         >
           {points.map((point) => (
-            <Card key={point.title} className={cardClasses}>
+            <div key={point.title} className={cardClasses}>
               <h3 className="text-base font-semibold text-slate-900">
                 {point.title}
               </h3>
               <p className="text-sm text-slate-600 leading-relaxed">
                 {point.desc}
               </p>
-            </Card>
+            </div>
           ))}
         </ScrollReveal>
       </div>
