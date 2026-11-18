@@ -84,7 +84,7 @@ export function FeatureGrid() {
             className={`${LANDING_BUTTONS.secondaryLight} gap-2 px-6 py-3 text-sm select-none`}
           >
             <span>Lihat Detail Fitur</span>
-            <ArrowUpRight className="w-4 h-4 text-brand-700" strokeWidth={2.25} />
+            <ArrowUpRight className={LANDING_STYLES.secondaryArrow} strokeWidth={2.25} />
           </Link>
         </ScrollReveal>
       </div>

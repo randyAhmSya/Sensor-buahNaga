@@ -76,7 +76,7 @@ export function DownloadAppPage() {
           <div className="rounded-3xl bg-slate-900 border border-slate-800 p-8 sm:p-12 text-white shadow-xl max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="space-y-4 text-center md:text-left">
-                <div className="inline-flex items-center px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-brand-400 text-xs font-semibold">
+                <div className={LANDING_STYLES.badgeDark}>
                   <span>Rilis Resmi Android</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">

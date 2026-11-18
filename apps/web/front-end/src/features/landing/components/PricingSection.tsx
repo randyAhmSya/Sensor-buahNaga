@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { CheckCircle2 } from 'lucide-react'
 import { SectionContainer } from '../../../components/common/SectionContainer'
 import { PRICING_PLANS, type PricingPlan } from '../../../constants/landing.constants'
-import { LANDING_BUTTONS } from '../styles'
+import { LANDING_BUTTONS, LANDING_STYLES } from '../styles'
 
 export interface PricingSectionProps {
   id?: string
@@ -42,22 +42,23 @@ export function PricingSection({
                     : 'bg-white rounded-2xl p-8 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between h-full'
                 }
               >
-                {isPopular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-brand-700 text-white text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider shadow-xs">
-                    {plan.popularBadge || 'PALING POPULER'}
-                  </div>
-                )}
-
                 <div>
-                  <h3
-                    className={
-                      isPopular
-                        ? 'text-xl font-bold text-brand-800 mb-2 mt-1'
-                        : 'text-xl font-bold text-slate-900 mb-2'
-                    }
-                  >
-                    {plan.name}
-                  </h3>
+                  <div className="flex items-center justify-between mb-3 min-h-7">
+                    <h3
+                      className={
+                        isPopular
+                          ? 'text-xl font-bold text-brand-800'
+                          : 'text-xl font-bold text-slate-900'
+                      }
+                    >
+                      {plan.name}
+                    </h3>
+                    {isPopular && (
+                      <span className={LANDING_STYLES.badgePopular}>
+                        {plan.popularBadge || 'PALING POPULER'}
+                      </span>
+                    )}
+                  </div>
 
                   {plan.period ? (
                     <div className="flex items-baseline gap-1 mb-2">
