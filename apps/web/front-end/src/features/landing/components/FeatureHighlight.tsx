@@ -56,7 +56,7 @@ export function FeatureHighlight() {
               key={idx}
               className="rounded-2xl bg-white p-6 shadow-xs hover:shadow-md transition-shadow group"
             >
-              <div className="p-3 rounded-xl bg-slate-50 w-fit mb-4 group-hover:scale-105 transition-transform">
+              <div className={`${LANDING_STYLES.iconContainer} mb-4 group-hover:scale-105 transition-transform`}>
                 {f.icon}
               </div>
               <h3 className="text-lg font-bold text-slate-900 mb-2">{f.title}</h3>
