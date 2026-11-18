@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { NAV_LINKS } from '../../constants/landing.constants'
 import logoImg from '@/assets/logo.png'
+import { LANDING_BUTTONS } from '../../features/landing/styles'
 
 export function PublicFooter() {
   return (
@@ -20,7 +21,7 @@ export function PublicFooter() {
               />
               <span className="font-extrabold text-2xl tracking-tight leading-none">
                 <span className="text-white">Agro</span>
-                <span className="text-emerald-400">Light</span>
+                <span className="text-brand-400">Light</span>
               </span>
             </Link>
             <p className="text-sm text-slate-400 leading-relaxed">
@@ -29,7 +30,7 @@ export function PublicFooter() {
             <div className="pt-1">
               <Link
                 to="/unduh-aplikasi"
-                className="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all select-none"
+                className={`${LANDING_BUTTONS.secondaryDark} px-4 py-2 text-xs font-semibold select-none`}
               >
                 <span>Unduh Aplikasi</span>
               </Link>
@@ -42,13 +43,13 @@ export function PublicFooter() {
             <ul className="space-y-2.5 text-sm text-slate-300">
               {NAV_LINKS.map((link) => (
                 <li key={link.path}>
-                  <Link to={link.path} className="hover:text-emerald-400 transition-colors">
+                  <Link to={link.path} className="hover:text-brand-400 transition-colors">
                     {link.footerLabel || link.label}
                   </Link>
                 </li>
               ))}
               <li>
-                <Link to="/login" className="hover:text-emerald-400 transition-colors">
+                <Link to="/login" className="hover:text-brand-400 transition-colors">
                   Masuk Dashboard
                 </Link>
               </li>
@@ -60,22 +61,22 @@ export function PublicFooter() {
             <h4 className="font-semibold text-white text-sm tracking-wider uppercase mb-4">Solusi IoT</h4>
             <ul className="space-y-2.5 text-sm text-slate-300">
               <li>
-                <Link to="/fitur" className="hover:text-emerald-400 transition-colors">
+                <Link to="/fitur" className="hover:text-brand-400 transition-colors">
                   Auto-Dimming Lampu Cerdas
                 </Link>
               </li>
               <li>
-                <Link to="/teknologi" className="hover:text-emerald-400 transition-colors">
+                <Link to="/teknologi" className="hover:text-brand-400 transition-colors">
                   Sensor Telemetri &amp; Suhu
                 </Link>
               </li>
               <li>
-                <Link to="/fitur" className="hover:text-emerald-400 transition-colors">
+                <Link to="/fitur" className="hover:text-brand-400 transition-colors">
                   Estimasi Panen Presisi
                 </Link>
               </li>
               <li>
-                <Link to="/cara-kerja" className="hover:text-emerald-400 transition-colors">
+                <Link to="/cara-kerja" className="hover:text-brand-400 transition-colors">
                   Monitoring Zona QR Code
                 </Link>
               </li>

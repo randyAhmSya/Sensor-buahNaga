@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 import { Lightbulb, TrendingUp, QrCode, LayoutDashboard, ArrowUpRight } from 'lucide-react'
-import { Card } from '../../../components/ui/Card'
 import { SectionContainer } from '../../../components/common/SectionContainer'
 import { ScrollReveal } from './ScrollReveal'
+import { LANDING_BUTTONS, LANDING_STYLES } from '../styles'
 
 const features = [
   {
@@ -36,7 +36,7 @@ export function FeatureGrid() {
     <SectionContainer className="py-20 md:py-24" id="features">
       <ScrollReveal direction="up" delay={50}>
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-          <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+          <div className={LANDING_STYLES.eyebrow}>
             TEKNOLOGI LAPANGAN TERUJI
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
@@ -58,12 +58,10 @@ export function FeatureGrid() {
               delay={100 + idx * 100}
               className="h-full"
             >
-              <Card
-                className="h-full bg-white p-7 sm:p-8 rounded-3xl border border-slate-200 shadow-xs hover:border-emerald-600 hover:shadow-md transition-all duration-200 flex flex-col justify-between"
-              >
+              <div className="h-full bg-white p-7 sm:p-8 rounded-2xl shadow-xs hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
                 <div>
-                  <div className="h-14 w-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center mb-6 shadow-sm">
-                    <IconComponent className="w-7 h-7" strokeWidth={2.25} />
+                  <div className={`${LANDING_STYLES.iconContainer} mb-6`}>
+                    <IconComponent className={LANDING_STYLES.icon} strokeWidth={2.25} />
                   </div>
                   <h3 className="font-semibold text-base sm:text-lg text-slate-900 mb-2.5">
                     {feature.title}
@@ -72,7 +70,7 @@ export function FeatureGrid() {
                     {feature.description}
                   </p>
                 </div>
-              </Card>
+              </div>
             </ScrollReveal>
           )
         })}
@@ -83,14 +81,13 @@ export function FeatureGrid() {
         <ScrollReveal direction="up" delay={200}>
           <Link
             to="/fitur"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm transition-all shadow-sm select-none"
+            className={`${LANDING_BUTTONS.secondaryLight} gap-2 px-6 py-3 text-sm select-none`}
           >
             <span>Lihat Detail Fitur</span>
-            <ArrowUpRight className="w-4 h-4 text-emerald-400" strokeWidth={2.25} />
+            <ArrowUpRight className="w-4 h-4 text-brand-700" strokeWidth={2.25} />
           </Link>
         </ScrollReveal>
       </div>
     </SectionContainer>
   )
 }
-

@@ -1,8 +1,8 @@
 import { Zap, Activity, ShieldCheck } from 'lucide-react'
-import { Card } from '../../../components/ui/Card'
 import { SectionContainer } from '../../../components/common/SectionContainer'
 import { ScrollReveal } from '../components/ScrollReveal'
 import { CtaBanner } from '../components/CtaBanner'
+import { LANDING_STYLES } from '../styles'
 
 export function AboutUsPage() {
   const coreValues = [
@@ -32,7 +32,7 @@ export function AboutUsPage() {
       <section className="bg-white border-b border-slate-200 py-16 sm:py-20 px-4 md:px-8">
         <div className="max-w-4xl mx-auto text-center space-y-4">
           <ScrollReveal direction="up" delay={50}>
-            <div className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+            <div className={LANDING_STYLES.eyebrow}>
               LATAR BELAKANG &amp; TUJUAN
             </div>
           </ScrollReveal>
@@ -53,8 +53,8 @@ export function AboutUsPage() {
       <SectionContainer className="py-16 md:py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-6xl mx-auto">
           <ScrollReveal direction="up" delay={100}>
-            <Card className="h-full bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-4 shadow-sm">
-              <div className="text-xs font-semibold uppercase tracking-wider text-amber-700">
+            <div className="h-full bg-white rounded-2xl p-6 sm:p-8 space-y-4 shadow-xs hover:shadow-md transition-shadow">
+              <div className="text-xs font-bold uppercase tracking-wider text-amber-700">
                 TANTANGAN LAPANGAN
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
@@ -63,12 +63,12 @@ export function AboutUsPage() {
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
                 Penggunaan lampu sepanjang malam untuk merangsang pembungaan buah naga sering memicu lonjakan biaya listrik tanpa kepastian hasil panen. Tanpa kontrol berbasis intensitas cahaya alami dan suhu sekitar, energi terbuang dan jadwal pemetikan sulit diprediksi dengan tepat.
               </p>
-            </Card>
+            </div>
           </ScrollReveal>
 
           <ScrollReveal direction="up" delay={150}>
-            <Card className="h-full bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-4 shadow-sm">
-              <div className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+            <div className="h-full bg-white rounded-2xl p-6 sm:p-8 space-y-4 shadow-xs hover:shadow-md transition-shadow">
+              <div className={LANDING_STYLES.eyebrow}>
                 PENDEKATAN TEKNOLOGI
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
@@ -77,7 +77,7 @@ export function AboutUsPage() {
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
                 AgroLight hadir untuk menjembatani sensor perangkat keras lapangan dengan dashboard analitik cloud. Melalui sensor intensitas cahaya dan kontrol jadwal adaptif, penyinaran hanya aktif saat diperlukan, memangkas biaya daya listrik serta memberikan kepastian estimasi panen.
               </p>
-            </Card>
+            </div>
           </ScrollReveal>
         </div>
       </SectionContainer>
@@ -87,7 +87,7 @@ export function AboutUsPage() {
         <div className="max-w-7xl mx-auto space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <ScrollReveal direction="up" delay={50}>
-              <div className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+              <div className={LANDING_STYLES.eyebrow}>
                 PRINSIP PENGEMBANGAN
               </div>
             </ScrollReveal>
@@ -108,9 +108,9 @@ export function AboutUsPage() {
               const Icon = val.icon
               return (
                 <ScrollReveal key={val.title} direction="up" delay={100 + idx * 75}>
-                  <Card className="h-full bg-slate-50 rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-4 shadow-xs">
-                    <div className="h-14 w-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-sm mb-4">
-                      <Icon className="w-7 h-7" strokeWidth={2.25} />
+                  <div className="h-full bg-slate-50 rounded-2xl p-6 sm:p-8 space-y-4">
+                    <div className={`${LANDING_STYLES.iconContainer} mb-4`}>
+                      <Icon className={LANDING_STYLES.icon} strokeWidth={2.25} />
                     </div>
                     <h3 className="text-base sm:text-lg font-semibold text-slate-900">
                       {val.title}
@@ -118,7 +118,7 @@ export function AboutUsPage() {
                     <p className="text-sm text-slate-600 leading-relaxed">
                       {val.description}
                     </p>
-                  </Card>
+                  </div>
                 </ScrollReveal>
               )
             })}
@@ -126,7 +126,7 @@ export function AboutUsPage() {
         </div>
       </section>
 
-      {/* Banner CTA */}
+      {/* CTA Section */}
       <CtaBanner />
     </div>
   )

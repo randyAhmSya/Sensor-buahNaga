@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowUpRight } from 'lucide-react'
-import { Button } from '../../../components/ui/Button'
 import { ScrollReveal } from './ScrollReveal'
+import { LANDING_BUTTONS } from '../styles'
 
 export interface CtaBannerProps {
   title?: string
@@ -16,16 +16,11 @@ export function CtaBanner({
   buttonText = 'Mulai Sekarang',
   onCtaClick,
 }: CtaBannerProps) {
-  const buttonElement = (
-    <Button
-      variant="white"
-      size="lg"
-      onClick={onCtaClick}
-      className="rounded-xl px-8 py-3.5 text-white bg-emerald-600 hover:bg-emerald-700 font-bold transition-all shadow-md inline-flex items-center gap-2"
-    >
+  const buttonContent = (
+    <>
       <span>{buttonText}</span>
-      <ArrowUpRight className="w-5 h-5 text-white" strokeWidth={2.25} />
-    </Button>
+      <ArrowUpRight className="w-5 h-5 text-brand-950" strokeWidth={2.25} />
+    </>
   )
 
   return (
@@ -43,10 +38,19 @@ export function CtaBanner({
 
             <div className="pt-2">
               {onCtaClick ? (
-                buttonElement
+                <button
+                  type="button"
+                  onClick={onCtaClick}
+                  className={`${LANDING_BUTTONS.primaryDark} px-8 py-3.5 gap-2`}
+                >
+                  {buttonContent}
+                </button>
               ) : (
-                <Link to="/register" className="inline-block">
-                  {buttonElement}
+                <Link
+                  to="/register"
+                  className={`${LANDING_BUTTONS.primaryDark} px-8 py-3.5 gap-2`}
+                >
+                  {buttonContent}
                 </Link>
               )}
             </div>
@@ -56,4 +60,3 @@ export function CtaBanner({
     </section>
   )
 }
-

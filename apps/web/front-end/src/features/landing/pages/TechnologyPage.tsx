@@ -1,8 +1,8 @@
 import { Cpu, Radio, Database } from 'lucide-react'
 import { SectionContainer } from '../../../components/common/SectionContainer'
-import { Card } from '../../../components/ui/Card'
 import { ScrollReveal } from '../components/ScrollReveal'
 import { CtaBanner } from '../components/CtaBanner'
+import { LANDING_STYLES } from '../styles'
 
 export function TechnologyPage() {
   const pillars = [
@@ -62,7 +62,7 @@ export function TechnologyPage() {
       <section className="bg-white border-b border-slate-200 py-16 sm:py-20 px-4 md:px-8">
         <div className="max-w-4xl mx-auto text-center space-y-4">
           <ScrollReveal direction="up" delay={50}>
-            <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+            <div className={LANDING_STYLES.eyebrow}>
               ARSITEKTUR &amp; SPESIFIKASI TEKNIS
             </div>
           </ScrollReveal>
@@ -83,7 +83,7 @@ export function TechnologyPage() {
       <SectionContainer className="py-16 md:py-20">
         <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
           <ScrollReveal direction="up" delay={50}>
-            <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+            <div className={LANDING_STYLES.eyebrow}>
               PILAR INFRASTRUKTUR
             </div>
           </ScrollReveal>
@@ -104,13 +104,13 @@ export function TechnologyPage() {
             const Icon = pillar.icon
             return (
               <ScrollReveal key={pillar.title} direction="up" delay={150 + idx * 75}>
-                <Card className="h-full bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 flex flex-col justify-between shadow-sm">
+                <div className="h-full bg-white rounded-2xl p-6 sm:p-8 flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <div className="h-14 w-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-sm mb-2">
-                        <Icon className="w-7 h-7" strokeWidth={2.25} />
+                      <div className={`${LANDING_STYLES.iconContainer} mb-2`}>
+                        <Icon className={LANDING_STYLES.icon} strokeWidth={2.25} />
                       </div>
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-white border border-slate-200 text-emerald-700">
+                      <span className={LANDING_STYLES.badge}>
                         {pillar.badge}
                       </span>
                     </div>
@@ -121,7 +121,7 @@ export function TechnologyPage() {
                       {pillar.description}
                     </p>
                   </div>
-                </Card>
+                </div>
               </ScrollReveal>
             )
           })}
@@ -133,7 +133,7 @@ export function TechnologyPage() {
         <div className="max-w-7xl mx-auto space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <ScrollReveal direction="up" delay={50}>
-              <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+              <div className={LANDING_STYLES.eyebrow}>
                 PARAMETER OPERASIONAL
               </div>
             </ScrollReveal>
@@ -152,8 +152,8 @@ export function TechnologyPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {specs.map((spec, idx) => (
               <ScrollReveal key={spec.label} direction="up" delay={100 + idx * 50}>
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 border-l-4 border-l-emerald-600">
-                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                <div className="p-6 rounded-2xl bg-slate-50 space-y-2">
+                  <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
                     {spec.label}
                   </div>
                   <div className="text-sm sm:text-base font-semibold text-slate-900 leading-snug">
