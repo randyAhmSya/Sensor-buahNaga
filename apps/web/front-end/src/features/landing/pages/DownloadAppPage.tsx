@@ -3,8 +3,15 @@ import { SectionContainer } from '../../../components/common/SectionContainer'
 import { ScrollReveal } from '../components/ScrollReveal'
 import { CtaBanner } from '../components/CtaBanner'
 import { LANDING_BUTTONS, LANDING_STYLES } from '../styles'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 export function DownloadAppPage() {
+  usePageMeta({
+    title: 'Unduh Aplikasi Android | AgroLight',
+    description:
+      'Unduh file APK resmi aplikasi mobile AgroLight untuk pemindaian QR code tiang sensor, operasional offline di kebun, dan pemantauan lampu cerdas.',
+  })
+
   const advantages = [
     {
       icon: QrCode,

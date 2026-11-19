@@ -3,8 +3,15 @@ import { SectionContainer } from '../../../components/common/SectionContainer'
 import { ScrollReveal } from '../components/ScrollReveal'
 import { CtaBanner } from '../components/CtaBanner'
 import { LANDING_STYLES } from '../styles'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 export function HowItWorksPage() {
+  usePageMeta({
+    title: 'Cara Kerja & Alur Implementasi | AgroLight',
+    description:
+      'Empat tahap implementasi sistem AgroLight di perkebunan buah naga: pemetaan digital, pairing QR tiang sensor, penjadwalan penyinaran, dan evaluasi panen.',
+  })
+
   const stages = [
     {
       step: '01',

@@ -3,6 +3,7 @@ import { FeatureDetailItem } from '../components/FeatureDetailItem'
 import { CtaBanner } from '../components/CtaBanner'
 import { ScrollReveal } from '../components/ScrollReveal'
 import { LANDING_STYLES } from '../styles'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 const featuresData = [
   {
@@ -96,6 +97,12 @@ const featuresData = [
 ]
 
 export const FeaturesPage = () => {
+  usePageMeta({
+    title: 'Fitur Otomasi & Telemetri | AgroLight',
+    description:
+      'Solusi lengkap otomasi pencahayaan buah naga: auto-dimming hemat daya, pemantauan telemetri lux & suhu, zonasi blok, dan kalkulasi estimasi panen presisi.',
+  })
+
   return (
     <div className="w-full flex-1 flex flex-col justify-between bg-slate-50">
       {/* Hero Section */}

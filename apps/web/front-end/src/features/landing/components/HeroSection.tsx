@@ -12,7 +12,14 @@ export function HeroSection() {
     <section className="relative mx-4 md:mx-8 my-4 rounded-3xl bg-slate-900 border border-slate-800 overflow-hidden shadow-xl text-white min-h-[640px] flex flex-col justify-between p-6 sm:p-10 md:p-12">
       {/* Real Farm Photography Background */}
       <img
-        src="/hero.png"
+        src="/images/hero-1376.webp"
+        srcSet="/images/hero-640.webp 640w, /images/hero-1024.webp 1024w, /images/hero-1376.webp 1376w"
+        sizes="100vw"
+        width={1376}
+        height={768}
+        fetchPriority="high"
+        loading="eager"
+        decoding="async"
         alt="Perkebunan Buah Naga AgroLight"
         className="absolute inset-0 h-full w-full object-cover object-center z-0"
       />

@@ -39,7 +39,7 @@ export function PublicFooter() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold text-white text-sm tracking-wider uppercase mb-4">Navigasi</h4>
+            <h3 className="font-semibold text-white text-sm tracking-wider uppercase mb-4">Navigasi</h3>
             <ul className="space-y-2.5 text-sm text-slate-300">
               {NAV_LINKS.map((link) => (
                 <li key={link.path}>
@@ -58,7 +58,7 @@ export function PublicFooter() {
 
           {/* Solution Links */}
           <div>
-            <h4 className="font-semibold text-white text-sm tracking-wider uppercase mb-4">Solusi IoT</h4>
+            <h3 className="font-semibold text-white text-sm tracking-wider uppercase mb-4">Solusi IoT</h3>
             <ul className="space-y-2.5 text-sm text-slate-300">
               <li>
                 <Link to="/fitur" className="hover:text-brand-400 transition-colors">
@@ -85,7 +85,7 @@ export function PublicFooter() {
 
           {/* Contact Col */}
           <div>
-            <h4 className="font-semibold text-white text-sm tracking-wider uppercase mb-4">Kontak Kami</h4>
+            <h3 className="font-semibold text-white text-sm tracking-wider uppercase mb-4">Kontak Kami</h3>
             <ul className="space-y-2.5 text-sm text-slate-300">
               <li>info@agrolight.io</li>
               <li>+62 812-3456-7890</li>
@@ -94,11 +94,12 @@ export function PublicFooter() {
           </div>
         </div>
 
-        {/* Solid Typography Watermark without opacity modifier */}
-        <div className="pt-8 pb-4 flex justify-between items-end overflow-hidden select-none">
-          <div className="font-extrabold text-5xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tighter text-slate-800 leading-none">
-            AgroLight
-          </div>
+        {/* Solid Typography Watermark rendered via CSS pseudo-element to be strictly decorative */}
+        <div className="pt-8 pb-4 flex justify-between items-end overflow-hidden select-none" aria-hidden="true">
+          <div
+            aria-hidden="true"
+            className="font-extrabold text-5xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tighter text-slate-800 leading-none after:content-['AgroLight'] select-none pointer-events-none"
+          />
         </div>
 
         {/* Bottom copyright and legal */}
