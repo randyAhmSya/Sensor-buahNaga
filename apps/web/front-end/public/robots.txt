@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /kebun
+Disallow: /petani
+Disallow: /login
+Disallow: /register
+

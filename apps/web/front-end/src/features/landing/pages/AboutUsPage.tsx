@@ -3,8 +3,15 @@ import { SectionContainer } from '../../../components/common/SectionContainer'
 import { ScrollReveal } from '../components/ScrollReveal'
 import { CtaBanner } from '../components/CtaBanner'
 import { LANDING_STYLES } from '../styles'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 export function AboutUsPage() {
+  usePageMeta({
+    title: 'Tentang Kami | AgroLight',
+    description:
+      'Misi AgroLight dalam elektrifikasi pertanian modern: otomasi penyinaran presisi, transparansi data telemetri, dan efisiensi energi perkebunan buah naga.',
+  })
+
   const coreValues = [
     {
       icon: Zap,

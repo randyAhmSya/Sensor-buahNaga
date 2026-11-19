@@ -1,0 +1,21 @@
+# AgroLight
+
+> Platform B2B SaaS IoT untuk otomasi pencahayaan LED induksi pembungaan dan estimasi panen presisi perkebunan buah naga.
+
+## Fitur Utama
+- Otomasi Pencahayaan LED: Penyinaran presisi malam hari untuk induksi pembungaan di luar musim.
+- Telemetri Real-time: Pemantauan intensitas cahaya (Lux) dan suhu lingkungan kebun.
+- Manajemen Kebun dan Blok: Pengelompokan area penyinaran dan penjadwalan terdistribusi.
+- Estimasi Panen: Proyeksi hasil dan siklus panen berbasis data lapangan.
+
+## Halaman Publik
+- [/](/): Beranda, ringkasan fitur, alur implementasi, dan paket harga.
+- [/fitur](/fitur): Rincian mendalam kapabilitas teknis dan operasional sistem.
+- [/teknologi](/teknologi): Spesifikasi arsitektur IoT ESP32, protokol MQTT, dan infrastruktur cloud.
+- [/cara-kerja](/cara-kerja): Alur 4 tahap implementasi kebun buah naga dari pemetaan hingga panen.
+- [/unduh-aplikasi](/unduh-aplikasi): Panduan unduh dan instalasi aplikasi mobile Android.
+- [/about-us](/about-us): Narasi misi dan pendekatan AgroLight dalam elektrifikasi pertanian modern.
+
+## Repositori Proyek
+- [GitHub Repository](https://github.com/randyAhmSya/Sensor-buahNaga): Kode sumber dan arsitektur repositori AgroLight.
+

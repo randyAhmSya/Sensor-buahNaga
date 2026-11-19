@@ -3,8 +3,15 @@ import { SectionContainer } from '../../../components/common/SectionContainer'
 import { ScrollReveal } from '../components/ScrollReveal'
 import { CtaBanner } from '../components/CtaBanner'
 import { LANDING_STYLES } from '../styles'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 export function TechnologyPage() {
+  usePageMeta({
+    title: 'Teknologi IoT ESP32 & MQTT | AgroLight',
+    description:
+      'Spesifikasi teknis arsitektur perangkat keras ESP32, protokol komunikasi MQTT, dan sinkronisasi cloud offline-ready sistem AgroLight.',
+  })
+
   const pillars = [
     {
       icon: Cpu,
