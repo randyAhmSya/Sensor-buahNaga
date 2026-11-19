@@ -63,7 +63,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({ isOpen, onClose, onA
             label="URL Foto Kebun (Opsional)"
             value={formData.imageUrl || ''}
             onChange={(e) => handleTextChange('imageUrl', e.target.value)}
-            placeholder="https://images.unsplash.com/..."
+            placeholder="https://.../foto-kebun.jpg"
             error={errors.imageUrl}
             leftIcon={<ImageIcon className="w-4 h-4 text-slate-400" />}
           />

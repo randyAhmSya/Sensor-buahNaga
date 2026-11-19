@@ -1,5 +1,5 @@
 import type { BlokBackend, BlockItem } from '../../../types/block.types.ts';
-import { DEFAULT_FARM_TEMPLATE_IMAGE } from '../../../config/constants.ts';
+import { DEFAULT_BLOCK_TEMPLATE_IMAGE } from '../../../config/constants.ts';
 
 /**
  * Memetakan blok backend tunggal (dari payload agregat kebun?include=blok)
@@ -14,7 +14,7 @@ export const mapBlokToAgregatBlockItem = (blok: BlokBackend): BlockItem => {
   const photoUrl =
     blok.url_foto && blok.url_foto.trim() !== ''
       ? blok.url_foto
-      : DEFAULT_FARM_TEMPLATE_IMAGE;
+      : DEFAULT_BLOCK_TEMPLATE_IMAGE;
 
   const rawEstimate = blok.estimasi_panen || blok.harvest_date;
   const cleanEstimate =

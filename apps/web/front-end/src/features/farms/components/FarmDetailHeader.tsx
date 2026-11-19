@@ -47,6 +47,10 @@ export const FarmDetailHeader: React.FC<FarmDetailHeaderProps> = ({
           <img
             src={displayBannerUrl}
             alt={name}
+            width={1200}
+            height={256}
+            loading="lazy"
+            decoding="async"
             onError={() => {
               if (hasCustomBanner) {
                 setImgError(true)

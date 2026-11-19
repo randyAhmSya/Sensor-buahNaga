@@ -51,7 +51,7 @@ export const HARVEST_PHASES = {
 
 export type HarvestPhase = (typeof HARVEST_PHASES)[keyof typeof HARVEST_PHASES]
 
-// Template Gambar Default Kebun Buah Naga / Pertanian Tropis Terkurasi
-export const DEFAULT_FARM_TEMPLATE_IMAGE =
-  'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
+// Template Gambar Default Kebun & Blok Lahan Lokal WebP Teroptimasi
+export const DEFAULT_FARM_TEMPLATE_IMAGE = '/images/hero-640.webp';
+export const DEFAULT_BLOCK_TEMPLATE_IMAGE = '/images/blok-640.webp';
 

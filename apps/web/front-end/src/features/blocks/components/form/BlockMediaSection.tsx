@@ -61,7 +61,7 @@ export const BlockMediaSection: FC<BlockMediaSectionProps> = ({
           label="Atau masukkan tautan URL Foto (Opsional)"
           value={formData.imageUrl || ''}
           onChange={(e) => onUrlChange(e.target.value)}
-          placeholder="https://images.unsplash.com/..."
+          placeholder="https://.../foto-blok.jpg"
           error={errors.imageUrl}
         />
       </div>
