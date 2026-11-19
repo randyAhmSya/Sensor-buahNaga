@@ -13,12 +13,12 @@ export const AuthSideBanner: FC<AuthSideBannerProps> = ({
   title,
   description,
   highlights,
-  imageUrl = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAB7CN0kpn3VsCmcKjYLy_BWfo8AYolr_bHvPqqC4iI2HmcJDriIXPte56Pj2LsSYFuSLdkf1cx37MEpYGY_K-yZySU2eIv9cBHTTjTj49rVlgADh7F2YZW2zshrkDT9qiZ-sj0ZqmchUjyDsQ5Mg96sEg1wpFg5rEL063CXLnJS652kJZAipm0vF5WkDyxhV71sKMCjLPR3tb4tsVEz8qmh0mlg20hbQfcjwQXJ9S5QpT1uecbd1Wd4w',
+  imageUrl = '/images/hero-1376.webp',
 }) => {
   return (
     <div className="hidden md:flex flex-col w-[45%] bg-emerald-950 p-12 justify-between relative overflow-hidden">
       <div className="z-10">
-        <BrandLogo variant="light" textSize="text-2xl" />
+        <BrandLogo variant="light" />
       </div>
 
       <div className="z-10 my-auto max-w-md space-y-4">

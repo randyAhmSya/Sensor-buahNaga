@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, Maximize2 } from 'lucide-react'
 import type { BlockItem } from '@/types/block.types'
-import { DEFAULT_FARM_TEMPLATE_IMAGE } from '@/config/constants'
+import { DEFAULT_BLOCK_TEMPLATE_IMAGE } from '@/config/constants'
 
 interface BlockDetailCardProps {
   block: BlockItem
@@ -17,7 +17,7 @@ export const BlockDetailCard: React.FC<BlockDetailCardProps> = ({ block, farmId 
   const hasCustomImage = Boolean(block.imageUrl && block.imageUrl.trim() && !imgError)
   const displayImageUrl = hasCustomImage
     ? block.imageUrl
-    : (!templateError ? DEFAULT_FARM_TEMPLATE_IMAGE : null)
+    : (!templateError ? DEFAULT_BLOCK_TEMPLATE_IMAGE : null)
 
   const blockId = block.id_blok ?? block.id
   const targetUrl = farmId
@@ -34,6 +34,8 @@ export const BlockDetailCard: React.FC<BlockDetailCardProps> = ({ block, farmId 
           <img
             src={displayImageUrl}
             alt={block.name}
+            width={400}
+            height={176}
             loading="lazy"
             decoding="async"
             onError={() => {

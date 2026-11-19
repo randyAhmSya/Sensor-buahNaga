@@ -19,9 +19,12 @@ export function BrandLogo({
   textClassName,
   textSize,
   to = '/',
-  showText = true,
+  showText,
 }: BrandLogoProps) {
   const isLight = variant === 'light'
+  // Pada latar terang (variant="dark"), default showText adalah false karena logo-240.webp sudah memuat tipografi AgroLight
+  // Pada latar gelap (variant="light"), default showText adalah true agar teks putih tetap terbaca sampai logo-light.webp tersedia
+  const shouldShowText = showText ?? isLight
 
   return (
     <Link
@@ -32,12 +35,25 @@ export function BrandLogo({
       )}
       aria-label="AgroLight Home"
     >
-      <img
-        src={logoImg}
-        alt="AgroLight Logo"
-        className={cn('w-8 h-8 object-contain shrink-0', imgClassName)}
-      />
-      {showText && (
+      {isLight ? (
+        <img
+          src={logoImg}
+          alt="AgroLight Logo"
+          width={32}
+          height={32}
+          className={cn('w-8 h-8 object-contain shrink-0', imgClassName)}
+        />
+      ) : (
+        <img
+          src="/images/logo-240.webp"
+          srcSet="/images/logo-240.webp 1x, /images/logo-480.webp 2x"
+          alt="AgroLight"
+          width={135}
+          height={75}
+          className={cn('h-8 w-auto max-w-[135px] object-contain shrink-0', imgClassName)}
+        />
+      )}
+      {shouldShowText && (
         <span
           className={cn(
             'font-extrabold text-xl tracking-tight leading-none',

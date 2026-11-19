@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Maximize2, Radio, RadioTower } from 'lucide-react'
 import type { BlockItem } from '@/types/block.types'
-import { DEFAULT_FARM_TEMPLATE_IMAGE } from '@/config/constants'
+import { DEFAULT_BLOCK_TEMPLATE_IMAGE } from '@/config/constants'
 
 interface BlockCardProps {
   block: BlockItem
@@ -19,7 +19,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, farmId, onClick }) 
   const hasCustomImage = Boolean(block.imageUrl && block.imageUrl.trim() && !imgError)
   const displayImageUrl = hasCustomImage
     ? block.imageUrl
-    : (!templateError ? DEFAULT_FARM_TEMPLATE_IMAGE : null)
+    : (!templateError ? DEFAULT_BLOCK_TEMPLATE_IMAGE : null)
 
   const blockId = block.id_blok ?? block.id
 
@@ -48,6 +48,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, farmId, onClick }) 
           <img
             src={displayImageUrl}
             alt={block.name}
+            width={96}
+            height={96}
             loading="lazy"
             decoding="async"
             onError={() => {

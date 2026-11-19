@@ -151,7 +151,7 @@ export const EditFarmModal: React.FC<EditFarmModalProps> = ({
             label="URL Foto Kebun (Opsional)"
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://images.unsplash.com/..."
+            placeholder="https://.../foto-kebun.jpg"
             leftIcon={<ImageIcon className="w-4 h-4 text-slate-400" />}
           />
 

@@ -57,6 +57,8 @@ export const FarmCard: React.FC<FarmCardProps> = ({
           <img
             src={displayImageUrl}
             alt={farm.name}
+            width={400}
+            height={192}
             loading="lazy"
             decoding="async"
             onError={() => {
