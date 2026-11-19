@@ -3,7 +3,6 @@ import { CalendarCheck, QrCode, LogOut, SunMedium, ShieldCheck } from 'lucide-re
 import { useAuthStore } from '../../store/useAuthStore'
 import { authService } from '../../services/authService'
 import { cn } from '../../utils/cn'
-import logoAgroLight from '@/assets/logo.png'
 import { UserAvatar } from '@/components/common/UserAvatar'
 
 export function PetaniSidebar() {
@@ -41,17 +40,23 @@ export function PetaniSidebar() {
   return (
     <aside className="w-64 bg-emerald-950 text-slate-200 flex flex-col justify-between shrink-0 border-r border-emerald-900 min-h-[100dvh] sticky top-0">
       <div>
-        <div className="h-16 flex items-center px-6 border-b border-emerald-900 bg-emerald-950">
-          <Link to="/petani/estimasi" className="flex items-center gap-3 select-none">
-            <img src={logoAgroLight} alt="AgroLight Logo" className="w-8 h-8 object-contain shrink-0" />
-            <div>
-              <span className="text-base font-black text-white tracking-tight flex items-center gap-1">
-                Agro<span className="text-emerald-400">Light</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider block mt-0.5">
-                Portal Petani
-              </span>
-            </div>
+        <div className="h-20 flex items-center px-6 border-b border-emerald-900 bg-emerald-950">
+          <Link
+            to="/petani/estimasi"
+            className="flex flex-col items-start gap-1 select-none"
+            aria-label="AgroLight Portal Petani"
+          >
+            <img
+              src="/images/logo-light-200.webp"
+              srcSet="/images/logo-light-200.webp 1x, /images/logo-light-400.webp 2x"
+              alt="AgroLight"
+              width={200}
+              height={85}
+              className="h-10 w-auto object-contain shrink-0"
+            />
+            <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider pl-0.5">
+              Portal Petani
+            </span>
           </Link>
         </div>
 

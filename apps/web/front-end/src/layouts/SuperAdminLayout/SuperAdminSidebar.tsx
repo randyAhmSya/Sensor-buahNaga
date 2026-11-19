@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
 import {
   X,
   LayoutDashboard,
@@ -11,7 +11,6 @@ import {
   Settings,
   LogOut,
 } from 'lucide-react'
-import logoAgroLight from '@/assets/logo.png'
 import { useAuthStore } from '@/store/useAuthStore'
 import { authService } from '@/services/authService'
 import { UserAvatar } from '@/components/common/UserAvatar'
@@ -53,19 +52,23 @@ export const SuperAdminSidebar: FC<SuperAdminSidebarProps> = ({
       <div className="flex flex-col flex-1 min-h-0">
         {/* Brand Header */}
         <div className="h-20 px-6 border-b border-slate-800/80 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <img src={logoAgroLight} alt="AgroLight Logo" className="w-8 h-8 object-contain shrink-0" />
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-lg font-extrabold text-white tracking-tight">
-                  Agro<span className="text-emerald-400">Light</span>
-                </span>
-              </div>
-              <span className="text-[11px] font-medium text-emerald-400/90 block -mt-0.5 tracking-wide">
-                Super Admin Console
-              </span>
-            </div>
-          </div>
+          <Link
+            to="/admin/dashboard"
+            className="flex flex-col items-start gap-1 select-none"
+            aria-label="AgroLight Super Admin Console"
+          >
+            <img
+              src="/images/logo-light-200.webp"
+              srcSet="/images/logo-light-200.webp 1x, /images/logo-light-400.webp 2x"
+              alt="AgroLight"
+              width={200}
+              height={85}
+              className="h-10 w-auto object-contain shrink-0"
+            />
+            <span className="text-[10px] font-semibold text-emerald-400 tracking-wider uppercase pl-0.5">
+              Super Admin Console
+            </span>
+          </Link>
 
           <button
             type="button"
