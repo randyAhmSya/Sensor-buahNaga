@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { NAV_LINKS } from '../../constants/landing.constants'
-import logoImg from '@/assets/logo.png'
 import { LANDING_BUTTONS } from '../../features/landing/styles'
 
 export function PublicFooter() {
@@ -13,16 +12,15 @@ export function PublicFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 lg:gap-12 pb-12 border-b border-slate-800">
           {/* Brand Col */}
           <div className="space-y-4 md:col-span-1">
-            <Link to="/" className="inline-flex items-center gap-3 select-none">
+            <Link to="/" className="inline-flex items-center select-none" aria-label="AgroLight Beranda">
               <img
-                src={logoImg}
-                alt="AgroLight Logo"
-                className="w-8 h-8 object-contain shrink-0"
+                src="/images/logo-light-200.webp"
+                srcSet="/images/logo-light-200.webp 1x, /images/logo-light-400.webp 2x"
+                alt="AgroLight"
+                width={200}
+                height={85}
+                className="h-11 w-auto object-contain shrink-0"
               />
-              <span className="font-extrabold text-2xl tracking-tight leading-none">
-                <span className="text-white">Agro</span>
-                <span className="text-brand-400">Light</span>
-              </span>
             </Link>
             <p className="text-sm text-slate-400 leading-relaxed">
               Solusi otomasi pencahayaan berbasis IoT dan estimasi panen presisi untuk perkebunan buah naga modern.

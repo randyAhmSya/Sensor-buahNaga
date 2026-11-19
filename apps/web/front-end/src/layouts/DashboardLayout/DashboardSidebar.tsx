@@ -12,7 +12,6 @@ import {
   X,
   LogOut
 } from 'lucide-react'
-import logoImg from '@/assets/logo.png'
 import { useAuthStore, getRoleLabel } from '@/store/useAuthStore'
 import { USER_ROLES } from '@/config/constants'
 import { authService } from '@/services/authService'
@@ -71,16 +70,22 @@ export const DashboardSidebar: FC<DashboardSidebarProps> = ({
     >
       {/* Brand Header */}
       <div className="p-5 border-b border-slate-800/80 flex items-center justify-between">
-        <Link to={isSuperAdmin ? "/admin/dashboard" : "/kebun/dashboard"} className="flex items-center gap-3 select-none">
-          <img src={logoImg} alt="AgroLight Logo" className="w-8 h-8 object-contain shrink-0" />
-          <div>
-            <span className="font-extrabold text-lg text-white tracking-tight leading-none block">
-              Agro<span className="text-emerald-400">Light</span>
-            </span>
-            <span className="text-[10px] font-medium text-slate-400 block mt-0.5 tracking-wider uppercase">
-              {isSuperAdmin ? 'Super Admin' : 'Portal Petani'}
-            </span>
-          </div>
+        <Link
+          to={isSuperAdmin ? "/admin/dashboard" : "/kebun/dashboard"}
+          className="flex flex-col items-start gap-1 select-none"
+          aria-label={isSuperAdmin ? "AgroLight Super Admin" : "AgroLight Portal Petani"}
+        >
+          <img
+            src="/images/logo-light-200.webp"
+            srcSet="/images/logo-light-200.webp 1x, /images/logo-light-400.webp 2x"
+            alt="AgroLight"
+            width={200}
+            height={85}
+            className="h-10 w-auto object-contain shrink-0"
+          />
+          <span className="text-[10px] font-semibold text-emerald-400 block tracking-wider uppercase pl-0.5">
+            {isSuperAdmin ? 'Super Admin' : 'Portal Petani'}
+          </span>
         </Link>
         <button 
           type="button"

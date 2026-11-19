@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, Menu, X } from 'lucide-react'
-import logoImg from '@/assets/logo.png'
 import { ScrollReveal } from './ScrollReveal'
 import { LANDING_BUTTONS } from '../styles'
 
@@ -31,16 +30,15 @@ export function HeroSection() {
       {/* Integrated Dark Navbar inside Hero Container */}
       <header className="w-full flex items-center justify-between pb-6 md:pb-8 border-b border-slate-800 relative z-30">
         {/* Brand Logo */}
-        <Link to="/" className="inline-flex items-center gap-3 select-none">
+        <Link to="/" className="inline-flex items-center select-none" aria-label="AgroLight Beranda">
           <img
-            src={logoImg}
-            alt="AgroLight Logo"
-            className="w-8 h-8 object-contain shrink-0"
+            src="/images/logo-light-200.webp"
+            srcSet="/images/logo-light-200.webp 1x, /images/logo-light-400.webp 2x"
+            alt="AgroLight"
+            width={200}
+            height={85}
+            className="h-10 sm:h-11 md:h-12 w-auto object-contain shrink-0"
           />
-          <span className="font-extrabold text-2xl tracking-tight leading-none">
-            <span className="text-white">Agro</span>
-            <span className="text-brand-400">Light</span>
-          </span>
         </Link>
 
         {/* Center Navigation Links */}
