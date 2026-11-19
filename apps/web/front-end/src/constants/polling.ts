@@ -3,7 +3,7 @@
  * mengatur seberapa sering web mengambil data terbaru.
  * Disarankan 5_000 sampai 30_000 (5 sampai 30 detik). Jangan di bawah 5_000.
  */
-export const POLLING_SENSOR_MS = 10_000
+export const POLLING_SENSOR_MS = 5_000
 
 export const POLLING_SENSOR_OPTIONS = {
     // data dianggap segar separuh dari interval, supaya tiap siklus selalu mengambil ulang
