@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { X, Save, Image as ImageIcon, MapPin, Sprout } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { InputField } from '@/components/form/InputField'
-import type { FarmItem } from '@/types/farm.types'
-import { farmService } from '@/services/farmService'
-import { farmKeys } from '@/services/queryKeys'
+import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { X, Save, MapPin, Sprout } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { InputField } from "@/components/form/InputField";
+import type { FarmItem } from "@/types/farm.types";
+import { farmService } from "@/services/farmService";
+import { farmKeys } from "@/services/queryKeys";
+import { compressImageFile } from "@/utils/imageCompressor";
 
 interface EditFarmModalProps {
-  isOpen: boolean
-  farm: FarmItem | null
-  onClose: () => void
-  onSuccess: (updatedFarm: FarmItem) => void
+  isOpen: boolean;
+  farm: FarmItem | null;
+  onClose: () => void;
+  onSuccess: (updatedFarm: FarmItem) => void;
 }
 
 export const EditFarmModal: React.FC<EditFarmModalProps> = ({
@@ -20,80 +21,113 @@ export const EditFarmModal: React.FC<EditFarmModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const queryClient = useQueryClient()
-  const [name, setName] = useState('')
-  const [location, setLocation] = useState('')
-  const [description, setDescription] = useState('')
-  const [imageUrl, setImageUrl] = useState('')
-  const [status, setStatus] = useState<'Aktif' | 'Inaktif'>('Aktif')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient();
+  const [name, setName] = useState("");
+  const [location, setLocation] = useState("");
+  const [description, setDescription] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState("");
+  const [status, setStatus] = useState<"Aktif" | "Inaktif">("Aktif");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (farm) {
-      setName(farm.name || '')
-      setLocation(farm.location || '')
-      setDescription(farm.description || '')
-      setImageUrl(farm.imageUrl || '')
-      setStatus(farm.status === 'Aktif' ? 'Aktif' : 'Inaktif')
-      setError(null)
+      setName(farm.name || "");
+      setLocation(farm.location || "");
+      setDescription(farm.description || "");
+      setPreview(farm.imageUrl || "");
+      setStatus(farm.status === "Aktif" ? "Aktif" : "Inaktif");
+      setError(null);
     }
-  }, [farm, isOpen])
+  }, [farm, isOpen]);
 
-  if (!isOpen || !farm) return null
+  if (!isOpen || !farm) return null;
+
+  const handlePickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setError("Format foto harus JPG, PNG, atau WebP.");
+      return;
+    }
+    const hasil = await compressImageFile(file);
+    if (hasil.size > 2 * 1024 * 1024) {
+      setError("Ukuran foto maksimal 2 MB.");
+      return;
+    }
+    if (preview.startsWith("blob:")) URL.revokeObjectURL(preview);
+    setSelectedFile(hasil);
+    setPreview(URL.createObjectURL(hasil));
+    setError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!name.trim()) {
-      setError('Nama kebun wajib diisi.')
-      return
+      setError("Nama kebun wajib diisi.");
+      return;
     }
     if (!location.trim()) {
-      setError('Lokasi kebun wajib diisi.')
-      return
+      setError("Lokasi kebun wajib diisi.");
+      return;
     }
 
-    setIsSubmitting(true)
-    setError(null)
+    setIsSubmitting(true);
+    setError(null);
 
     try {
       await farmService.update(farm.id, {
         name: name.trim(),
         location: location.trim(),
         description: description.trim(),
-        imageUrl: imageUrl.trim() || undefined,
+        foto: selectedFile ?? undefined,
         status: status,
-      })
+      });
 
       const updatedFarm: FarmItem = {
         ...farm,
         name: name.trim(),
         location: location.trim(),
         description: description.trim(),
-        imageUrl: imageUrl.trim(),
+        imageUrl: farm.imageUrl,
         status: status,
-      }
-
-      queryClient.setQueryData<FarmItem[]>(['kebun'], (old = []) =>
-        old.map((f) => (f.id === farm.id ? updatedFarm : f))
-      )
+      };
+      queryClient.setQueryData<FarmItem[]>(["kebun"], (old = []) =>
+        old.map((f) => (f.id === farm.id ? updatedFarm : f)),
+      );
 
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['kebun'], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: farmKeys.all, refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: farmKeys.withBlocks(), refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: farmKeys.detail(farm.id), refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' }),
-      ])
+        queryClient.invalidateQueries({
+          queryKey: ["kebun"],
+          refetchType: "all",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: farmKeys.all,
+          refetchType: "all",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: farmKeys.withBlocks(),
+          refetchType: "all",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: farmKeys.detail(farm.id),
+          refetchType: "all",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["dashboard"],
+          refetchType: "all",
+        }),
+      ]);
 
-      onSuccess(updatedFarm)
-      onClose()
+      onSuccess(updatedFarm);
+      onClose();
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Gagal menyimpan perubahan kebun.')
+      setError((err as Error)?.message || "Gagal menyimpan perubahan kebun.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
@@ -125,8 +159,8 @@ export const EditFarmModal: React.FC<EditFarmModalProps> = ({
             label="Nama Kebun *"
             value={name}
             onChange={(e) => {
-              setName(e.target.value)
-              if (error) setError(null)
+              setName(e.target.value);
+              if (error) setError(null);
             }}
             placeholder="Contoh: Kebun Buah Naga Banyuwangi"
             leftIcon={<Sprout className="w-4 h-4 text-slate-400" />}
@@ -138,26 +172,42 @@ export const EditFarmModal: React.FC<EditFarmModalProps> = ({
             label="Lokasi Kebun *"
             value={location}
             onChange={(e) => {
-              setLocation(e.target.value)
-              if (error) setError(null)
+              setLocation(e.target.value);
+              if (error) setError(null);
             }}
             placeholder="Contoh: Pesanggaran, Banyuwangi, Jawa Timur"
             leftIcon={<MapPin className="w-4 h-4 text-slate-400" />}
             required
           />
 
-          <InputField
-            name="imageUrl"
-            label="URL Foto Kebun (Opsional)"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://.../foto-kebun.jpg"
-            leftIcon={<ImageIcon className="w-4 h-4 text-slate-400" />}
-          />
+          <div className="space-y-1.5">
+            <label className="block text-sm font-semibold text-slate-800">
+              Foto Kebun{" "}
+              <span className="text-slate-400 font-normal text-xs ml-1">
+                (Opsional, JPG/PNG/WebP, maks 2 MB)
+              </span>
+            </label>
+            {preview && (
+              <img
+                src={preview}
+                alt="Pratinjau foto kebun"
+                className="h-32 w-full rounded-xl object-cover"
+              />
+            )}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePickFile}
+              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border file:border-slate-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-50"
+            />
+          </div>
 
           <div className="space-y-1.5">
             <label className="block text-sm font-semibold text-slate-800">
-              Keterangan Kebun <span className="text-slate-400 font-normal text-xs ml-1">(Opsional)</span>
+              Keterangan Kebun{" "}
+              <span className="text-slate-400 font-normal text-xs ml-1">
+                (Opsional)
+              </span>
             </label>
             <textarea
               rows={3}
@@ -170,25 +220,28 @@ export const EditFarmModal: React.FC<EditFarmModalProps> = ({
 
           <div className="space-y-1.5">
             <label className="block text-sm font-semibold text-slate-800">
-              Status Kebun <span className="text-rose-600 font-bold ml-0.5">*</span>
+              Status Kebun{" "}
+              <span className="text-rose-600 font-bold ml-0.5">*</span>
             </label>
             <div className="grid grid-cols-2 gap-3">
-              {(['Aktif', 'Inaktif'] as const).map((statusOption) => (
+              {(["Aktif", "Inaktif"] as const).map((statusOption) => (
                 <button
                   key={statusOption}
                   type="button"
                   onClick={() => setStatus(statusOption)}
                   className={`py-2 px-3 rounded-xl border text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 ${
                     status === statusOption
-                      ? statusOption === 'Aktif'
-                        ? 'border-emerald-600 bg-emerald-50/60 text-emerald-800'
-                        : 'border-slate-400 bg-slate-100 text-slate-800'
-                      : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                      ? statusOption === "Aktif"
+                        ? "border-emerald-600 bg-emerald-50/60 text-emerald-800"
+                        : "border-slate-400 bg-slate-100 text-slate-800"
+                      : "border-slate-200 bg-white text-slate-500 hover:border-slate-300"
                   }`}
                 >
                   <span
                     className={`w-2 h-2 rounded-full ${
-                      statusOption === 'Aktif' ? 'bg-emerald-600' : 'bg-slate-400'
+                      statusOption === "Aktif"
+                        ? "bg-emerald-600"
+                        : "bg-slate-400"
                     }`}
                   />
                   {statusOption}
@@ -223,5 +276,5 @@ export const EditFarmModal: React.FC<EditFarmModalProps> = ({
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
