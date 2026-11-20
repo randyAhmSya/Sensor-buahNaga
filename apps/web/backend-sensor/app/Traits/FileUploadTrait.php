@@ -49,7 +49,7 @@ trait FileUploadTrait
         $syarat = $wajib ? 'required' : 'nullable';
 
         // Membatasi hanya gambar murni, maksimal 2MB
-        return "$syarat|image|mimes:jpeg,png,jpg,webp|max:2048";
+        return "$syarat|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4096,max_height=4096";
     }
 
     public function uploadPrivat($file, string $baseFolder, ?string $oldPath = null): ?string
