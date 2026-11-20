@@ -1,56 +1,52 @@
-# Welcome to your Expo app 👋
+# AgroLight Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplikasi Android untuk petani AgroLight: memindai QR node sensor, memantau data node, melihat riwayat auto-dimming, dan mengelola langganan. Dibuat dengan Expo SDK 57, React Native, NativeWind, dan TanStack Query.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Menjalankan
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Buka lewat Expo Go atau emulator Android.
 
-### Other setup steps
+## Konfigurasi
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Salin `.env.example` menjadi `.env`.
 
-## Learn more
+| Variabel | Fungsi |
+|---|---|
+| `EXPO_PUBLIC_API_URL` | Alamat API backend, contoh `http://192.168.1.3:8080/api` |
+| `EXPO_PUBLIC_FITUR_LANGGANAN` | `true` untuk menampilkan fitur langganan |
 
-To learn more about developing your project with Expo, look at the following resources:
+Perangkat fisik tidak bisa memakai `localhost`. Pakai alamat IP laptop di jaringan Wi-Fi yang sama dengan HP.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Pengambilan data
 
-## Join the community
+- Interval polling dipusatkan di `src/constant/polling.ts`: node 10 detik, daftar dan grafik 30 detik, notifikasi 60 detik. Ubah angka di sana saja.
+- Polling berhenti saat layar tidak fokus atau aplikasi di latar belakang.
+- Setelah memindai QR, data node dan riwayat pemindaian di-invalidasi supaya langsung segar.
+- Cache disimpan di AsyncStorage (maksimal 24 jam), dan layar yang penting memakai `refetchOnMount: "always"`.
 
-Join our community of developers creating universal apps.
+## Membangun APK
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm install -g eas-cli
+eas login
+eas build -p android --profile preview
+```
+
+Profil `preview` di `eas.json` menghasilkan APK dan memakai `EXPO_PUBLIC_API_URL` dari bagian `env` profil itu. Ubah alamat tersebut sesuai server sebelum membangun. Selama alamatnya IP lokal, APK hanya berfungsi di jaringan Wi-Fi yang sama.
+
+### Membagikan APK
+
+APK yang dipasang manual (sideload) memicu peringatan "aplikasi tidak dikenali" dari Chrome, Google Drive, dan Play Protect. Itu normal untuk aplikasi di luar Play Store. Penguji cukup memilih "Install anyway" atau mengizinkan instalasi dari sumber tidak dikenal. Untuk distribusi yang lebih mulus, gunakan jalur uji internal Play Store atau akun distribusi terbatas.
+
+## Pengujian
+
+```bash
+npx expo lint
+```
+
+Untuk produksi, gunakan HTTPS dan hapus pengecualian cleartext HTTP.
