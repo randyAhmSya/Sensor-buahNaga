@@ -1,6 +1,6 @@
 import type { BlokBackend, BlockItem } from '../../../types/block.types.ts';
 import { DEFAULT_BLOCK_TEMPLATE_IMAGE } from '../../../config/constants.ts';
-
+import { resolveStorageUrl } from '../../../utils/storageUrl.ts';
 /**
  * Memetakan blok backend tunggal (dari payload agregat kebun?include=blok)
  * menjadi BlockItem antarmuka pengguna.
@@ -11,17 +11,16 @@ import { DEFAULT_BLOCK_TEMPLATE_IMAGE } from '../../../config/constants.ts';
  */
 export const mapBlokToAgregatBlockItem = (blok: BlokBackend): BlockItem => {
   const blokId = String(blok.id_blok || blok.id || '').trim();
-  const photoUrl =
-    blok.url_foto && blok.url_foto.trim() !== ''
-      ? blok.url_foto
-      : DEFAULT_BLOCK_TEMPLATE_IMAGE;
+  const photoUrl = blok.url_foto && blok.url_foto.trim() !== ''
+    ? resolveStorageUrl(blok.url_foto)
+    : DEFAULT_BLOCK_TEMPLATE_IMAGE;
 
   const rawEstimate = blok.estimasi_panen || blok.harvest_date;
   const cleanEstimate =
     rawEstimate &&
-    rawEstimate.trim() &&
-    rawEstimate !== '--' &&
-    rawEstimate !== 'Belum Dijadwalkan'
+      rawEstimate.trim() &&
+      rawEstimate !== '--' &&
+      rawEstimate !== 'Belum Dijadwalkan'
       ? rawEstimate.trim()
       : '';
 

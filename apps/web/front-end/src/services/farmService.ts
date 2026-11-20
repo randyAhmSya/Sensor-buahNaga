@@ -4,6 +4,8 @@ import type { KebunBackend } from '@/types/kebun.types';
 import type { FarmItem } from '@/types/farm.types';
 import type { BlockItem } from '@/types/block.types';
 import { mapBloksToBlockItems } from '../features/blocks/utils/blockMapper.ts';
+import { resolveStorageUrl } from '../utils/storageUrl.ts';
+import { getEntityId } from '../utils/normalize.ts';
 
 export interface CreateFarmPayload {
   name: string;
@@ -17,23 +19,10 @@ export interface CreateFarmPayload {
   foto?: File;
 }
 
-const resolveImageUrl = (url: string | null | undefined): string => {
-  if (!url || !url.trim()) {
-    return '';
-  }
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
-    return url;
-  }
-  const apiBase = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
-    ? import.meta.env.VITE_API_BASE_URL.replace(/\/api\/?$/, '')
-    : 'http://localhost:8000';
-  return `${apiBase}${url.startsWith('/') ? '' : '/'}${url}`;
-};
 
-import { getEntityId } from '../utils/normalize.ts';
 
 export const mapKebunToFarmItem = (kebun: KebunBackend, blocks: BlockItem[] = []): FarmItem => {
-  const photoUrl = resolveImageUrl(kebun.url_foto);
+  const photoUrl = resolveStorageUrl(kebun.url_foto);
   const kebunId = getEntityId(kebun);
   const isStatusActive =
     kebun.status_kebun === true ||
