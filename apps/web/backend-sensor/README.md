@@ -1,3 +1,64 @@
+# AgroLight Backend (Laravel)
+
+REST API, listener MQTT, dan penjadwal tugas untuk AgroLight. Laravel 13, PHP 8.3, PostgreSQL, Sanctum.
+
+## Setup
+
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+```
+
+Isi `.env` (nilai bawaan `.env.example` memakai SQLite, ganti ke PostgreSQL):
+
+| Variabel | Contoh | Fungsi |
+|---|---|---|
+| `APP_URL` | `http://localhost:8080` | Dasar alamat foto (`/storage/...`), harus sesuai alamat server |
+| `DB_CONNECTION` | `pgsql` | Mesin database |
+| `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | `127.0.0.1`, `5432`, ... | Koneksi PostgreSQL |
+| `MQTT_HOST`, `MQTT_PORT` | `127.0.0.1`, `1883` | Broker Mosquitto |
+| `MQTT_BACKEND_USERNAME`, `MQTT_BACKEND_PASSWORD` | | Akun backend di broker |
+| `LANGGANAN_WAJIB` | `true` | Mewajibkan langganan aktif |
+| `LAMPU_TIMEZONE` | `Asia/Jakarta` | Zona waktu jendela nyala lampu |
+
+```bash
+php artisan migrate --seed
+php artisan storage:link
+php artisan serve          # atau layani folder public/ lewat Apache (XAMPP)
+php artisan mqtt:listen    # proses terpisah untuk menerima telemetri
+```
+
+Setelah mengubah `.env`, jalankan `php artisan config:clear` (atau `config:cache` di produksi).
+
+## Tugas terjadwal
+
+Picu `php artisan schedule:run` tiap menit (cron atau Task Scheduler). Isinya: `CekLanggananAkanHabis` (08:00) dan `lampu:pangkas-data` (03:00, zona Asia/Jakarta).
+
+## Pengujian
+
+```bash
+php artisan config:clear
+php artisan test
+```
+
+## Upload file
+
+| Jenis | Disk | Lokasi |
+|---|---|---|
+| Foto kebun dan blok | `public` | `storage/app/public/foto_kebun/ dan foto_blok/ (per TAHUN/BULAN)` |
+| Bukti transfer | `local` | `storage/app/private/bukti_transfer/TAHUN/BULAN/`, hanya lewat endpoint terautentikasi |
+
+Aturan terpusat di `FileUploadTrait::aturanValidasiFoto()`: JPEG, PNG, JPG, atau WebP, maksimal 2 MB, maksimal 4096 x 4096 px. Tipe file dicek dari isi file. Folder `storage` perlu bisa ditulis oleh pengguna web server dan ikut dibackup.
+
+## Keamanan singkat
+
+- Semua rute petani memakai `auth:sanctum`, cek tenant aktif, dan cek langganan aktif.
+- Akses kebun, blok, dan node dicek lewat Policy per tenant.
+- `qr/scan` dibatasi `throttle:30,1`, dan `gateway/pair` dibatasi `throttle:10,1`.
+
+---
+
 ## ASCII TREE
 
 ```
@@ -182,4 +243,3 @@ backend-sensor/
     ├── console.php
     └── web.php
 ```
-
