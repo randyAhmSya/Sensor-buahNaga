@@ -7,6 +7,7 @@ AgroLight adalah platform dashboard B2B SaaS agritech yang dirancang untuk otoma
 ## 🚀 Fitur Utama
 
 - **Dashboard Utama & Telemetri**: Pemantauan langsung status blok lahan, live telemetri node (*lux*, konsumsi daya, konektivitas), grafik auto-dimming malam hari, serta ringkasan *countdown* panen.
+- **Pemantauan langsung**: data node dan grafik diperbarui otomatis (polling). Interval diatur di satu tempat, `src/constants/polling.ts`.
 - **Manajemen Kebun & Blok**: Struktur hierarkis kebun dan pemetaan blok lahan lengkap dengan rincian luas area dan modul sensor.
 - **Jadwal Lampu Cerdas**: Konfigurasi siklus nyala-padam, target intensitas lampu, serta riwayat log penyesuaian otomatis peredupan (*auto-dimming*) berbasis lux sensor.
 - **Estimasi Panen**: Perhitungan proyeksi tanggal panen otomatis berdasarkan tanggal awal induksi penyinaran lampu dan target hari munculnya bunga, disertai pencatatan panen aktual.
@@ -16,10 +17,11 @@ AgroLight adalah platform dashboard B2B SaaS agritech yang dirancang untuk otoma
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: [React](https://react.dev/) 18+ / [TypeScript](https://www.typescriptlang.org/)
+- **Frontend**: [React](https://react.dev/) / [TypeScript](https://www.typescriptlang.org/)
 - **Build Tool**: [Vite](https://vitejs.dev/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) (pendekatan *Clean Minimalist Outline*)
-- **Routing**: [React Router](https://reactrouter.com/) (v6)
+- **Routing**: [React Router](https://reactrouter.com/)
+- **Data fetching**: [TanStack Query](https://tanstack.com/query)
 - **Validasi Skema**: [Zod](https://zod.dev/)
 - **Ikonografi**: [Lucide React](https://lucide.dev/)
 - **Linter**: [Oxlint](https://oxc.rs/)
@@ -50,7 +52,8 @@ src/
 ## ⚙️ Panduan Menjalankan Proyek
 
 ### 1. Prasyarat
-- [Node.js](https://nodejs.org/) (versi 18.x atau lebih baru)
+- [Node.js](https://nodejs.org/) (versi 20 atau lebih baru)
+- Backend Laravel yang sudah berjalan (lihat `apps/web/backend-sensor/README.md`)
 - Package manager: npm, yarn, atau pnpm
 
 ### 2. Instalasi Dependensi
@@ -59,20 +62,35 @@ Clone repositori dan pasang seluruh dependensi:
 npm install
 ```
 
-### 3. Menjalankan Server Pengembangan (Dev)
+### 3. Konfigurasi `.env`
+Buat `.env` di folder ini:
+```
+VITE_API_BASE_URL=http://localhost:8080/api
+VITE_PROXY_TARGET=http://localhost:8080
+```
+`VITE_API_BASE_URL` dipakai untuk memanggil API dan membentuk alamat foto (`<alamat>/storage/...`). `VITE_PROXY_TARGET` adalah tujuan proxy `/api` pada server dev. Tanpa `VITE_API_BASE_URL`, nilai bawaan `http://localhost:8000` dipakai.
+
+### 4. Menjalankan Server Pengembangan (Dev)
 Jalankan dev server lokal:
 ```bash
 npm run dev
 ```
 Buka URL lokal yang muncul pada terminal (biasanya `http://localhost:5173`) di browser.
 
-### 4. Pengecekan Tipe TypeScript
+### 5. Pengecekan Kode
+Jalankan lint dan pengujian:
+```bash
+npm run lint
+npm test
+```
+
+### 6. Pengecekan Tipe TypeScript
 Jalankan type-check untuk memastikan integritas kode:
 ```bash
 npx tsc -b
 ```
 
-### 5. Build Produksi
+### 7. Build Produksi
 Kompilasi kode sumber ke folder `dist/`:
 ```bash
 npm run build
@@ -81,8 +99,8 @@ npm run preview
 
 ---
 
-## 🔌 Kesiapan Integrasi Backend
-Aplikasi ini telah memisahkan lapisan UI dan data melalui Service Abstraction di `src/services/api.ts`. Ketika backend REST API (Express & PostgreSQL) telah siap, integrasi cukup dilakukan dengan memperbarui pemanggilan endpoint pada layer service tersebut tanpa perlu mengubah kode komponen UI.
+## 🔌 Integrasi Backend
+Semua pemanggilan API lewat service layer di `src/services/`. Alamat dasar API dibaca dari `VITE_API_BASE_URL`. URL foto kebun dan blok dibentuk oleh `resolveStorageUrl` (`src/utils/storageUrl.ts`) dari path relatif yang dikirim backend. Agar foto tampil, backend perlu menjalankan `php artisan storage:link`.
 
 ---
 
@@ -134,4 +152,3 @@ Catatan: Header cache panjang (immutable) hanya boleh diterapkan pada berkas ber
 - [ ] Konfigurasi `og:url` pada meta tag Open Graph setelah domain produksi resmi ditetapkan.
 - [ ] Konfigurasi `og:image` dengan URL absolut gambar preview sosial media 1200x630 setelah domain aktif.
 - [ ] Tambahkan tag `<link rel="canonical">` per rute setelah URL kanonikal final tersedia.
-

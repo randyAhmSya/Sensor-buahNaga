@@ -1,198 +1,67 @@
-# Buah Naga Project — Smart Dragon Fruit Monitoring
- 
-Monorepo untuk proyek IoT monitoring buah naga, dibagi jadi 3 job:
- 
-| Job | Folder | Tanggung jawab |
+# AgroLight: Otomasi Pencahayaan Buah Naga
+
+AgroLight adalah platform B2B SaaS untuk mengotomasi lampu penyinaran malam pada budidaya buah naga. Sensor lux di lahan mengirim data lewat MQTT, server menghitung peredupan otomatis (*auto-dimming*) sesuai jadwal dan target lux, lalu petani memantau semuanya dari web dan aplikasi Android.
+
+Proyek magang D-IV Teknologi Rekayasa Perangkat Lunak, Politeknik Negeri Banyuwangi.
+
+## Komponen
+
+| Komponen | Folder | Teknologi |
 |---|---|---|
-| 1 | `apps/api` | API + protokol MQTT + broker (Aedes) |
-| 2 | `apps/web` | Website (Next.js, full stack: frontend + backend) |
-| 3 | `apps/mobile` | Aplikasi Android (Expo/React Native) + QR pairing |
- 
-Ditambah:
-- `packages/shared` — logic dan konvensi yang dipakai bareng semua job
-- `tools/simulator` — virtual gateway, simulasi kirim data sensor tanpa hardware asli
----
- 
-## Struktur folder
- 
+| Backend API | `apps/web/backend-sensor` | Laravel 13, PHP 8.3, PostgreSQL, Sanctum, MQTT |
+| Web | `apps/web/front-end` | React + Vite + TypeScript, Tailwind v4, TanStack Query |
+| Mobile | `apps/mobile` | Expo SDK 57, React Native, NativeWind |
+| Sensor virtual | di luar repo ini | Python + Mosquitto (simulasi tanpa perangkat keras) |
+
+Dokumentasi tiap bagian ada di README masing-masing:
+[backend](apps/web/backend-sensor/README.md), [web](apps/web/front-end/README.md), [mobile](apps/mobile/README.md).
+
+## Alur singkat
+
 ```
-buah-naga-project/
-├── docker-compose.yml
-├── .gitignore
-├── package.json
-├── apps/
-│   ├── api/
-│   ├── web/
-│   └── mobile/
-├── packages/
-│   └── shared/
-│       ├── prisma/
-│       │   └── schema.prisma
-│       ├── db.js
-│       ├── mqtt-topics.js
-│       ├── temperature-logic.js
-│       └── device-validation.js
-└── tools/
-    └── simulator/
+Sensor / simulator --MQTT--> Mosquitto --> php artisan mqtt:listen --> PostgreSQL
+                                                                         |
+Web (React)  <---- REST API (Laravel + Sanctum, per tenant) -------------+
+Mobile (Expo) <---------------------------------------------------------+
 ```
- 
----
- 
+
+- Setiap data dibatasi per tenant. Akses kebun dicek lewat Policy dan `tenant_id`.
+- Kode QR perangkat hanyalah pengenal, bukan rahasia. Keamanannya ada di autentikasi, Policy, pengecekan tenant, log pemindaian (`qr_scan_logs`), dan pembatas laju.
+- Log peredupan otomatis hanya dibuat saat jadwal berada dalam mode auto, ada target lux, ada telemetri masuk, node online, dan waktu berada di jendela nyala lampu.
+
 ## Prasyarat
- 
-- Node.js versi 20+
-- Docker Desktop (wajib untuk Job 1 & Job 2, opsional untuk Job 3)
-- Expo Go di HP (untuk Job 3)
-- Git versi 2.25+ (untuk sparse-checkout mode `--cone`)
----
- 
-## Setup awal (semua job)
- 
-```bash
-docker compose up -d      # nyalakan database (skip kalau cuma kerja di mobile)
-npm install                # install dependency workspace root
-```
- 
----
- 
-## `apps/api` — Job 1 (API + MQTT)
- 
-**Install dependency:**
-```bash
-cd apps/api
-npm install express aedes aedes-server-factory @prisma/client
-npm install --save-dev prisma
-```
- 
-**Buat file `.env`:**
-```
-DATABASE_URL="postgresql://buah_naga:ganti_password_ini@localhost:5432/buah_naga_db"
-JWT_SECRET="ganti_dengan_rahasia_acak"
-```
- 
-**Struktur yang disarankan:**
-```
-apps/api/
-├── index.js          # entry point, jalankan Express + broker
-├── broker.js          # setup Aedes MQTT broker
-├── routes/
-│   └── devices.js      # endpoint REST device
-└── middleware/
-    └── auth.js          # verifikasi JWT (kalau dipakai)
-```
- 
-**Jalankan:**
-```bash
-npm run dev
-```
- 
-**Tanggung jawab utama:**
-- Bangun broker MQTT (terima data dari simulator/alat asli, port default 1883, aktifkan WebSocket untuk mobile)
-- Validasi device ID sebelum data masuk
-- Endpoint REST untuk registrasi/pengecekan device
----
- 
-## `apps/web` — Job 2 (Website full stack, Next.js)
- 
-**Install:**
-```bash
-cd apps/web
-npx create-next-app@latest .
-```
-Pilih **recommended defaults** (TypeScript, Tailwind, App Router).
- 
-**Buat file `.env.local`:**
-```
-DATABASE_URL="postgresql://buah_naga:ganti_password_ini@localhost:5432/buah_naga_db"
-```
- 
-**Struktur:**
-```
-apps/web/
-├── app/
-│   ├── page.tsx           # frontend: dashboard
-│   ├── layout.tsx
-│   └── api/
-│       └── devices/
-│           └── route.ts    # backend: endpoint /api/devices
-```
- 
-**Jalankan:**
-```bash
-npm run dev
-```
-Buka `http://localhost:3000`.
- 
-**Tanggung jawab utama:**
-- Dashboard tampilkan kondisi tiap panel (A/B/C dst)
-- CRUD device (tambah/kelola alat baru)
-- Autentikasi user (kalau ada)
----
- 
-## `apps/mobile` — Job 3 (Android, Expo/React Native)
- 
-**Install:**
-```bash
-npx create-expo-app@latest apps/mobile
-cd apps/mobile
-npm install mqtt
-npx expo install expo-camera
-```
- 
-**Buat file `.env` (opsional, hanya kalau alamat broker beda dev/prod):**
-```
-EXPO_PUBLIC_MQTT_BROKER_URL=ws://ALAMAT_BROKER:PORT/mqtt
-```
- 
-**Jalankan:**
-```bash
-npx expo start
-```
-Scan QR di terminal pakai Expo Go.
- 
-**Tanggung jawab utama:**
-- Scan QR untuk pairing device (`expo-camera`)
-- Subscribe topic MQTT device yang di-pairing, terima data real-time
-- Tampilkan status (aman/waspada/bahaya) pakai logic dari `packages/shared`
-- **Tidak** connect langsung ke database — cukup consume API dari `apps/api`/`apps/web` dan data MQTT
----
- 
-## `packages/shared` — konvensi bersama
- 
-Isi logic murni (input → proses → output), tanpa dependency database atau platform spesifik, supaya konsisten dipakai di semua job:
- 
-| File | Fungsi |
+
+- PHP 8.3+, Composer, dan PostgreSQL 16 (bisa lewat `docker compose up -d` di root repo)
+- Node.js 20+
+- Mosquitto (broker MQTT)
+- Expo Go atau perangkat Android untuk mobile
+- Git 2.25+ (repo ini memakai sparse-checkout)
+
+## Menjalankan secara lokal
+
+1. **Backend.** Ikuti langkah di [README backend](apps/web/backend-sensor/README.md). Singkatnya: `composer install`, salin `.env.example` menjadi `.env`, isi koneksi database, lalu `php artisan key:generate`, `php artisan migrate --seed`, dan `php artisan storage:link`.
+2. **Listener MQTT.** Di folder backend jalankan `php artisan mqtt:listen`.
+3. **Web.** Di `apps/web/front-end` jalankan `npm install` lalu `npm run dev`.
+4. **Mobile.** Di `apps/mobile` jalankan `npm install` lalu `npx expo start`.
+
+## Pengujian
+
+| Bagian | Perintah |
 |---|---|
-| `mqtt-topics.js` | Format nama topic MQTT (`getDeviceTopic`) |
-| `temperature-logic.js` | Threshold dan status suhu (aman/waspada/bahaya) |
-| `device-validation.js` | Validasi format device ID |
-| `prisma/schema.prisma` | Skema database, satu-satunya sumber kebenaran |
-| `db.js` | Export instance Prisma Client (dipakai `apps/api` & `apps/web`, **jangan** di mobile) |
- 
-**Setup:**
-```bash
-cd packages/shared
-npm init -y
-npm install @prisma/client
-npm install --save-dev prisma
-npx prisma generate
-npx prisma migrate dev --name init
-```
- 
-**Buat `.env`:**
-```
-DATABASE_URL="postgresql://buah_naga:ganti_password_ini@localhost:5432/buah_naga_db"
-```
- 
-**Cara import (sesuaikan jumlah `../` dengan kedalaman file):**
-```js
-const { getDeviceTopic } = require('../../packages/shared/mqtt-topics');
-```
- 
----
- 
-## Clone sesuai jobdesk (sparse-checkout)
- 
+| Backend | `php artisan config:clear` lalu `php artisan test` |
+| Web | `npm run lint`, `npx tsc --noEmit`, `npm test`, `npm run build` |
+| Mobile | `npx expo lint` |
+
+## Catatan penting
+
+- **Penyimpanan file.** Foto kebun dan blok disimpan di `storage/app/public` dan dibuka lewat `/storage`, jadi `php artisan storage:link` wajib dijalankan di setiap mesin baru. Bukti transfer disimpan privat di `storage/app/private`.
+- **Batas upload.** Foto: JPEG, PNG, JPG, atau WebP, maksimal 2 MB dan 4096 px. Naikkan `upload_max_filesize` dan `post_max_size` di `php.ini` XAMPP (bawaan 2M) agar batas Laravel yang berlaku.
+- **Langganan.** Saklar `LANGGANAN_WAJIB` (`true` secara bawaan) menentukan apakah langganan aktif diwajibkan.
+- **Zona waktu.** Jendela nyala lampu mengikuti `LAMPU_TIMEZONE` (bawaan `Asia/Jakarta`).
+- **Tugas terjadwal.** Pengingat langganan habis (08:00) dan pemangkasan data lama (`lampu:pangkas-data`, 03:00) berjalan lewat `php artisan schedule:run` yang dipicu tiap menit.
+- **Peringatan.** `docker-compose.yml` hanya untuk pengembangan lokal. Ganti kata sandi database sebelum dipakai di tempat lain.
+
+
 Tiap kolaborator cukup ambil folder job-nya masing-masing **plus** `packages/shared`:
  
 ```bash
