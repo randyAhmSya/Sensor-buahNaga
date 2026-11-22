@@ -2,9 +2,9 @@
 
 namespace App\Traits;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
 
 trait FileUploadTrait
 {
@@ -86,29 +86,38 @@ trait FileUploadTrait
      * supaya unggahan tidak pernah hilang.
      */
     private function simpanGambar($file, string $folder, string $disk, int $lebarMaks): string
-{
-    $webp = $this->jadikanWebp($file, $lebarMaks);
+    {
+        $webp = $this->jadikanWebp($file, $lebarMaks);
 
-    if ($webp === null) {
-        Log::warning('Upload: konversi WebP gagal, file asli disimpan', [
-            'mime' => $file->getMimeType(),
-            'ukuran' => $file->getSize(),
-            'gd_webp' => function_exists('imagewebp'),
-        ]);
-    } elseif (strlen($webp) >= $file->getSize()) {
-        Log::info('Upload: WebP tidak lebih kecil, file asli disimpan', [
-            'asli' => $file->getSize(),
-            'webp' => strlen($webp),
-        ]);
-    } else {
-        $path = $folder . '/' . Str::random(40) . '.webp';
-        Storage::disk($disk)->put($path, $webp);
+        if ($webp === null) {
+            Log::warning('Upload: konversi WebP gagal, file asli disimpan', [
+                'mime' => $file->getMimeType(),
+                'ukuran' => $file->getSize(),
+                'gd_webp' => function_exists('imagewebp'),
+            ]);
+        } elseif (strlen($webp) >= $file->getSize()) {
+            Log::info('Upload: WebP tidak lebih kecil, file asli disimpan', [
+                'asli' => $file->getSize(),
+                'webp' => strlen($webp),
+            ]);
+        } else {
+            $path = $folder . '/' . Str::random(40) . '.webp';
 
-        return $path;
+            // Disk memakai 'throw' => false, jadi kegagalan tulis harus diperiksa sendiri.
+            if (!Storage::disk($disk)->put($path, $webp)) {
+                throw new \RuntimeException("Gagal menulis file ke disk {$disk}: {$path}");
+            }
+
+            return $path;
+        }
+
+        $tersimpan = $file->store($folder, $disk);
+        if ($tersimpan === false) {
+            throw new \RuntimeException("Gagal menyimpan file ke disk {$disk}: {$folder}");
+        }
+
+        return $tersimpan;
     }
-
-    return $file->store($folder, $disk);
-}
 
     /**
      * Perkecil (tanpa memperbesar) lalu encode ke WebP memakai GD.
@@ -151,6 +160,8 @@ trait FileUploadTrait
                 $gambar = $kecil;
             }
         }
+
+        // WebP butuh truecolor; PNG berpalet harus dikonversi dulu.
         imagepalettetotruecolor($gambar);
         imagealphablending($gambar, false);
         imagesavealpha($gambar, true);
