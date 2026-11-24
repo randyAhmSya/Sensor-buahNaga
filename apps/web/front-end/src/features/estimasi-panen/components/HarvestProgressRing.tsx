@@ -1,7 +1,7 @@
 interface HarvestProgressRingProps {
-  progress: number
-  size?: number
-  strokeWidth?: number
+  progress: number;
+  size?: number;
+  strokeWidth?: number;
 }
 
 export function HarvestProgressRing({
@@ -9,20 +9,26 @@ export function HarvestProgressRing({
   size = 110,
   strokeWidth = 10,
 }: HarvestProgressRingProps) {
-  const clampedProgress = Math.min(100, Math.max(0, progress))
-  const radius = (size - strokeWidth) / 2
-  const circumference = 2 * Math.PI * radius
-  const offset = circumference - (clampedProgress / 100) * circumference
+  const clampedProgress = Math.min(100, Math.max(0, progress));
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (clampedProgress / 100) * circumference;
 
   const getColor = () => {
-    if (clampedProgress >= 90) return 'text-emerald-500 stroke-emerald-500'
-    if (clampedProgress >= 50) return 'text-amber-500 stroke-amber-500'
-    return 'text-sky-500 stroke-sky-500'
-  }
+    if (clampedProgress >= 90) return "text-emerald-500 stroke-emerald-500";
+    if (clampedProgress >= 50) return "text-amber-500 stroke-amber-500";
+    return "text-sky-500 stroke-sky-500";
+  };
 
   return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg className="w-full h-full transform -rotate-90" viewBox={`0 0 ${size} ${size}`}>
+    <div
+      className="relative inline-flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
+      <svg
+        className="w-full h-full transform -rotate-90"
+        viewBox={`0 0 ${size} ${size}`}
+      >
         {/* Background Track */}
         <circle
           cx={size / 2}
@@ -54,5 +60,5 @@ export function HarvestProgressRing({
         </span>
       </div>
     </div>
-  )
+  );
 }

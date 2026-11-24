@@ -1,14 +1,20 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Bell, AlertCircle, AlertTriangle, ShieldCheck, ArrowRight } from 'lucide-react';
+import React from "react";
+import { Link } from "react-router-dom";
+import {
+  Bell,
+  AlertCircle,
+  AlertTriangle,
+  ShieldCheck,
+  ArrowRight,
+} from "lucide-react";
 
 export interface DashboardAlertItem {
   id: string;
   title: string;
   description: string;
   time: string;
-  type: 'danger' | 'warning' | 'info';
-  source: 'device' | 'subscription' | 'system';
+  type: "danger" | "warning" | "info";
+  source: "device" | "subscription" | "system";
   link?: string;
 }
 
@@ -19,12 +25,9 @@ export interface DashboardAlertNotificationsWidgetProps {
   className?: string;
 }
 
-export const DashboardAlertNotificationsWidget: React.FC<DashboardAlertNotificationsWidgetProps> = ({
-  alerts = [],
-  isLoading = false,
-  onViewAll,
-  className = '',
-}) => {
+export const DashboardAlertNotificationsWidget: React.FC<
+  DashboardAlertNotificationsWidgetProps
+> = ({ alerts = [], isLoading = false, onViewAll, className = "" }) => {
   const displayAlerts = alerts.slice(0, 5);
 
   return (
@@ -34,10 +37,17 @@ export const DashboardAlertNotificationsWidget: React.FC<DashboardAlertNotificat
       {/* Header dengan Tombol Lihat Semua */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
-          <Bell className="w-4 h-4 text-slate-400 shrink-0" strokeWidth={1.75} />
+          <Bell
+            className="w-4 h-4 text-slate-400 shrink-0"
+            strokeWidth={1.75}
+          />
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Peringatan & Notifikasi</h2>
-            <p className="text-xs text-slate-500">Pemberitahuan terkini status perangkat dan akun</p>
+            <h2 className="text-sm font-bold text-slate-900">
+              Peringatan & Notifikasi
+            </h2>
+            <p className="text-xs text-slate-500">
+              Pemberitahuan terkini status perangkat dan akun
+            </p>
           </div>
         </div>
 
@@ -62,7 +72,7 @@ export const DashboardAlertNotificationsWidget: React.FC<DashboardAlertNotificat
       </div>
 
       {/* Konten Notifikasi */}
-      <div className="flex-1 flex flex-col justify-around py-1 divide-y divide-slate-100">
+      <div className="flex-1 flex flex-col justify-start py-1 divide-y divide-slate-100">
         {isLoading ? (
           <div className="py-6 space-y-3 animate-pulse">
             <div className="h-4 bg-slate-100 rounded-md w-3/4" />
@@ -73,15 +83,18 @@ export const DashboardAlertNotificationsWidget: React.FC<DashboardAlertNotificat
             <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <p className="text-xs font-bold text-slate-700">Semua Sistem Normal</p>
+            <p className="text-xs font-bold text-slate-700">
+              Semua Sistem Normal
+            </p>
             <p className="text-[11px] text-slate-400 max-w-xs">
-              Tidak ada peringatan kritis atau notifikasi baru yang memerlukan tindakan.
+              Tidak ada peringatan kritis atau notifikasi baru yang memerlukan
+              tindakan.
             </p>
           </div>
         ) : (
           displayAlerts.map((item) => {
-            const isDanger = item.type === 'danger';
-            const isWarning = item.type === 'warning';
+            const isDanger = item.type === "danger";
+            const isWarning = item.type === "warning";
 
             return (
               <div key={item.id} className="py-3 flex items-start gap-3">
