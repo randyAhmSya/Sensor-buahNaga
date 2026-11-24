@@ -1,24 +1,68 @@
-import { memo } from 'react'
-import type { TelemetryNodeRow } from '@/types/telemetry'
-import { StatusBadge } from '@/components/ui/StatusBadge'
+import { memo } from "react";
+import type { TelemetryNodeRow } from "@/types/telemetry";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
-export type ActivityItem = TelemetryNodeRow
+export type ActivityItem = TelemetryNodeRow;
+
+const FORMAT_WIB = new Intl.DateTimeFormat("id-ID", {
+  timeZone: "Asia/Jakarta",
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+/**
+ * Ubah waktu mentah dari server (mis. 2026-11-24T05:39:13+00:00) menjadi
+ * waktu WIB yang mudah dibaca, plus keterangan "berapa lama yang lalu".
+ * Mengembalikan null kalau teksnya bukan tanggal (mis. "Belum ada data").
+ */
+const formatWaktuTercatat = (
+  mentah: string,
+): { tanggal: string; relatif: string } | null => {
+  const waktu = new Date(mentah);
+  if (Number.isNaN(waktu.getTime())) return null;
+
+  const bagian = FORMAT_WIB.formatToParts(waktu).reduce<Record<string, string>>(
+    (acc, p) => {
+      acc[p.type] = p.value;
+      return acc;
+    },
+    {},
+  );
+  const tanggal = `${bagian.day} ${bagian.month} ${bagian.year}, ${bagian.hour}.${bagian.minute} WIB`;
+
+  const menit = Math.floor((Date.now() - waktu.getTime()) / 60000);
+  let relatif: string;
+  if (menit < 1) relatif = "baru saja";
+  else if (menit < 60) relatif = `${menit} menit lalu`;
+  else if (menit < 1440) relatif = `${Math.floor(menit / 60)} jam lalu`;
+  else relatif = `${Math.floor(menit / 1440)} hari lalu`;
+
+  return { tanggal, relatif };
+};
 
 interface RecentActivityTableRowProps {
-  item: TelemetryNodeRow
+  item: TelemetryNodeRow;
 }
 
 const RecentActivityTableRow = memo<RecentActivityTableRowProps>(({ item }) => {
   const getVariant = () => {
-    if (item.status === 'Optimal' || item.status === 'Online') return 'optimal'
-    if (item.status === 'Low Light') return 'warning'
-    if (item.status === 'Offline') return 'danger'
-    return 'standby'
-  }
+    if (item.status === "Optimal" || item.status === "Online") return "optimal";
+    if (item.status === "Low Light") return "warning";
+    if (item.status === "Offline") return "danger";
+    return "standby";
+  };
+
+  const waktu = formatWaktuTercatat(item.recordedTime);
 
   return (
     <tr className="hover:bg-slate-50/80 transition-colors">
-      <td className="py-4 px-6 font-semibold text-slate-900">{item.nodeCode}</td>
+      <td className="py-4 px-6 font-semibold text-slate-900">
+        {item.nodeCode}
+      </td>
       <td className="py-4 px-6 text-slate-600">{item.location}</td>
       <td className="py-4 px-6">
         <span className="font-medium text-slate-800 bg-white border border-slate-200 px-2 py-0.5 rounded-md text-xs shadow-2xs">
@@ -26,76 +70,91 @@ const RecentActivityTableRow = memo<RecentActivityTableRowProps>(({ item }) => {
         </span>
       </td>
       <td className="py-4 px-6 text-slate-600">{item.powerConsumption}</td>
-      <td className="py-4 px-6 text-slate-400 text-xs">{item.recordedTime}</td>
+      <td className="py-4 px-6 text-xs">
+        {waktu ? (
+          <div>
+            <p className="font-medium text-slate-700 whitespace-nowrap">
+              {waktu.tanggal}
+            </p>
+            <p className="text-slate-400 mt-0.5">{waktu.relatif}</p>
+          </div>
+        ) : (
+          <span className="text-slate-400">{item.recordedTime}</span>
+        )}
+      </td>
       <td className="py-4 px-6 text-center w-32">
         <div className="flex justify-center">
           <StatusBadge status={item.status} variant={getVariant()} />
         </div>
       </td>
     </tr>
-  )
-})
+  );
+});
 
-RecentActivityTableRow.displayName = 'RecentActivityTableRow'
+RecentActivityTableRow.displayName = "RecentActivityTableRow";
 
 interface RecentActivityTableProps {
-  activities?: TelemetryNodeRow[]
-  onViewAll?: () => void
+  activities?: TelemetryNodeRow[];
+  onViewAll?: () => void;
 }
 
-export const RecentActivityTable = memo<RecentActivityTableProps>(({
-  activities = [],
-  onViewAll,
-}) => {
-  return (
-    <div className="bg-white border border-slate-200 rounded-2xl shadow-2xs overflow-hidden h-full flex flex-col justify-between">
-      <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900">Telemetri Node Terkini</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Pemantauan intensitas cahaya dan daya aktual per blok lampu.
-          </p>
+export const RecentActivityTable = memo<RecentActivityTableProps>(
+  ({ activities = [], onViewAll }) => {
+    return (
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-2xs overflow-hidden h-full flex flex-col justify-between">
+        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">
+              Telemetri Node Terkini
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Pemantauan intensitas cahaya dan daya aktual per blok lampu.
+            </p>
+          </div>
+          {onViewAll && (
+            <button
+              type="button"
+              onClick={onViewAll}
+              className="text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer active:scale-[0.98] transition-transform"
+            >
+              Lihat Semua Node
+            </button>
+          )}
         </div>
-        {onViewAll && (
-          <button
-            type="button"
-            onClick={onViewAll}
-            className="text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer active:scale-[0.98] transition-transform"
-          >
-            Lihat Semua Node
-          </button>
-        )}
-      </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="bg-slate-50/80 border-b border-slate-200/80 text-xs font-bold uppercase tracking-wider text-slate-500">
-              <th className="py-3.5 px-6">Kode Node</th>
-              <th className="py-3.5 px-6">Lokasi</th>
-              <th className="py-3.5 px-6">Nilai Lux</th>
-              <th className="py-3.5 px-6">Konsumsi Daya</th>
-              <th className="py-3.5 px-6">Waktu Tercatat</th>
-              <th className="py-3.5 px-6 text-center w-32">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {activities.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-400 text-xs font-medium">
-                  Belum ada aktivitas sensor tercatat
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="bg-slate-50/80 border-b border-slate-200/80 text-xs font-bold uppercase tracking-wider text-slate-500">
+                <th className="py-3.5 px-6">Kode Node</th>
+                <th className="py-3.5 px-6">Lokasi</th>
+                <th className="py-3.5 px-6">Nilai Lux</th>
+                <th className="py-3.5 px-6">Konsumsi Daya</th>
+                <th className="py-3.5 px-6">Waktu Tercatat</th>
+                <th className="py-3.5 px-6 text-center w-32">Status</th>
               </tr>
-            ) : (
-              activities.map((item) => (
-                <RecentActivityTableRow key={item.nodeCode} item={item} />
-              ))
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {activities.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="py-8 text-center text-slate-400 text-xs font-medium"
+                  >
+                    Belum ada aktivitas sensor tercatat
+                  </td>
+                </tr>
+              ) : (
+                activities.map((item) => (
+                  <RecentActivityTableRow key={item.nodeCode} item={item} />
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  )
-})
+    );
+  },
+);
 
-RecentActivityTable.displayName = 'RecentActivityTable'
+RecentActivityTable.displayName = "RecentActivityTable";

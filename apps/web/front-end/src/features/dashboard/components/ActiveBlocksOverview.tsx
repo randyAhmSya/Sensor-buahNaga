@@ -1,8 +1,8 @@
-import React from 'react';
-import { Lightbulb, Layers, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { StatusBadge } from '@/components/ui/StatusBadge';
-import type { ActiveBlockOverviewItem } from '../hooks/useDashboardData';
+import React from "react";
+import { Lightbulb, Layers, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import type { ActiveBlockOverviewItem } from "../hooks/useDashboardData";
 
 interface ActiveBlocksOverviewProps {
   items?: ActiveBlockOverviewItem[];
@@ -17,10 +17,17 @@ export const ActiveBlocksOverview: React.FC<ActiveBlocksOverviewProps> = ({
     <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 md:p-6 flex flex-col justify-between h-full">
       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
-          <Layers className="w-4 h-4 text-slate-400 shrink-0" strokeWidth={1.75} />
+          <Layers
+            className="w-4 h-4 text-slate-400 shrink-0"
+            strokeWidth={1.75}
+          />
           <div>
-            <h3 className="text-sm font-bold text-slate-900">Operasional Blok Lahan</h3>
-            <p className="text-xs text-slate-500">Status penyinaran blok malam ini</p>
+            <h3 className="text-sm font-bold text-slate-900">
+              Operasional Blok Lahan
+            </h3>
+            <p className="text-xs text-slate-500">
+              Status penyinaran blok malam ini
+            </p>
           </div>
         </div>
         <Link
@@ -32,7 +39,7 @@ export const ActiveBlocksOverview: React.FC<ActiveBlocksOverviewProps> = ({
         </Link>
       </div>
 
-      <div className="divide-y divide-slate-100 flex-1 flex flex-col justify-around py-1">
+      <div className="divide-y divide-slate-100 flex-1 flex flex-col justify-start py-1">
         {isLoading ? (
           <div className="py-6 space-y-3 animate-pulse">
             <div className="h-4 bg-slate-100 rounded-md w-3/4" />
@@ -44,9 +51,14 @@ export const ActiveBlocksOverview: React.FC<ActiveBlocksOverviewProps> = ({
           </div>
         ) : (
           items.slice(0, 4).map((item) => (
-            <div key={item.id} className="py-3 flex items-center justify-between gap-3">
+            <div
+              key={item.id}
+              className="py-3 flex items-center justify-between gap-3"
+            >
               <div>
-                <h4 className="text-xs font-bold text-slate-900">{item.name}</h4>
+                <h4 className="text-xs font-bold text-slate-900">
+                  {item.name}
+                </h4>
                 <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5 font-medium">
                   <span>{item.nodeCount} Node Sensor</span>
                   <span>•</span>
@@ -54,7 +66,7 @@ export const ActiveBlocksOverview: React.FC<ActiveBlocksOverviewProps> = ({
                 </div>
               </div>
               <div className="flex items-center justify-end">
-                {item.status === 'Menyala' ? (
+                {item.status === "Menyala" ? (
                   <StatusBadge
                     status="Menyala"
                     variant="active"
