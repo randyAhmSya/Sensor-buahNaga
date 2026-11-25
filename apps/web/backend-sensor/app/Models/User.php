@@ -18,8 +18,10 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens, GenerateUuid;
+    use GenerateUuid, HasApiTokens, HasFactory, Notifiable;
+
     protected $primaryKey = 'id';
+
     protected $fillable = [
         'tenant_id',
         'nama_lengkap',
@@ -27,7 +29,14 @@ class User extends Authenticatable
         'password',
         'role',
         'is_aktif',
+        'google_id',
+        'nomor_telepon',
+        'url_foto',
+        'profil_lengkap',
+        'email_verified_at',
+
     ];
+
     protected $hidden = [
         'password',
         'remember_token',
@@ -44,8 +53,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_aktif' => 'boolean',
+            'profil_lengkap' => 'boolean',
         ];
     }
+
     public function tenant()
     {
         return $this->belongsTo(Tenant::class, 'tenant_id', 'tenant_id');
