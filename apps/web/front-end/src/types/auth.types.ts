@@ -3,14 +3,14 @@
  */
 
 export type BackendRole =
-  | 'superAdmin'
-  | 'super_admin'
-  | 'superadmin'
-  | 'SUPER_ADMIN'
-  | 'petani_biasa'
-  | 'user'
-  | 'petani'
-  | 'admin_kebun'
+  | "superAdmin"
+  | "super_admin"
+  | "superadmin"
+  | "SUPER_ADMIN"
+  | "petani_biasa"
+  | "user"
+  | "petani"
+  | "admin_kebun"
   | (string & {});
 
 export interface BackendUser {
@@ -21,6 +21,7 @@ export interface BackendUser {
   role: BackendRole;
   nomor_telepon?: string | null;
   url_foto?: string | null;
+  profil_lengkap?: boolean;
   email_verified_at?: string | null;
   created_at?: string;
   updated_at?: string;

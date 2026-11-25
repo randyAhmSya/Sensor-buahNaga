@@ -1,46 +1,53 @@
-import type { ReactNode } from 'react'
-import { Navigate } from 'react-router-dom'
-import { useAuthStore } from '../../store/useAuthStore'
-import type { UserRole } from '../../config/constants'
-
+import type { ReactNode } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuthStore } from "../../store/useAuthStore";
+import type { UserRole } from "../../config/constants";
 
 interface RoleGuardProps {
-  allowedRoles: UserRole[]
-  children: ReactNode
-  redirectTo?: string
+  allowedRoles: UserRole[];
+  children: ReactNode;
+  redirectTo?: string;
 }
 
 export function RoleGuard({
   allowedRoles,
   children,
-  redirectTo = '/login',
+  redirectTo = "/login",
 }: RoleGuardProps) {
-  const { user, isAuthenticated } = useAuthStore()
+  const { user, isAuthenticated } = useAuthStore();
 
   if (!isAuthenticated || !user) {
-    return <Navigate to={redirectTo} replace />
+    return <Navigate to={redirectTo} replace />;
   }
 
-  const userRole = (user.role || '').toLowerCase()
+  // Akun baru dari login Google wajib melengkapi profil dulu
+  if (user.profileComplete === false) {
+    return <Navigate to="/lengkapi-profil" replace />;
+  }
+
+  const userRole = (user.role || "").toLowerCase();
   const isAllowed = allowedRoles.some((role) => {
-    const r = role.toLowerCase()
-    if (r === userRole) return true
-    if ((r === 'super_admin' || r === 'superadmin') && (userRole === 'super_admin' || userRole === 'superadmin')) {
-      return true
+    const r = role.toLowerCase();
+    if (r === userRole) return true;
+    if (
+      (r === "super_admin" || r === "superadmin") &&
+      (userRole === "super_admin" || userRole === "superadmin")
+    ) {
+      return true;
     }
-    return false
-  })
+    return false;
+  });
 
   if (!isAllowed) {
     // Alihkan cerdas sesuai role pengguna agar tidak terlempar ke halaman yang salah
-    if (userRole === 'super_admin' || userRole === 'superadmin') {
-      return <Navigate to="/admin" replace />
+    if (userRole === "super_admin" || userRole === "superadmin") {
+      return <Navigate to="/admin" replace />;
     }
-    if (userRole === 'petani' || userRole === 'petani_biasa') {
-      return <Navigate to="/petani/estimasi" replace />
+    if (userRole === "petani" || userRole === "petani_biasa") {
+      return <Navigate to="/petani/estimasi" replace />;
     }
-    return <Navigate to="/kebun/farms" replace />
+    return <Navigate to="/kebun/farms" replace />;
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }

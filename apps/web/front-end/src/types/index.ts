@@ -1,39 +1,41 @@
-import type { UserRole } from '../config/constants'
+import type { UserRole } from "../config/constants";
 
 // Export all database schema interfaces & backend API models
-export * from './api.types'
-export * from './auth.types'
-export * from './kebun.types'
-export * from './block.types'
-export * from './node.types'
-export * from './gateway.types'
-export * from './qr.types'
-export * from './tenant.types'
-export * from './database.types'
-export * from './user'
-export * from './telemetry'
-export * from './farm'
-export * from './sensor.types'
-export * from './petaniSubscription.types'
+export * from "./api.types";
+export * from "./auth.types";
+export * from "./kebun.types";
+export * from "./block.types";
+export * from "./node.types";
+export * from "./gateway.types";
+export * from "./qr.types";
+export * from "./tenant.types";
+export * from "./database.types";
+export * from "./user";
+export * from "./telemetry";
+export * from "./farm";
+export * from "./sensor.types";
+export * from "./petaniSubscription.types";
 
 // User & Auth Types
 export interface UserProfile {
-  id: string
-  name: string
-  email: string
-  role: UserRole
-  tenantId: string
-  avatarUrl?: string
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  tenantId: string;
+  avatarUrl?: string;
+  /** false = akun hasil login Google yang belum mengisi nama kebun & no HP */
+  profileComplete?: boolean;
 }
 
 export interface AuthState {
-  user: UserProfile | null
-  token: string | null
-  isAuthenticated: boolean
-  isCheckingSession?: boolean
-  login: (user: UserProfile, token: string) => void
-  logout: () => void
-  validateSession: () => Promise<boolean>
+  user: UserProfile | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  isCheckingSession?: boolean;
+  login: (user: UserProfile, token: string) => void;
+  logout: () => void;
+  validateSession: () => Promise<boolean>;
 }
 
 // Re-export or alias for UI backwards-compatibility / convenience
@@ -43,13 +45,13 @@ export type {
   BlokHarvestDTO as HarvestBlock,
   KodeQrDTO as QrSticker,
   TenantHierarchyDTO as TenantData,
-} from './database.types'
+} from "./database.types";
 
 // Supporting UI Specific Types
 export interface DeviceMetrics {
-  temperature: number
-  voltage: number
-  solarInputVoltage?: number
-  rssi?: number
-  batteryLevel?: number
+  temperature: number;
+  voltage: number;
+  solarInputVoltage?: number;
+  rssi?: number;
+  batteryLevel?: number;
 }

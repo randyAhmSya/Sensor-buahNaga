@@ -1,30 +1,30 @@
-import { create } from 'zustand';
-import type { UserProfile, AuthState } from '../types';
-import { USER_ROLES, type UserRole } from '../config/constants';
-import type { BackendUser } from '../types/auth.types';
+import { create } from "zustand";
+import type { UserProfile, AuthState } from "../types";
+import { USER_ROLES, type UserRole } from "../config/constants";
+import type { BackendUser } from "../types/auth.types";
 
 export const mapRoleToUserRole = (backendRole?: string | null): UserRole => {
   if (!backendRole) return USER_ROLES.ADMIN_KEBUN;
-  const normalized = backendRole.toLowerCase().replace(/[-_\s]/g, '');
-  if (normalized === 'superadmin') {
+  const normalized = backendRole.toLowerCase().replace(/[-_\s]/g, "");
+  if (normalized === "superadmin") {
     return USER_ROLES.SUPER_ADMIN;
   }
-  if (normalized === 'petani') {
+  if (normalized === "petani") {
     return USER_ROLES.PETANI;
   }
-  if (normalized === 'agronom') {
+  if (normalized === "agronom") {
     return USER_ROLES.AGRONOM;
   }
   return USER_ROLES.ADMIN_KEBUN;
 };
 
 export const getRoleLabel = (role?: string | null): string => {
-  if (!role) return 'Pengguna';
-  const normalized = role.toLowerCase().replace(/[-_\s]/g, '');
-  if (normalized === 'superadmin') return 'Super Admin';
-  if (normalized === 'adminkebun') return 'Admin Kebun';
-  if (normalized === 'petani') return 'Petani';
-  if (normalized === 'agronom') return 'Agronom';
+  if (!role) return "Pengguna";
+  const normalized = role.toLowerCase().replace(/[-_\s]/g, "");
+  if (normalized === "superadmin") return "Super Admin";
+  if (normalized === "adminkebun") return "Admin Kebun";
+  if (normalized === "petani") return "Petani";
+  if (normalized === "agronom") return "Agronom";
   return role;
 };
 
@@ -36,16 +36,21 @@ export const mapBackendUserToUserProfile = (user: BackendUser): UserProfile => {
     role: mapRoleToUserRole(user.role),
     tenantId: user.tenant_id,
     avatarUrl: user.url_foto || undefined,
+    profileComplete: user.profil_lengkap !== false,
   };
 };
 
 export const AUTH_STORAGE_KEYS = {
-  TOKEN: 'agro_auth_token',
-  USER: 'agro_auth_user',
+  TOKEN: "agro_auth_token",
+  USER: "agro_auth_user",
 } as const;
 
-const getInitialAuthState = (): { user: UserProfile | null; token: string | null; isAuthenticated: boolean } => {
-  if (typeof window === 'undefined') {
+const getInitialAuthState = (): {
+  user: UserProfile | null;
+  token: string | null;
+  isAuthenticated: boolean;
+} => {
+  if (typeof window === "undefined") {
     return { user: null, token: null, isAuthenticated: false };
   }
 
@@ -83,7 +88,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isCheckingSession: false,
 
   login: (user: UserProfile, token: string) => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.setItem(AUTH_STORAGE_KEYS.TOKEN, token);
       localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(user));
     }
@@ -96,7 +101,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.removeItem(AUTH_STORAGE_KEYS.TOKEN);
       localStorage.removeItem(AUTH_STORAGE_KEYS.USER);
       sessionStorage.removeItem(AUTH_STORAGE_KEYS.TOKEN);
@@ -116,7 +121,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     inFlightValidatePromise = (async (): Promise<boolean> => {
-      const currentToken = get().token || (typeof window !== 'undefined' ? localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN) : null);
+      const currentToken =
+        get().token ||
+        (typeof window !== "undefined"
+          ? localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN)
+          : null);
       if (!currentToken) {
         get().logout();
         return false;
@@ -124,12 +133,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       set({ isCheckingSession: true });
       try {
-        const { apiClient } = await import('@/services/api');
-        const response = await apiClient.get<{ status: string; data: BackendUser }>('/auth/me');
+        const { apiClient } = await import("@/services/api");
+        const response = await apiClient.get<{
+          status: string;
+          data: BackendUser;
+        }>("/auth/me");
         if (response && response.data) {
           const profile = mapBackendUserToUserProfile(response.data);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(profile));
+          if (typeof window !== "undefined") {
+            localStorage.setItem(
+              AUTH_STORAGE_KEYS.USER,
+              JSON.stringify(profile),
+            );
           }
           set({
             user: profile,

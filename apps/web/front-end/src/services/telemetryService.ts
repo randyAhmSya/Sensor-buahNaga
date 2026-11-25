@@ -1,5 +1,5 @@
-import { apiClient } from './api';
-import type { ApiResponse } from '@/types/api.types';
+import { apiClient } from "./api";
+import type { ApiResponse } from "@/types/api.types";
 
 /**
  * Kontrak dan Layanan Telemetri Sensor AgroLight
@@ -27,7 +27,7 @@ export interface ReadSensor {
 
 export type TelemetryLog = ReadSensor;
 
-export type TelemetryRangeFilter = '24jam' | '7hari' | '30hari';
+export type TelemetryRangeFilter = "24jam" | "7hari" | "30hari";
 
 export interface TelemetryQueryFilter {
   rentang?: TelemetryRangeFilter;
@@ -41,15 +41,43 @@ export interface TelemetryQueryFilter {
 /**
  * Normalisasi item pembacaan sensor agar kompatibel dengan ragam display di frontend
  */
-export const normalizeReadSensor = (raw: Record<string, unknown>): ReadSensor => {
-  const sensorId = String(raw.sensor_id || '');
-  const id = String(raw.id_read_sensor || raw.id || '');
-  const suhu = typeof raw.suhu === 'number' ? raw.suhu : typeof raw.temperature === 'number' ? raw.temperature : 0;
-  const kelembapan = typeof raw.kelembapan === 'number' ? raw.kelembapan : typeof raw.humidity === 'number' ? raw.humidity : 0;
-  const lux = typeof raw.nilai_lux === 'number' ? raw.nilai_lux : typeof raw.lux === 'number' ? raw.lux : 0;
-  const baterai = typeof raw.baterai === 'number' ? raw.baterai : typeof raw.battery === 'number' ? raw.battery : undefined;
-  const sinyal = typeof raw.kualitas_sinyal === 'string' ? raw.kualitas_sinyal : undefined;
-  const waktu = String(raw.dicatat_pada || raw.waktu_catat || raw.created_at || new Date().toISOString());
+export const normalizeReadSensor = (
+  raw: Record<string, unknown>,
+): ReadSensor => {
+  const sensorId = String(raw.sensor_id || "");
+  const id = String(raw.id_read_sensor || raw.id || "");
+  const suhu =
+    typeof raw.suhu === "number"
+      ? raw.suhu
+      : typeof raw.temperature === "number"
+        ? raw.temperature
+        : 0;
+  const kelembapan =
+    typeof raw.kelembapan === "number"
+      ? raw.kelembapan
+      : typeof raw.humidity === "number"
+        ? raw.humidity
+        : 0;
+  const lux =
+    typeof raw.nilai_lux === "number"
+      ? raw.nilai_lux
+      : typeof raw.lux === "number"
+        ? raw.lux
+        : 0;
+  const baterai =
+    typeof raw.baterai === "number"
+      ? raw.baterai
+      : typeof raw.battery === "number"
+        ? raw.battery
+        : undefined;
+  const sinyal =
+    typeof raw.kualitas_sinyal === "string" ? raw.kualitas_sinyal : undefined;
+  const waktu = String(
+    raw.dicatat_pada ||
+      raw.waktu_catat ||
+      raw.created_at ||
+      new Date().toISOString(),
+  );
 
   return {
     id,
@@ -76,49 +104,141 @@ export const normalizeReadSensor = (raw: Record<string, unknown>): ReadSensor =>
  */
 export const fetchTelemetri = async (
   sensorId: string,
-  limit: number = 100
+  limit: number = 100,
 ): Promise<ReadSensor[]> => {
   if (
     !sensorId ||
-    typeof sensorId !== 'string' ||
+    typeof sensorId !== "string" ||
     !sensorId.trim() ||
-    sensorId === 'Belum Terpasang' ||
-    sensorId === 'undefined' ||
-    sensorId === 'null'
+    sensorId === "Belum Terpasang" ||
+    sensorId === "undefined" ||
+    sensorId === "null"
   ) {
     return [];
   }
 
   try {
-    const res = await apiClient.get<ApiResponse<unknown[]> | unknown[]>('/petani/telemetri', {
-      params: {
-        sensor_id: sensorId.trim(),
-        limit,
+    const res = await apiClient.get<ApiResponse<unknown[]> | unknown[]>(
+      "/petani/telemetri",
+      {
+        params: {
+          sensor_id: sensorId.trim(),
+          limit,
+        },
       },
-    });
+    );
 
     if (!res) return [];
 
     let rawList: unknown[] = [];
     if (Array.isArray(res)) {
       rawList = res;
-    } else if (res && typeof res === 'object' && 'data' in res) {
+    } else if (res && typeof res === "object" && "data" in res) {
       const dataPayload = (res as ApiResponse<unknown>).data;
       if (Array.isArray(dataPayload)) {
         rawList = dataPayload;
-      } else if (dataPayload && typeof dataPayload === 'object' && 'data' in dataPayload) {
+      } else if (
+        dataPayload &&
+        typeof dataPayload === "object" &&
+        "data" in dataPayload
+      ) {
         const nested = (dataPayload as Record<string, unknown>).data;
         if (Array.isArray(nested)) rawList = nested;
       }
     }
 
     return rawList
-      .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+      .filter(
+        (item): item is Record<string, unknown> =>
+          typeof item === "object" && item !== null,
+      )
       .map(normalizeReadSensor);
   } catch (error) {
-    console.error('Gagal mengambil data telemetri sensor:', error);
+    console.error("Gagal mengambil data telemetri sensor:", error);
     return [];
   }
+};
+
+export interface TelemetryPageMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
+
+export interface TelemetryPageParams {
+  sensorId: string;
+  page: number;
+  perPage?: number;
+  /** ISO 8601, boleh berzona (mis. ...Z). Backend menormalkan ke zona aplikasi. */
+  dari?: string;
+  sampai?: string;
+}
+
+const unwrapList = (res: unknown): unknown[] => {
+  if (Array.isArray(res)) return res;
+  if (res && typeof res === "object" && "data" in res) {
+    const d = (res as { data: unknown }).data;
+    if (Array.isArray(d)) return d;
+  }
+  return [];
+};
+
+/**
+ * Log sensor berhalaman (terbaru di atas) dengan filter rentang waktu.
+ * GET /api/petani/telemetri?sensor_id=&page=&per_page=&dari=&sampai=
+ */
+export const fetchTelemetriHalaman = async (
+  params: TelemetryPageParams,
+): Promise<{ items: ReadSensor[]; meta: TelemetryPageMeta }> => {
+  const res = await apiClient.get<
+    ApiResponse<unknown[]> & { meta?: TelemetryPageMeta }
+  >("/petani/telemetri", {
+    params: {
+      sensor_id: params.sensorId.trim(),
+      page: params.page,
+      per_page: params.perPage ?? 25,
+      ...(params.dari ? { dari: params.dari } : {}),
+      ...(params.sampai ? { sampai: params.sampai } : {}),
+    },
+  });
+
+  const items = unwrapList(res)
+    .filter(
+      (i): i is Record<string, unknown> => typeof i === "object" && i !== null,
+    )
+    .map(normalizeReadSensor);
+
+  const meta = (res as { meta?: TelemetryPageMeta })?.meta ?? {
+    current_page: params.page,
+    last_page: 1,
+    per_page: params.perPage ?? 25,
+    total: items.length,
+  };
+
+  return { items, meta };
+};
+
+/** Semua baris pada rentang waktu (maks 50.000) untuk ekspor CSV. */
+export const fetchTelemetriEkspor = async (
+  sensorId: string,
+  dari?: string,
+  sampai?: string,
+): Promise<ReadSensor[]> => {
+  const res = await apiClient.get<unknown>("/petani/telemetri", {
+    params: {
+      sensor_id: sensorId.trim(),
+      ekspor: 1,
+      ...(dari ? { dari } : {}),
+      ...(sampai ? { sampai } : {}),
+    },
+  });
+
+  return unwrapList(res)
+    .filter(
+      (i): i is Record<string, unknown> => typeof i === "object" && i !== null,
+    )
+    .map(normalizeReadSensor);
 };
 
 export const telemetryService = {
