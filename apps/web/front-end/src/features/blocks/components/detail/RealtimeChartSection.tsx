@@ -1,137 +1,178 @@
-import React, { useState, useMemo } from 'react'
-import { Activity } from 'lucide-react'
-import type { ReadSensor } from '@/services/telemetryService'
+import React, { useState, useMemo } from "react";
+import { Activity } from "lucide-react";
+import type { ReadSensor } from "@/services/telemetryService";
 
-export type TimeFilter = '24 Jam' | 'Semua Bacaan'
+export type TimeFilter = "24 Jam" | "Semua Bacaan";
 
 interface RealtimeChartSectionProps {
-  selectedRange?: TimeFilter
-  onRangeChange?: (range: TimeFilter) => void
-  hasTelemetry?: boolean
-  isOnline?: boolean
-  nodeStatus?: string
-  lastSeen?: string
-  deviceId?: string
-  telemetryData?: ReadSensor[]
+  selectedRange?: TimeFilter;
+  onRangeChange?: (range: TimeFilter) => void;
+  hasTelemetry?: boolean;
+  isOnline?: boolean;
+  nodeStatus?: string;
+  lastSeen?: string;
+  deviceId?: string;
+  telemetryData?: ReadSensor[];
 }
+
+const formatAxis = (v: number): string =>
+  Math.abs(v) >= 100
+    ? Math.round(v).toLocaleString("id-ID")
+    : v.toLocaleString("id-ID", { maximumFractionDigits: 1 });
 
 export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
   selectedRange: externalRange,
   onRangeChange,
   hasTelemetry = false,
   isOnline = false,
-  nodeStatus = '',
-  lastSeen = '',
-  deviceId = 'Belum Terpasang',
+  nodeStatus = "",
+  lastSeen = "",
+  deviceId = "Belum Terpasang",
   telemetryData = [],
 }) => {
-  const [internalRange, setInternalRange] = useState<TimeFilter>('24 Jam')
-  const selectedRange = externalRange || internalRange
+  const [internalRange, setInternalRange] = useState<TimeFilter>("24 Jam");
+  const selectedRange = externalRange || internalRange;
 
   const handleRangeChange = (range: TimeFilter) => {
     if (onRangeChange) {
-      onRangeChange(range)
+      onRangeChange(range);
     } else {
-      setInternalRange(range)
+      setInternalRange(range);
     }
-  }
+  };
 
-  const timeRanges: TimeFilter[] = ['24 Jam', 'Semua Bacaan']
-  const isInstalled = deviceId && deviceId !== 'Belum Terpasang'
-  const hasData = telemetryData.length > 0 || hasTelemetry
-  const showChart = isInstalled && hasData && (isOnline || telemetryData.length > 0)
+  const timeRanges: TimeFilter[] = ["24 Jam", "Semua Bacaan"];
+  const isInstalled = deviceId && deviceId !== "Belum Terpasang";
+  const hasData = telemetryData.length > 0 || hasTelemetry;
+  const showChart =
+    isInstalled && hasData && (isOnline || telemetryData.length > 0);
 
   // Filter data sesuai rentang waktu jika ada timestamp
   const displayData = useMemo(() => {
-    if (telemetryData.length === 0) return []
-    if (selectedRange === '24 Jam') {
-      const now = Date.now()
-      const oneDayAgo = now - 24 * 60 * 60 * 1000
+    if (telemetryData.length === 0) return [];
+    if (selectedRange === "24 Jam") {
+      const now = Date.now();
+      const oneDayAgo = now - 24 * 60 * 60 * 1000;
       const filtered = telemetryData.filter((d) => {
-        if (!d.dicatat_pada) return true
-        const t = new Date(d.dicatat_pada).getTime()
-        return !isNaN(t) ? t >= oneDayAgo : true
-      })
-      return filtered.length > 0 ? filtered : telemetryData
+        if (!d.dicatat_pada) return true;
+        const t = new Date(d.dicatat_pada).getTime();
+        return !isNaN(t) ? t >= oneDayAgo : true;
+      });
+      return filtered.length > 0 ? filtered : telemetryData;
     }
-    return telemetryData
-  }, [telemetryData, selectedRange])
+    return telemetryData;
+  }, [telemetryData, selectedRange]);
 
   // Koordinat grafik SVG dinamis
   const chartPoints = useMemo(() => {
-    if (displayData.length === 0) return null
+    if (displayData.length === 0) return null;
 
-    const N = displayData.length
-    const luxValues = displayData.map((d) => Number(d.nilai_lux ?? d.lux ?? 0))
-    const tempValues = displayData.map((d) => Number(d.suhu ?? d.temperature ?? 0))
+    const N = displayData.length;
+    const luxValues = displayData.map((d) => Number(d.nilai_lux ?? d.lux ?? 0));
+    const tempValues = displayData.map((d) =>
+      Number(d.suhu ?? d.temperature ?? 0),
+    );
 
-    const maxLux = Math.max(...luxValues, 100)
-    const minLux = Math.min(...luxValues, 0)
-    const luxRange = maxLux - minLux || 1
+    // Skala menyesuaikan data (bukan patokan tetap), diberi ruang 10% atas-bawah
+    const fit = (vals: number[], batasBawah?: number) => {
+      const lo = Math.min(...vals);
+      const hi = Math.max(...vals);
+      const pad = hi === lo ? Math.max(Math.abs(hi) * 0.1, 1) : (hi - lo) * 0.1;
+      const min =
+        batasBawah !== undefined ? Math.max(batasBawah, lo - pad) : lo - pad;
+      return { min, max: hi + pad };
+    };
+    const { min: minLux, max: maxLux } = fit(luxValues, 0);
+    const { min: minTemp, max: maxTemp } = fit(tempValues);
+    const luxRange = maxLux - minLux || 1;
+    const tempRange = maxTemp - minTemp || 1;
 
-    const maxTemp = Math.max(...tempValues, 40)
-    const minTemp = Math.min(...tempValues, 15)
-    const tempRange = maxTemp - minTemp || 1
-
-    const width = 500
-    const topY = 20
-    const bottomY = 130
-    const usableHeight = bottomY - topY
+    const width = 500;
+    const topY = 20;
+    const bottomY = 130;
+    const usableHeight = bottomY - topY;
 
     const points = displayData.map((_, i) => {
-      const x = N > 1 ? (i / (N - 1)) * (width - 20) + 10 : width / 2
-      const yLux = bottomY - ((luxValues[i] - minLux) / luxRange) * usableHeight
-      const yTemp = bottomY - ((tempValues[i] - minTemp) / tempRange) * usableHeight
-      return { x, yLux, yTemp, lux: luxValues[i], temp: tempValues[i] }
-    })
+      const x = N > 1 ? (i / (N - 1)) * (width - 20) + 10 : width / 2;
+      const yLux =
+        bottomY - ((luxValues[i] - minLux) / luxRange) * usableHeight;
+      const yTemp =
+        bottomY - ((tempValues[i] - minTemp) / tempRange) * usableHeight;
+      return { x, yLux, yTemp, lux: luxValues[i], temp: tempValues[i] };
+    });
 
     const luxLinePath = points.reduce(
-      (acc, pt, i) => (i === 0 ? `M ${pt.x},${pt.yLux}` : `${acc} L ${pt.x},${pt.yLux}`),
-      ''
-    )
-    const luxAreaPath = `${luxLinePath} L ${points[points.length - 1].x},${bottomY + 10} L ${points[0].x},${bottomY + 10} Z`
+      (acc, pt, i) =>
+        i === 0 ? `M ${pt.x},${pt.yLux}` : `${acc} L ${pt.x},${pt.yLux}`,
+      "",
+    );
+    const luxAreaPath = `${luxLinePath} L ${points[points.length - 1].x},${bottomY + 10} L ${points[0].x},${bottomY + 10} Z`;
 
     const tempLinePath = points.reduce(
-      (acc, pt, i) => (i === 0 ? `M ${pt.x},${pt.yTemp}` : `${acc} L ${pt.x},${pt.yTemp}`),
-      ''
-    )
+      (acc, pt, i) =>
+        i === 0 ? `M ${pt.x},${pt.yTemp}` : `${acc} L ${pt.x},${pt.yTemp}`,
+      "",
+    );
 
     return {
       points,
       luxLinePath,
       luxAreaPath,
       tempLinePath,
+      minLux,
+      maxLux,
+      minTemp,
+      maxTemp,
       latestLux: luxValues[luxValues.length - 1],
       latestTemp: tempValues[tempValues.length - 1],
-    }
-  }, [displayData])
+    };
+  }, [displayData]);
 
   // Ekstrak label waktu sumbu horizontal dari dicatat_pada
   const timeLabels = useMemo(() => {
-    if (displayData.length === 0) return []
+    if (displayData.length === 0) return [];
 
+    const tz = "Asia/Jakarta";
+    const jam = new Intl.DateTimeFormat("id-ID", {
+      timeZone: tz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    });
+    const tgl = new Intl.DateTimeFormat("id-ID", {
+      timeZone: tz,
+      day: "numeric",
+      month: "short",
+    });
+
+    const first = new Date(displayData[0]?.dicatat_pada ?? "").getTime();
+    const last = new Date(
+      displayData[displayData.length - 1]?.dicatat_pada ?? "",
+    ).getTime();
+    const lintasHari =
+      !isNaN(first) && !isNaN(last) && last - first > 20 * 60 * 60 * 1000;
+
+    // Jam memakai titik dua (01:15) supaya tidak terbaca seperti tanggal; rentang >20 jam diberi tanggal.
     const formatTime = (timeStr?: string) => {
-      if (!timeStr) return '00:00'
-      const dt = new Date(timeStr)
-      if (!isNaN(dt.getTime())) {
-        return dt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-      }
-      const parts = timeStr.split(' ')
-      return parts[1] ? parts[1].substring(0, 5) : timeStr.substring(0, 5)
-    }
+      if (!timeStr) return "";
+      const dt = new Date(timeStr);
+      if (isNaN(dt.getTime())) return timeStr.substring(0, 5);
+      const j = jam.format(dt).replace(".", ":");
+      return lintasHari ? `${tgl.format(dt)} ${j}` : j;
+    };
 
-    const count = Math.min(5, displayData.length)
+    const count = Math.min(5, displayData.length);
     if (count <= 1) {
-      return [formatTime(displayData[0]?.dicatat_pada)]
+      return [formatTime(displayData[0]?.dicatat_pada)];
     }
 
-    const labels: string[] = []
+    const labels: string[] = [];
     for (let i = 0; i < count; i++) {
-      const idx = Math.round((i / (count - 1)) * (displayData.length - 1))
-      labels.push(formatTime(displayData[idx]?.dicatat_pada))
+      const idx = Math.round((i / (count - 1)) * (displayData.length - 1));
+      labels.push(formatTime(displayData[idx]?.dicatat_pada));
     }
-    return labels
-  }, [displayData])
+    return labels;
+  }, [displayData]);
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs h-full flex flex-col justify-between space-y-5">
@@ -141,7 +182,9 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
           <Activity className="w-4 h-4 text-emerald-700 shrink-0" />
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-slate-900">Telemetri Intensitas & Suhu</h3>
+              <h3 className="text-base font-bold text-slate-900">
+                Telemetri Intensitas & Suhu
+              </h3>
               {chartPoints && (
                 <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-white text-emerald-800 border-2 border-emerald-600 ml-1">
                   {chartPoints.latestLux} lx | {chartPoints.latestTemp}°C
@@ -162,8 +205,8 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
               onClick={() => handleRangeChange(range)}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 selectedRange === range
-                  ? 'bg-white text-emerald-800 shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? "bg-white text-emerald-800 shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
             >
               {range}
@@ -180,32 +223,85 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
           </div>
           <h4 className="text-sm font-bold text-slate-800 mb-1">
             {!isInstalled
-              ? 'Node Belum Dipasangkan'
-              : (nodeStatus || '').toLowerCase() === 'offline'
-              ? 'Node Offline'
-              : 'Sensor Terhubung'}
+              ? "Node Belum Dipasangkan"
+              : (nodeStatus || "").toLowerCase() === "offline"
+                ? "Node Offline"
+                : "Sensor Terhubung"}
           </h4>
           <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
             {!isInstalled
-              ? 'Pasangkan perangkat node sensor IoT pada blok ini untuk mulai mengukur intensitas cahaya dan suhu secara real-time.'
-              : (nodeStatus || '').toLowerCase() === 'belum_pernah_terlihat'
-              ? 'Menunggu data telemetri pertama...'
-              : (nodeStatus || '').toLowerCase() === 'offline'
-              ? `Node offline, data terakhir pada ${lastSeen && lastSeen.trim() ? lastSeen : 'Belum ada data'}`
-              : 'Sensor terhubung. Menunggu data telemetri pertama...'}
+              ? "Pasangkan perangkat node sensor IoT pada blok ini untuk mulai mengukur intensitas cahaya dan suhu secara real-time."
+              : (nodeStatus || "").toLowerCase() === "belum_pernah_terlihat"
+                ? "Menunggu data telemetri pertama..."
+                : (nodeStatus || "").toLowerCase() === "offline"
+                  ? `Node offline, data terakhir pada ${lastSeen && lastSeen.trim() ? lastSeen : "Belum ada data"}`
+                  : "Sensor terhubung. Menunggu data telemetri pertama..."}
           </p>
         </div>
       ) : (
         <>
           <div className="flex-1 flex flex-col justify-center py-2">
-            <div className="relative h-44 w-full">
-              <svg className="w-full h-full overflow-visible" viewBox="0 0 500 150" preserveAspectRatio="none">
-                <line x1="0" y1="20" x2="500" y2="20" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
-                <line x1="0" y1="75" x2="500" y2="75" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
-                <line x1="0" y1="130" x2="500" y2="130" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
+            <div className="relative h-44 w-full flex items-stretch gap-2">
+              {chartPoints && (
+                <div className="relative w-12 shrink-0 text-[10px] font-semibold text-emerald-700 text-right">
+                  <span className="absolute -top-3 right-0 text-[9px] uppercase text-emerald-700/70">
+                    lx
+                  </span>
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      className="absolute right-0 -translate-y-1/2 tabular-nums"
+                      style={{ top: `${[13.3, 50, 86.7][i]}%` }}
+                    >
+                      {formatAxis(
+                        chartPoints.maxLux -
+                          (i / 2) * (chartPoints.maxLux - chartPoints.minLux),
+                      )}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <svg
+                className="w-full h-full flex-1 min-w-0 overflow-visible"
+                viewBox="0 0 500 150"
+                preserveAspectRatio="none"
+              >
+                <line
+                  x1="0"
+                  y1="20"
+                  x2="500"
+                  y2="20"
+                  stroke="#f1f5f9"
+                  strokeWidth="1"
+                  strokeDasharray="3 3"
+                />
+                <line
+                  x1="0"
+                  y1="75"
+                  x2="500"
+                  y2="75"
+                  stroke="#f1f5f9"
+                  strokeWidth="1"
+                  strokeDasharray="3 3"
+                />
+                <line
+                  x1="0"
+                  y1="130"
+                  x2="500"
+                  y2="130"
+                  stroke="#f1f5f9"
+                  strokeWidth="1"
+                  strokeDasharray="3 3"
+                />
 
                 <defs>
-                  <linearGradient id="luxGradientDynamic" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <linearGradient
+                    id="luxGradientDynamic"
+                    x1="0%"
+                    y1="0%"
+                    x2="0%"
+                    y2="100%"
+                  >
                     <stop offset="0%" stopColor="#059669" stopOpacity="0.22" />
                     <stop offset="100%" stopColor="#059669" stopOpacity="0.0" />
                   </linearGradient>
@@ -213,7 +309,10 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
 
                 {chartPoints ? (
                   <>
-                    <path d={chartPoints.luxAreaPath} fill="url(#luxGradientDynamic)" />
+                    <path
+                      d={chartPoints.luxAreaPath}
+                      fill="url(#luxGradientDynamic)"
+                    />
                     <path
                       d={chartPoints.luxLinePath}
                       fill="none"
@@ -267,10 +366,29 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
                   </>
                 )}
               </svg>
+              {chartPoints && (
+                <div className="relative w-12 shrink-0 text-[10px] font-semibold text-amber-600 text-left">
+                  <span className="absolute -top-3 left-0 text-[9px] uppercase text-amber-600/70">
+                    °C
+                  </span>
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      className="absolute left-0 -translate-y-1/2 tabular-nums"
+                      style={{ top: `${[13.3, 50, 86.7][i]}%` }}
+                    >
+                      {formatAxis(
+                        chartPoints.maxTemp -
+                          (i / 2) * (chartPoints.maxTemp - chartPoints.minTemp),
+                      )}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Sumbu Waktu Horisontal dicatat_pada */}
-            <div className="flex justify-between text-[10px] text-slate-400 font-semibold pt-3 px-1 border-t border-slate-100">
+            <div className="flex justify-between text-[10px] text-slate-400 font-semibold pt-3 pl-14 pr-14 border-t border-slate-100">
               {timeLabels.length > 0 ? (
                 timeLabels.map((lbl, idx) => <span key={idx}>{lbl}</span>)
               ) : (
@@ -290,7 +408,9 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-0.5 bg-emerald-600 rounded-full" />
-                <span className="text-slate-600 font-medium">Intensitas Lux</span>
+                <span className="text-slate-600 font-medium">
+                  Intensitas Lux
+                </span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-0.5 bg-amber-600 rounded-full border-b border-dashed" />
@@ -306,5 +426,5 @@ export const RealtimeChartSection: React.FC<RealtimeChartSectionProps> = ({
         </>
       )}
     </div>
-  )
-}
+  );
+};

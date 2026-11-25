@@ -135,7 +135,7 @@ export const BlockDetailPage: React.FC = () => {
       <CycleHistoryTable history={data.cycleHistory} />
 
       {/* Tabel Riwayat Log Sensor Detail */}
-      <SensorLogTable logs={data.sensorLogs} />
+      <SensorLogTable sensorId={data.nodeSensorId} />
     </div>
   );
 };
