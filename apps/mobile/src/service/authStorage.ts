@@ -11,6 +11,8 @@ export interface AuthUser {
   phone?: string;
   location?: string;
   avatarUrl?: string;
+  /** false = akun baru dari login Google yang belum mengisi nama kebun & no HP */
+  profil_lengkap?: boolean;
 }
 
 export type AuthState = {
@@ -100,7 +102,10 @@ export const authStorage = {
             }
           }
         } catch (err) {
-          console.warn("[authStorage] Gagal menginisialisasi dari storage:", err);
+          console.warn(
+            "[authStorage] Gagal menginisialisasi dari storage:",
+            err,
+          );
         } finally {
           isInitialized = true;
           notifyAuthListeners();
@@ -139,7 +144,10 @@ export const authStorage = {
         return storedToken;
       }
     } catch (err) {
-      console.warn("[authStorage] Gagal mengambil token langsung dari storage:", err);
+      console.warn(
+        "[authStorage] Gagal mengambil token langsung dari storage:",
+        err,
+      );
     }
 
     return null;

@@ -7,7 +7,11 @@ import { focusManager, onlineManager } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import * as SplashScreen from "expo-splash-screen";
 import NetInfo from "@react-native-community/netinfo";
-import { queryClient, asyncStoragePersister, clearAppCache } from "@/lib/queryClient";
+import {
+  queryClient,
+  asyncStoragePersister,
+  clearAppCache,
+} from "@/lib/queryClient";
 import { ErrorBoundary } from "@/component/ui/ErrorBoundary";
 import { onSubscriptionRequired, onAuthRequired } from "@/service/apiClient";
 import { useAuthState } from "@/service/authStorage";
@@ -57,7 +61,7 @@ function SubscriptionAlertWatcher({ children }: { children: React.ReactNode }) {
                 isAlertShown.current = false;
               },
             },
-          ]
+          ],
         );
         return;
       }
@@ -94,9 +98,11 @@ function SubscriptionAlertWatcher({ children }: { children: React.ReactNode }) {
 function AuthNavigationWatcher({
   isInitialized,
   isAuthenticated,
+  profilBelumLengkap,
 }: {
   isInitialized: boolean;
   isAuthenticated: boolean;
+  profilBelumLengkap: boolean;
 }) {
   const segments = useSegments();
   const isHandling401 = useRef(false);
@@ -106,13 +112,24 @@ function AuthNavigationWatcher({
     if (!isInitialized) return;
 
     const inAuthGroup = segments[0] === "login";
+    const diLengkapiProfil = segments[0] === "lengkapi-profil";
+    const diCallbackGoogle = segments[0] === "auth"; // deep link hasil login Google
+
+    if (diCallbackGoogle) return;
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace("/login");
-    } else if (isAuthenticated && inAuthGroup) {
+    } else if (isAuthenticated && profilBelumLengkap && !diLengkapiProfil) {
+      // Akun baru dari Google wajib melengkapi profil dulu
+      router.replace("/lengkapi-profil");
+    } else if (
+      isAuthenticated &&
+      !profilBelumLengkap &&
+      (inAuthGroup || diLengkapiProfil)
+    ) {
       router.replace("/(tabs)");
     }
-  }, [isInitialized, isAuthenticated, segments]);
+  }, [isInitialized, isAuthenticated, profilBelumLengkap, segments]);
 
   // 2. Tangani 401 unauthenticated listener dari apiClient (cegah loop / ganda)
   useEffect(() => {
@@ -133,7 +150,7 @@ function AuthNavigationWatcher({
 }
 
 export default function RootLayout() {
-  const { isInitialized, isAuthenticated } = useAuthState();
+  const { isInitialized, isAuthenticated, user } = useAuthState();
 
   useEffect(() => {
     const appStateSub = AppState.addEventListener("change", onAppStateChange);
@@ -177,9 +194,12 @@ export default function RootLayout() {
               <AuthNavigationWatcher
                 isInitialized={isInitialized}
                 isAuthenticated={isAuthenticated}
+                profilBelumLengkap={user?.profil_lengkap === false}
               />
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="login" />
+                <Stack.Screen name="lengkapi-profil" />
+                <Stack.Screen name="auth/google" />
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="scan" options={{ presentation: "modal" }} />
                 <Stack.Screen name="subscription" />
