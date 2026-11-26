@@ -31,9 +31,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFFFFF",
+          "backgroundColor": "#D1FAE5",
           "image": "./assets/images/logo/logo.png",
-          "imageWidth": 160,
+          "imageWidth": 280,
           "resizeMode": "contain"
         }
       ],
@@ -51,9 +51,7 @@
         {
           "android": {
             "usesCleartextTraffic": true,
-            "buildArchs": [
-              "arm64-v8a"
-            ],
+            "buildArchs": ["arm64-v8a"],
             "enableMinifyInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true
           }

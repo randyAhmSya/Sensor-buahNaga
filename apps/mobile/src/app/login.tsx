@@ -12,7 +12,7 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { PressableOpacity } from "@/component/ui/PressableOpacity";
-import { authService } from "@/service/authService";
+import { authService, GoogleLoginDibatalkan } from "@/service/authService";
 
 const LOGO_IMG = require("@/assets/images/logo/logo.png");
 
@@ -23,6 +23,29 @@ export default function LoginScreen() {
   const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const handleGoogleLogin = async () => {
+    try {
+      setIsGoogleLoading(true);
+      setErrorMessage(null);
+      const hasil = await authService.loginDenganGoogle();
+      // Akun baru wajib melengkapi profil dulu sebelum masuk dasbor
+      router.replace(
+        hasil.user.profil_lengkap === false ? "/lengkapi-profil" : "/(tabs)",
+      );
+    } catch (err: unknown) {
+      if (err instanceof GoogleLoginDibatalkan) return;
+      const apiErr = err as { data?: { pesan?: string }; message?: string };
+      setErrorMessage(
+        apiErr.data?.pesan ||
+          apiErr.message ||
+          "Login Google gagal. Silakan coba lagi.",
+      );
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim();
@@ -33,7 +56,7 @@ export default function LoginScreen() {
 
     if (!trimmedEmail.includes("@") || !trimmedEmail.includes(".")) {
       setErrorMessage(
-        "Format email tidak valid. Masukkan alamat email yang benar (contoh: nama@kebun.id)."
+        "Format email tidak valid. Masukkan alamat email yang benar (contoh: nama@kebun.id).",
       );
       return;
     }
@@ -125,7 +148,11 @@ export default function LoginScreen() {
         <View className="flex-1 justify-center max-w-md w-full self-center py-6">
           {/* Logo & Brand Header */}
           <View className="items-center mb-8">
-            <View className="w-20 h-20 rounded-lg bg-white shadow-sm border border-slate-200 items-center justify-center mb-4 p-2">
+            {/* Bayangan di dalam (inset), bukan di luar, supaya logo tidak tampak seperti kotak melayang */}
+            <View
+              className="w-20 h-20 rounded-2xl bg-emerald-50 border border-emerald-100 items-center justify-center mb-4 p-2"
+              style={{ boxShadow: "inset 0px 2px 8px rgba(4, 120, 87, 0.18)" }}
+            >
               <Image
                 source={LOGO_IMG}
                 className="w-16 h-16"
@@ -137,7 +164,8 @@ export default function LoginScreen() {
               Selamat Datang Kembali
             </Text>
             <Text className="text-sm text-slate-500 text-center mt-1 px-4">
-              Masuk untuk memantau kebun dan sistem IoT buah naga Anda secara realtime
+              Masuk untuk memantau kebun dan sistem IoT buah naga Anda secara
+              realtime
             </Text>
           </View>
 
@@ -210,7 +238,9 @@ export default function LoginScreen() {
                 <PressableOpacity
                   onPress={() => setShowPassword(!showPassword)}
                   activeOpacity={0.7}
-                  accessibilityLabel={showPassword ? "Sembunyikan sandi" : "Tampilkan sandi"}
+                  accessibilityLabel={
+                    showPassword ? "Sembunyikan sandi" : "Tampilkan sandi"
+                  }
                   className="p-1"
                 >
                   <Ionicons
@@ -249,7 +279,7 @@ export default function LoginScreen() {
               <PressableOpacity
                 onPress={() => {
                   setErrorMessage(
-                    "Silakan hubungi administrator kebun untuk mereset kata sandi."
+                    "Silakan hubungi administrator kebun untuk mereset kata sandi.",
                   );
                 }}
                 activeOpacity={0.7}
@@ -288,6 +318,32 @@ export default function LoginScreen() {
               )}
             </PressableOpacity>
           </View>
+
+          {/* Login Google */}
+          <View className="flex-row items-center gap-3 mt-6">
+            <View className="flex-1 h-px bg-slate-200" />
+            <Text className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              atau
+            </Text>
+            <View className="flex-1 h-px bg-slate-200" />
+          </View>
+          <PressableOpacity
+            onPress={handleGoogleLogin}
+            disabled={isGoogleLoading || isSubmitting}
+            activeOpacity={0.85}
+            className="flex-row items-center justify-center gap-3 rounded-lg py-3.5 mt-4 bg-white border-[1.5px] border-slate-300"
+            accessibilityRole="button"
+            accessibilityLabel="Masuk dengan Google"
+          >
+            {isGoogleLoading ? (
+              <ActivityIndicator size="small" color="#047857" />
+            ) : (
+              <Ionicons name="logo-google" size={18} color="#EA4335" />
+            )}
+            <Text className="text-sm font-semibold text-slate-700">
+              {isGoogleLoading ? "Membuka Google..." : "Masuk dengan Google"}
+            </Text>
+          </PressableOpacity>
 
           {/* Footer Info */}
           <View className="mt-8 items-center gap-2">
