@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { useBuyManualMutation } from "@/hooks/useSubscription";
+import { BackButton } from "@/component/ui/BackButton";
 
 function formatRupiah(amount: number): string {
   return new Intl.NumberFormat("id-ID", {
@@ -92,13 +93,15 @@ function PayManualScreenInner() {
         }
       } catch (manipErr) {
         if (__DEV__) {
-          console.warn("[pay-manual] Fallback upload tanpa kompresi manipulasi:", manipErr);
+          console.warn(
+            "[pay-manual] Fallback upload tanpa kompresi manipulasi:",
+            manipErr,
+          );
         }
       }
 
       const fileName =
-        selectedImage.fileName ||
-        `bukti_transfer_${Date.now()}.jpg`;
+        selectedImage.fileName || `bukti_transfer_${Date.now()}.jpg`;
       const mimeType = "image/jpeg";
 
       await buyManualMutation.mutateAsync({
@@ -132,15 +135,13 @@ function PayManualScreenInner() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top", "left", "right"]}>
+      <SafeAreaView
+        className="flex-1 bg-gray-50"
+        edges={["top", "left", "right"]}
+      >
         {/* Header */}
         <View className="flex-row items-center justify-between border-b border-gray-200 bg-white px-4 py-3.5">
-          <Pressable
-            onPress={() => router.back()}
-            className="h-10 w-10 items-center justify-center rounded-full bg-gray-100 active:bg-gray-200"
-          >
-            <Ionicons name="arrow-back" size={22} color="#15803d" />
-          </Pressable>
+          <BackButton fallback="/subscription" />
 
           <Text className="text-base font-bold text-gray-900">
             Transfer Manual
@@ -202,7 +203,8 @@ function PayManualScreenInner() {
             </View>
 
             <Text className="text-[11px] text-emerald-900 mt-3 leading-relaxed">
-              *Pastikan nominal transfer tepat hingga digit terakhir agar proses verifikasi admin berjalan cepat.
+              *Pastikan nominal transfer tepat hingga digit terakhir agar proses
+              verifikasi admin berjalan cepat.
             </Text>
           </View>
 
@@ -245,7 +247,11 @@ function PayManualScreenInner() {
                 className="rounded-lg border-2 border-dashed border-emerald-300 bg-white p-8 items-center justify-center active:bg-emerald-50"
               >
                 <View className="h-12 w-12 rounded-full bg-emerald-100 items-center justify-center mb-2">
-                  <Ionicons name="cloud-upload-outline" size={26} color="#15803d" />
+                  <Ionicons
+                    name="cloud-upload-outline"
+                    size={26}
+                    color="#15803d"
+                  />
                 </View>
                 <Text className="text-sm font-bold text-emerald-900">
                   Pilih Foto dari Galeri

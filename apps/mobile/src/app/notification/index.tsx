@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,18 +7,18 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
-} from 'react-native';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useQueryClient } from '@tanstack/react-query';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useNotifications,
   useUnreadNotificationCount,
   useMarkAsReadMutation,
   useMarkAllAsReadMutation,
-} from '@/hooks/useNotifications';
-import { QUERY_KEYS } from '@/constant/queryKeys';
-import type { NotifikasiItem } from '@/types/notification';
+} from "@/hooks/useNotifications";
+import { QUERY_KEYS } from "@/constant/queryKeys";
+import type { NotifikasiItem } from "@/types/notification";
+import { BackButton } from "@/component/ui/BackButton";
 
 export default function NotificationScreen() {
   const queryClient = useQueryClient();
@@ -70,12 +70,12 @@ export default function NotificationScreen() {
   const handleMarkAll = () => {
     if (!hasUnread) return;
     Alert.alert(
-      'Tandai Semua Dibaca',
-      'Apakah Anda yakin ingin menandai seluruh notifikasi sebagai sudah dibaca?',
+      "Tandai Semua Dibaca",
+      "Apakah Anda yakin ingin menandai seluruh notifikasi sebagai sudah dibaca?",
       [
-        { text: 'Batal', style: 'cancel' },
+        { text: "Batal", style: "cancel" },
         {
-          text: 'Tandai',
+          text: "Tandai",
           onPress: () => markAllAsReadMutation.mutate(),
         },
       ],
@@ -84,16 +84,24 @@ export default function NotificationScreen() {
 
   const renderIcon = (tipe: string) => {
     switch (tipe) {
-      case 'peringatan':
-      case 'HARDWARE_ALERT':
-        return <Ionicons name="hardware-chip-outline" size={20} color="#E11D48" />;
-      case 'panen':
-      case 'AGRONOMI_ALERT':
+      case "peringatan":
+      case "HARDWARE_ALERT":
+        return (
+          <Ionicons name="hardware-chip-outline" size={20} color="#E11D48" />
+        );
+      case "panen":
+      case "AGRONOMI_ALERT":
         return <Ionicons name="leaf-outline" size={20} color="#059669" />;
-      case 'langganan':
+      case "langganan":
         return <Ionicons name="card-outline" size={20} color="#059669" />;
       default:
-        return <Ionicons name="information-circle-outline" size={20} color="#2563EB" />;
+        return (
+          <Ionicons
+            name="information-circle-outline"
+            size={20}
+            color="#2563EB"
+          />
+        );
     }
   };
 
@@ -101,12 +109,7 @@ export default function NotificationScreen() {
     <View className="flex-1 bg-slate-50">
       {/* Header */}
       <View className="flex-row items-center justify-between border-b border-slate-200 bg-white px-4 py-3.5 pt-12">
-        <Pressable
-          onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400"
-        >
-          <Ionicons name="arrow-back" size={20} color="#0F172A" />
-        </Pressable>
+        <BackButton fallback="/(tabs)" />
 
         <Text className="text-base font-bold text-slate-900">Notifikasi</Text>
 
@@ -120,7 +123,7 @@ export default function NotificationScreen() {
           ) : (
             <Text
               className={`text-xs font-bold ${
-                hasUnread ? 'text-emerald-700' : 'text-slate-400'
+                hasUnread ? "text-emerald-700" : "text-slate-400"
               }`}
             >
               Baca Semua
@@ -135,13 +138,13 @@ export default function NotificationScreen() {
           onPress={() => setFilterUnreadOnly(false)}
           className={`rounded-lg px-3 py-1.5 ${
             !filterUnreadOnly
-              ? 'bg-emerald-700'
-              : 'bg-white border border-slate-300'
+              ? "bg-emerald-700"
+              : "bg-white border border-slate-300"
           }`}
         >
           <Text
             className={`text-xs font-bold ${
-              !filterUnreadOnly ? 'text-white' : 'text-slate-700'
+              !filterUnreadOnly ? "text-white" : "text-slate-700"
             }`}
           >
             Semua
@@ -152,13 +155,13 @@ export default function NotificationScreen() {
           onPress={() => setFilterUnreadOnly(true)}
           className={`flex-row items-center gap-1.5 rounded-lg px-3 py-1.5 ${
             filterUnreadOnly
-              ? 'bg-emerald-700'
-              : 'bg-white border border-slate-300'
+              ? "bg-emerald-700"
+              : "bg-white border border-slate-300"
           }`}
         >
           <Text
             className={`text-xs font-semibold ${
-              filterUnreadOnly ? 'text-white' : 'text-slate-700'
+              filterUnreadOnly ? "text-white" : "text-slate-700"
             }`}
           >
             Belum Dibaca
@@ -166,15 +169,15 @@ export default function NotificationScreen() {
           {hasUnread && (
             <View
               className={`h-4 min-w-[16px] items-center justify-center rounded-full px-1 ${
-                filterUnreadOnly ? 'bg-white' : 'bg-rose-600'
+                filterUnreadOnly ? "bg-white" : "bg-rose-600"
               }`}
             >
               <Text
                 className={`text-[10px] font-bold ${
-                  filterUnreadOnly ? 'text-emerald-800' : 'text-white'
+                  filterUnreadOnly ? "text-emerald-800" : "text-white"
                 }`}
               >
-                {(unreadCount ?? 0) > 99 ? '99+' : unreadCount}
+                {(unreadCount ?? 0) > 99 ? "99+" : unreadCount}
               </Text>
             </View>
           )}
@@ -188,14 +191,18 @@ export default function NotificationScreen() {
         </View>
       ) : notifications.length === 0 ? (
         <View className="flex-1 items-center justify-center px-6">
-          <Ionicons name="notifications-off-outline" size={48} color="#64748B" />
+          <Ionicons
+            name="notifications-off-outline"
+            size={48}
+            color="#64748B"
+          />
           <Text className="mt-3 text-sm font-bold text-slate-800">
             Tidak Ada Notifikasi
           </Text>
           <Text className="mt-1 text-center text-xs text-slate-600">
             {filterUnreadOnly
-              ? 'Semua notifikasi penting telah Anda baca.'
-              : 'Belum ada riwayat aktivitas terbaru di kebun Anda.'}
+              ? "Semua notifikasi penting telah Anda baca."
+              : "Belum ada riwayat aktivitas terbaru di kebun Anda."}
           </Text>
         </View>
       ) : (
@@ -206,7 +213,7 @@ export default function NotificationScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={handleRefresh}
-              colors={['#059669']}
+              colors={["#059669"]}
             />
           }
           renderItem={({ item }) => {
@@ -215,7 +222,7 @@ export default function NotificationScreen() {
               <Pressable
                 onPress={() => handleMarkAsRead(item)}
                 className={`flex-row items-start gap-3 border-b border-slate-200 p-4 bg-white ${
-                  isUnread ? 'border-l-4 border-l-[#047857]' : ''
+                  isUnread ? "border-l-4 border-l-[#047857]" : ""
                 }`}
               >
                 <View className="mt-0.5 h-9 w-9 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400">
@@ -226,7 +233,9 @@ export default function NotificationScreen() {
                   <View className="flex-row items-center justify-between gap-2">
                     <Text
                       className={`text-sm flex-1 mr-1 ${
-                        isUnread ? 'font-bold text-slate-900' : 'font-semibold text-slate-800'
+                        isUnread
+                          ? "font-bold text-slate-900"
+                          : "font-semibold text-slate-800"
                       }`}
                       numberOfLines={1}
                     >
@@ -242,11 +251,11 @@ export default function NotificationScreen() {
                   </Text>
 
                   <Text className="mt-2 text-[10px] font-medium text-slate-600">
-                    {new Date(item.created_at).toLocaleString('id-ID', {
-                      day: 'numeric',
-                      month: 'short',
-                      hour: '2-digit',
-                      minute: '2-digit',
+                    {new Date(item.created_at).toLocaleString("id-ID", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
                     })}
                   </Text>
                 </View>

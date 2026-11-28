@@ -150,23 +150,14 @@ export default function LoginScreen() {
         <View className="flex-1 justify-center max-w-md w-full self-center py-6">
           {/* Logo & Brand Header */}
           <View className="items-center mb-8">
-            {/* Bayangan di dalam (inset), bukan di luar, supaya logo tidak tampak seperti kotak melayang */}
-            <View
-              className="w-20 h-20 rounded-2xl border items-center justify-center mb-4 p-2"
-              style={{
-                backgroundColor: colors.auth.logoBg,
-                borderColor: colors.auth.logoBorder,
-                boxShadow: colors.auth.logoInnerShadow,
-              }}
-            >
-              <Image
-                source={LOGO_IMG}
-                className="w-16 h-16"
-                resizeMode="contain"
-                accessibilityLabel="Logo Smart Dragon Fruit Farm"
-              />
-            </View>
-            <Text className="text-2xl font-bold text-slate-800 tracking-tight text-center">
+            {/* Logo tanpa kotak/latar, ukuran besar */}
+            <Image
+              source={LOGO_IMG}
+              style={{ width: 160, height: 160 }}
+              resizeMode="contain"
+              accessibilityLabel="Logo Smart Dragon Fruit Farm"
+            />
+            <Text className="mt-2 text-2xl font-bold text-slate-800 tracking-tight text-center">
               Selamat Datang Kembali
             </Text>
             <Text className="text-sm text-slate-500 text-center mt-1 px-4">

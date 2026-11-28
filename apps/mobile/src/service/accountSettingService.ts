@@ -1,5 +1,7 @@
 import apiClient from "./apiClient";
 import { authStorage } from "./authStorage";
+import { queryClient } from "@/lib/queryClient";
+import { QUERY_KEYS } from "@/constant/queryKeys";
 import { type AccountProfile } from "@/constant/AccountSetting";
 
 export interface UpdateAccountPayload {
@@ -49,14 +51,32 @@ async function syncLocalUser(u: MeResponse["data"]): Promise<void> {
   });
 }
 
-/** Ambil profil dari server (sumber kebenaran), lalu samakan cache lokal. */
-export async function fetchAccountProfile(): Promise<AccountProfile> {
+const PROFILE_STALE_MS = 5 * 60 * 1000;
+
+/**
+ * Profil akun dengan cache 5 menit: membuka/menutup layar berulang kali tidak
+ * memanggil /auth/me lagi. Request yang sedang berjalan juga digabung.
+ */
+export function fetchAccountProfile(): Promise<AccountProfile> {
+  return queryClient.fetchQuery({
+    queryKey: QUERY_KEYS.accountSettings.all,
+    queryFn: ambilProfilDariServer,
+    staleTime: PROFILE_STALE_MS,
+  });
+}
+
+async function ambilProfilDariServer(): Promise<AccountProfile> {
   const res = await apiClient.get<MeResponse>("/auth/me");
   const u = res.data?.data;
   if (!u)
     throw new Error("Data profil tidak ditemukan. Silakan login kembali.");
   await syncLocalUser(u);
   return toProfile(u);
+}
+
+function simpanKeCache(p: AccountProfile): AccountProfile {
+  queryClient.setQueryData(QUERY_KEYS.accountSettings.all, p);
+  return p;
 }
 
 /** Simpan nama, nomor HP, dan nama kebun ke backend. */
@@ -73,8 +93,11 @@ export async function updateAccountProfile(
   const u = res.data?.data;
   if (u) {
     await syncLocalUser(u);
-    return toProfile(u);
+    return simpanKeCache(toProfile(u));
   }
+  await queryClient.invalidateQueries({
+    queryKey: QUERY_KEYS.accountSettings.all,
+  });
   return fetchAccountProfile();
 }
 
