@@ -43,10 +43,9 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        // Harus sama persis dengan "Authorized redirect URI" di Google Cloud Console
         'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL').'/api/auth/google/callback'),
-        // Alamat front-end tujuan setelah login Google (satu alamat, tanpa koma)
         'frontend_url' => env('GOOGLE_FRONTEND_URL', 'http://localhost:5173'),
+        'izinkan_expo' => env('GOOGLE_IZINKAN_EXPO', false),
     ],
 
 ];

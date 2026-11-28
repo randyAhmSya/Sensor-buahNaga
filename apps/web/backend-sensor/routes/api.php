@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\Auth\ProfilController;
 use App\Http\Controllers\WebhookMidtransController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('throttle:5,1')->post('/auth/login', [AuthController::class, 'login']);
@@ -18,9 +18,8 @@ Route::middleware('auth:sanctum')->post('/auth/logout', [AuthController::class, 
 
 Route::post('webhook/midtrans', [WebhookMidtransController::class, 'handle']);
 
-Route::middleware('auth:sanctum')->get('/auth/me', function (Request $request) {
-    return response()->json([
-        'status' => 'success',
-        'data' => $request->user(),
-    ]);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/auth/me', [ProfilController::class, 'saya']);
+    Route::put('/auth/profil', [ProfilController::class, 'perbarui']);
+    Route::put('/auth/password', [ProfilController::class, 'ubahPassword'])->middleware('throttle:5,1');
 });
