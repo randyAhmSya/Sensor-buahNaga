@@ -1,10 +1,11 @@
 import React, { useMemo } from "react";
-import { View, Text, Pressable, ScrollView } from "react-native";
-import { useLocalSearchParams, router, Stack } from "expo-router";
+import { View, Text, ScrollView } from "react-native";
+import { useLocalSearchParams, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQrScanLogs } from "@/hooks/useQrScanLogs";
 import { ActivityCard } from "@/component/dashboard/ActivityCard";
+import { BackButton } from "@/component/ui/BackButton";
 
 export default function HistoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -25,15 +26,14 @@ export default function HistoryDetailScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView className="flex-1 bg-gray-50" style={{ flex: 1 }} edges={["top", "left", "right"]}>
+      <SafeAreaView
+        className="flex-1 bg-gray-50"
+        style={{ flex: 1 }}
+        edges={["top", "left", "right"]}
+      >
         {/* Header */}
         <View className="flex-row items-center justify-between border-b border-gray-200 bg-white px-4 py-3.5">
-          <Pressable
-            onPress={() => router.back()}
-            className="h-10 w-10 items-center justify-center rounded-full bg-gray-100 active:bg-gray-200"
-          >
-            <Ionicons name="arrow-back" size={22} color="#15803d" />
-          </Pressable>
+          <BackButton fallback="/(tabs)/history" />
 
           <Text className="text-base font-bold text-gray-900">
             Riwayat Node / Sensor
@@ -67,7 +67,8 @@ export default function HistoryDetailScreen() {
 
             <View className="mt-4 border-t border-slate-100 pt-3">
               <Text className="text-sm text-gray-600 leading-relaxed">
-                Log telemetri historis (pencahayaan lux, konsumsi daya watt, dan pembacaan suhu) untuk node ini akan dimuat di sini.
+                Log telemetri historis (pencahayaan lux, konsumsi daya watt, dan
+                pembacaan suhu) untuk node ini akan dimuat di sini.
               </Text>
             </View>
           </View>
@@ -79,7 +80,11 @@ export default function HistoryDetailScreen() {
             </Text>
             {nodeLogs.length === 0 ? (
               <View className="items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white p-6">
-                <Ionicons name="document-text-outline" size={36} color="#9ca3af" />
+                <Ionicons
+                  name="document-text-outline"
+                  size={36}
+                  color="#9ca3af"
+                />
                 <Text className="mt-2 text-center text-sm font-medium text-gray-600">
                   Belum ada log pemindaian untuk node ini
                 </Text>

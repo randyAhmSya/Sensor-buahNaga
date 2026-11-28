@@ -15,6 +15,7 @@ import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import { useBuyOnlineMutation } from "@/hooks/useSubscription";
 import { subscriptionService } from "@/service/subscriptionService";
+import { BackButton } from "@/component/ui/BackButton";
 
 function formatRupiah(amount: number): string {
   return new Intl.NumberFormat("id-ID", {
@@ -89,15 +90,13 @@ function PayOnlineScreenInner() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top", "left", "right"]}>
+      <SafeAreaView
+        className="flex-1 bg-gray-50"
+        edges={["top", "left", "right"]}
+      >
         {/* Header */}
         <View className="flex-row items-center justify-between border-b border-gray-200 bg-white px-4 py-3.5">
-          <Pressable
-            onPress={() => router.back()}
-            className="h-10 w-10 items-center justify-center rounded-full bg-gray-100 active:bg-gray-200"
-          >
-            <Ionicons name="arrow-back" size={22} color="#15803d" />
-          </Pressable>
+          <BackButton fallback="/subscription" />
 
           <Text className="text-base font-bold text-gray-900">
             Pembayaran Online Midtrans
@@ -154,7 +153,8 @@ function PayOnlineScreenInner() {
                     QRIS (BCA, GoPay, OVO, ShopeePay, Dana)
                   </Text>
                   <Text className="text-[11px] text-gray-400">
-                    Scan kode QR langsung dari aplikasi e-wallet / m-banking Anda
+                    Scan kode QR langsung dari aplikasi e-wallet / m-banking
+                    Anda
                   </Text>
                 </View>
               </View>
@@ -175,7 +175,11 @@ function PayOnlineScreenInner() {
 
               <View className="flex-row items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
                 <View className="h-9 w-9 rounded-lg bg-emerald-100 items-center justify-center">
-                  <Ionicons name="storefront-outline" size={20} color="#15803d" />
+                  <Ionicons
+                    name="storefront-outline"
+                    size={20}
+                    color="#15803d"
+                  />
                 </View>
                 <View>
                   <Text className="text-xs font-bold text-gray-900">

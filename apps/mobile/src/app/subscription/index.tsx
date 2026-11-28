@@ -17,6 +17,7 @@ import {
   useSubscriptionPackages,
 } from "@/hooks/useSubscription";
 import type { PaketLangganan } from "@/types/subscription";
+import { BackButton } from "@/component/ui/BackButton";
 
 function formatRupiah(amount: number): string {
   return new Intl.NumberFormat("id-ID", {
@@ -40,7 +41,9 @@ function SubscriptionIndexScreenInner() {
   } = useSubscriptionPackages();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedPaket, setSelectedPaket] = useState<PaketLangganan | null>(null);
+  const [selectedPaket, setSelectedPaket] = useState<PaketLangganan | null>(
+    null,
+  );
   const [modalVisible, setModalVisible] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -88,16 +91,13 @@ function SubscriptionIndexScreenInner() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top", "left", "right"]}>
+      <SafeAreaView
+        className="flex-1 bg-gray-50"
+        edges={["top", "left", "right"]}
+      >
         {/* Header */}
         <View className="flex-row items-center justify-between border-b border-gray-200 bg-white px-4 py-3.5">
-          <Pressable
-            onPress={() => router.back()}
-            className="h-10 w-10 items-center justify-center rounded-full bg-gray-100 active:bg-gray-200"
-            accessibilityLabel="Kembali"
-          >
-            <Ionicons name="arrow-back" size={22} color="#15803d" />
-          </Pressable>
+          <BackButton fallback="/profile" />
 
           <Text className="text-base font-bold text-gray-900">
             Langganan & Paket
@@ -141,8 +141,8 @@ function SubscriptionIndexScreenInner() {
                     status === "aktif"
                       ? "bg-emerald-100 border border-emerald-300"
                       : status === "dalam_masa_tenggang"
-                      ? "bg-amber-100 border border-amber-300"
-                      : "bg-red-100 border border-red-300"
+                        ? "bg-amber-100 border border-amber-300"
+                        : "bg-red-100 border border-red-300"
                   }`}
                 >
                   <Text
@@ -150,15 +150,15 @@ function SubscriptionIndexScreenInner() {
                       status === "aktif"
                         ? "text-emerald-800"
                         : status === "dalam_masa_tenggang"
-                        ? "text-amber-800"
-                        : "text-red-800"
+                          ? "text-amber-800"
+                          : "text-red-800"
                     }`}
                   >
                     {status === "aktif"
                       ? "Aktif"
                       : status === "dalam_masa_tenggang"
-                      ? "Masa Tenggang"
-                      : "Kadaluarsa"}
+                        ? "Masa Tenggang"
+                        : "Kadaluarsa"}
                   </Text>
                 </View>
               )}
@@ -180,7 +180,8 @@ function SubscriptionIndexScreenInner() {
                     Dalam Masa Tenggang ({sisaHari} Hari)
                   </Text>
                   <Text className="text-xs text-gray-500 mt-0.5">
-                    Segera perpanjang paket agar kontrol otomatis dan sensor tidak terhenti.
+                    Segera perpanjang paket agar kontrol otomatis dan sensor
+                    tidak terhenti.
                   </Text>
                 </View>
               ) : (
@@ -189,7 +190,8 @@ function SubscriptionIndexScreenInner() {
                     Masa Langganan Telah Habis
                   </Text>
                   <Text className="text-xs text-gray-500 mt-0.5">
-                    Silakan beli paket langganan untuk mengaktifkan kembali kontrol perangkat kebun.
+                    Silakan beli paket langganan untuk mengaktifkan kembali
+                    kontrol perangkat kebun.
                   </Text>
                 </View>
               )}
@@ -252,19 +254,31 @@ function SubscriptionIndexScreenInner() {
 
                 <View className="mt-4 gap-2 border-t border-gray-100 pt-3">
                   <View className="flex-row items-center gap-2">
-                    <Ionicons name="checkmark-circle" size={16} color="#15803d" />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={16}
+                      color="#15803d"
+                    />
                     <Text className="text-xs text-gray-600">
                       Monitoring sensor & telemetri kebun real-time
                     </Text>
                   </View>
                   <View className="flex-row items-center gap-2">
-                    <Ionicons name="checkmark-circle" size={16} color="#15803d" />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={16}
+                      color="#15803d"
+                    />
                     <Text className="text-xs text-gray-600">
                       Auto-dimming pintar & jadwal lampu otomatis
                     </Text>
                   </View>
                   <View className="flex-row items-center gap-2">
-                    <Ionicons name="checkmark-circle" size={16} color="#15803d" />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={16}
+                      color="#15803d"
+                    />
                     <Text className="text-xs text-gray-600">
                       Pelacakan siklus pembungaan hingga panen
                     </Text>
@@ -309,7 +323,8 @@ function SubscriptionIndexScreenInner() {
                 <View className="my-4 rounded-xl bg-gray-50 p-3.5 border border-gray-200">
                   <Text className="text-xs text-gray-500">Paket Terpilih</Text>
                   <Text className="text-base font-bold text-gray-900">
-                    {selectedPaket.nama_paket} (+{selectedPaket.tambahan_hari} Hari)
+                    {selectedPaket.nama_paket} (+{selectedPaket.tambahan_hari}{" "}
+                    Hari)
                   </Text>
                   <Text className="text-sm font-extrabold text-emerald-700 mt-0.5">
                     {formatRupiah(selectedPaket.harga)}
@@ -346,7 +361,11 @@ function SubscriptionIndexScreenInner() {
                 >
                   <View className="flex-row items-center gap-3">
                     <View className="h-10 w-10 rounded-xl bg-gray-100 items-center justify-center">
-                      <Ionicons name="document-text-outline" size={22} color="#374151" />
+                      <Ionicons
+                        name="document-text-outline"
+                        size={22}
+                        color="#374151"
+                      />
                     </View>
                     <View>
                       <Text className="text-sm font-bold text-gray-900">

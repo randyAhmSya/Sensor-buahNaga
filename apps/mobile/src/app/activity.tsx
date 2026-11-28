@@ -21,6 +21,7 @@ import { fetchNodeDetail } from "@/service/nodeDetailService";
 import { scanHistoryStorage } from "@/service/storage/scanHistoryStorage";
 import { isUuid } from "@/hooks/useNodeDetails";
 import type { EnhancedApiError } from "@/service/apiClient";
+import { BackButton } from "@/component/ui/BackButton";
 
 type FilterStatus = "all" | "success" | "failed";
 
@@ -158,19 +159,16 @@ export default function ActivityScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView className="flex-1 bg-gray-50" style={{ flex: 1 }} edges={["top", "left", "right"]}>
+      <SafeAreaView
+        className="flex-1 bg-gray-50"
+        style={{ flex: 1 }}
+        edges={["top", "left", "right"]}
+      >
         {/* Header */}
         <View className="border-b border-gray-100 bg-white px-4 py-3.5">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-3 flex-1">
-              <Pressable
-                onPress={() => router.back()}
-                className="h-10 w-10 items-center justify-center rounded-full bg-gray-100 active:bg-gray-200"
-                accessibilityRole="button"
-                accessibilityLabel="Kembali"
-              >
-                <Ionicons name="arrow-back" size={22} color="#1F2937" />
-              </Pressable>
+              <BackButton fallback="/(tabs)" />
 
               <View className="flex-1">
                 <Text className="text-base font-bold text-gray-900">
@@ -293,7 +291,11 @@ export default function ActivityScreen() {
             {filteredLogs.length === 0 ? (
               <View className="flex-1 items-center justify-center p-8 mt-12">
                 <View className="h-16 w-16 items-center justify-center rounded-lg bg-white border-[1.5px] border-slate-400 mb-3">
-                  <Ionicons name="document-text-outline" size={32} color="#047857" />
+                  <Ionicons
+                    name="document-text-outline"
+                    size={32}
+                    color="#047857"
+                  />
                 </View>
                 <Text className="text-base font-bold text-gray-900 text-center">
                   Tidak Ada Catatan Aktivitas

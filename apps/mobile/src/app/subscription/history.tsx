@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSubscriptionHistory } from "@/hooks/useSubscription";
 import type { TransaksiLangganan } from "@/types/subscription";
+import { BackButton } from "@/component/ui/BackButton";
 
 function formatRupiah(amount: number): string {
   return new Intl.NumberFormat("id-ID", {
@@ -42,7 +43,8 @@ function StatusBadge({ status }: { status: string }) {
   const normalized = status.toLowerCase();
   const isSuccess = normalized === "berhasil" || normalized === "diverifikasi";
   const isPending =
-    normalized === "menunggu_pembayaran" || normalized === "menunggu_verifikasi";
+    normalized === "menunggu_pembayaran" ||
+    normalized === "menunggu_verifikasi";
   const isFailed = normalized === "ditolak" || normalized === "dibatalkan";
 
   let bgClass = "bg-gray-100 border-gray-200";
@@ -88,15 +90,13 @@ function SubscriptionHistoryScreenInner() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top", "left", "right"]}>
+      <SafeAreaView
+        className="flex-1 bg-gray-50"
+        edges={["top", "left", "right"]}
+      >
         {/* Header */}
         <View className="flex-row items-center justify-between border-b border-gray-200 bg-white px-4 py-3.5">
-          <Pressable
-            onPress={() => router.back()}
-            className="h-10 w-10 items-center justify-center rounded-full bg-gray-100 active:bg-gray-200"
-          >
-            <Ionicons name="arrow-back" size={22} color="#15803d" />
-          </Pressable>
+          <BackButton fallback="/subscription" />
 
           <Text className="text-base font-bold text-gray-900">
             Riwayat Transaksi Langganan

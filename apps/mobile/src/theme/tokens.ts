@@ -137,6 +137,13 @@ export const pillColors = {
 } as const;
 
 /** Tombol "Masuk dengan Google" dan elemen login lain. */
+/** Tombol kembali tunggal. */
+export const backButtonColors = {
+  bg: "#F3F4F6",
+  pressedBg: "#E5E7EB",
+  icon: "#14532D",
+} as const;
+
 export const authColors = {
   googleRed: "#EA4335",
   buttonBg: "#FFFFFF",
@@ -216,4 +223,5 @@ export const colors = {
   tone: toneAccent,
   pill: pillColors,
   auth: authColors,
+  backButton: backButtonColors,
 } as const;

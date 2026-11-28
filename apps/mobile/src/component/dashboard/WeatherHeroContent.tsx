@@ -28,7 +28,7 @@ function MetricTile({
   icon,
   value,
   label,
-  valueSize = 22,
+  valueSize = 20,
   progress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
@@ -91,10 +91,7 @@ export function WeatherHeroContent({
   children,
 }: WeatherHeroContentProps) {
   const hasSuhu =
-    bacaanTerbaru !== null &&
-    bacaanTerbaru !== undefined &&
-    bacaanTerbaru.suhu !== null &&
-    bacaanTerbaru.suhu !== undefined;
+    bacaanTerbaru?.suhu !== null && bacaanTerbaru?.suhu !== undefined;
 
   const aktif = nodeStats.online > 0;
 
@@ -205,15 +202,18 @@ export function WeatherHeroContent({
               icon="sunny-outline"
               value={cahayaValue}
               label={cahayaLabel}
-              valueSize={bacaanTerbaru ? 18 : 22}
+              valueSize={bacaanTerbaru ? 17 : 20}
             />
-            {hasSuhu && bacaanTerbaru && (
-              <MetricTile
-                icon="thermometer-outline"
-                value={`${Math.round(Number(bacaanTerbaru.suhu))}°C`}
-                label="Suhu Udara"
-              />
-            )}
+            <MetricTile
+              icon="thermometer-outline"
+              value={
+                hasSuhu && bacaanTerbaru
+                  ? `${Math.round(Number(bacaanTerbaru.suhu))}°C`
+                  : "-"
+              }
+              label="Suhu Udara"
+              valueSize={20}
+            />
           </View>
         </View>
       </View>
