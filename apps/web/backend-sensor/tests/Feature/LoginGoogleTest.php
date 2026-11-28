@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Services\GoogleAuthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Testing\TestResponse;
@@ -190,5 +191,58 @@ class LoginGoogleTest extends TestCase
         $res = $this->get('/api/auth/google/callback?error=access_denied');
 
         $this->assertSame('dibatalkan', $this->paramRedirect($res)['google_error']);
+    }
+
+    public function test_redirect_menolak_app_redirect_tidak_diizinkan_bukan_jatuh_ke_web(): void
+    {
+        config(['services.google.izinkan_expo' => false]);
+
+        $this->get('/api/auth/google/redirect?app_redirect='.urlencode('exp://192.168.1.2:8081/--/auth/google'))
+            ->assertStatus(422);
+    }
+
+    public function test_state_mobile_mengembalikan_hasil_ke_deep_link_aplikasi(): void
+    {
+        $user = $this->buatUser($this->buatTenant());
+        $this->akunGoogle($user->email);
+        Cache::put('google_state:st-app', ['app' => 'agrolight://auth/google'], 600);
+
+        $res = $this->get('/api/auth/google/callback?code=abc&state=st-app');
+
+        $this->assertStringStartsWith('agrolight://auth/google?kode=', $res->headers->get('Location'));
+    }
+
+    public function test_error_pada_alur_mobile_juga_kembali_ke_aplikasi(): void
+    {
+        $admin = $this->buatUser(null, 'superAdmin');
+        $this->akunGoogle($admin->email);
+        Cache::put('google_state:st-app', ['app' => 'agrolight://auth/google'], 600);
+
+        $res = $this->get('/api/auth/google/callback?code=abc&state=st-app');
+
+        $this->assertStringStartsWith('agrolight://auth/google?', $res->headers->get('Location'));
+        $this->assertSame('superadmin_tidak_diizinkan', $this->paramRedirect($res)['google_error']);
+    }
+
+    public function test_hanya_deep_link_aplikasi_yang_diterima(): void
+    {
+        $g = app(GoogleAuthService::class);
+
+        $this->assertTrue($g->urlAppValid('agrolight://auth/google'));
+        $this->assertFalse($g->urlAppValid('https://penipu.example/ambil'));
+        $this->assertFalse($g->urlAppValid('javascript:alert(1)'));
+        $this->assertFalse($g->urlAppValid('exp://192.168.1.5:8081/--/auth/google'));
+
+        config(['services.google.izinkan_expo' => true]);
+        $this->assertTrue($g->urlAppValid('exp://192.168.1.5:8081/--/auth/google'));
+    }
+
+    public function test_state_dengan_tujuan_tidak_valid_diabaikan(): void
+    {
+        $g = app(GoogleAuthService::class);
+
+        $state = $g->buatState('https://penipu.example/ambil');
+
+        $this->assertSame(['app' => null], $g->pakaiState($state));
     }
 }

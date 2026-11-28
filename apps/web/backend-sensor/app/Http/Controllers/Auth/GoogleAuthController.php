@@ -21,21 +21,38 @@ class GoogleAuthController extends Controller
         protected AuthService $authService
     ) {}
 
-    public function redirect()
+    public function redirect(Request $request)
     {
+        // Aplikasi mobile mengirim app_redirect. Bila ditolak (mis. exp:// Expo Go saat
+        // GOOGLE_IZINKAN_EXPO=false), jangan diam-diam jatuh ke website: beri tahu jelas.
+        $appRedirect = $request->query('app_redirect');
+        if ($appRedirect !== null && ! $this->google->urlAppValid($appRedirect)) {
+            return response()->json([
+                'status' => 'error',
+                'pesan' => 'app_redirect tidak diizinkan. Untuk Expo Go set GOOGLE_IZINKAN_EXPO=true di .env backend lalu php artisan config:clear; untuk APK pakai skema agrolight://.',
+            ], 422);
+        }
+
         return Socialite::driver('google')
             ->stateless()
-            ->with(['state' => $this->google->buatState(), 'prompt' => 'select_account'])
+            ->with([
+                'state' => $this->google->buatState($request->query('app_redirect')),
+                'prompt' => 'select_account',
+            ])
             ->redirect();
     }
 
     public function callback(Request $request)
     {
+        // State dipakai lebih dulu agar kita tahu tujuan kembali (web atau aplikasi mobile)
+        $konteks = $this->google->pakaiState($request->query('state'));
+        $app = $konteks['app'] ?? null;
+
         if ($request->query('error')) {
-            return $this->kembaliKeFrontend(['google_error' => 'dibatalkan']);
+            return $this->kembali(['google_error' => 'dibatalkan'], $app);
         }
 
-        if (! $this->google->pakaiState($request->query('state'))) {
+        if ($konteks === null) {
             return $this->kembaliKeFrontend(['google_error' => 'state_tidak_valid']);
         }
 
@@ -44,16 +61,16 @@ class GoogleAuthController extends Controller
         } catch (Throwable $e) {
             Log::warning('Login Google gagal: '.$e->getMessage());
 
-            return $this->kembaliKeFrontend(['google_error' => 'gagal_google']);
+            return $this->kembali(['google_error' => 'gagal_google'], $app);
         }
 
         [$user, $error] = $this->google->selesaikan($akunGoogle);
 
         if (! $user) {
-            return $this->kembaliKeFrontend(['google_error' => $error]);
+            return $this->kembali(['google_error' => $error], $app);
         }
 
-        return $this->kembaliKeFrontend(['kode' => $this->google->buatKode($user)]);
+        return $this->kembali(['kode' => $this->google->buatKode($user)], $app);
     }
 
     /** Front-end menukar kode satu kali pakai dengan token Sanctum. */
@@ -79,6 +96,11 @@ class GoogleAuthController extends Controller
 
     public function lengkapiProfil(Request $request)
     {
+        // Rapikan dulu: spasi dan tanda hubung dibuang sebelum divalidasi
+        if (is_string($request->input('nomor_telepon'))) {
+            $request->merge(['nomor_telepon' => preg_replace('/[\s-]/', '', $request->input('nomor_telepon'))]);
+        }
+
         $data = $request->validate([
             'nama_tenant' => 'required|string|max:100',
             'nomor_telepon' => ['required', 'string', 'regex:/^(\+62|62|0)8[0-9]{7,12}$/'],
@@ -99,6 +121,18 @@ class GoogleAuthController extends Controller
         });
 
         return $this->successResponse($user->fresh(), 'Profil berhasil dilengkapi.');
+    }
+
+    /** Kembalikan hasil ke aplikasi mobile (deep link) bila diminta, selain itu ke web. */
+    private function kembali(array $query, ?string $appRedirect)
+    {
+        if ($appRedirect) {
+            $pemisah = str_contains($appRedirect, '?') ? '&' : '?';
+
+            return redirect()->away($appRedirect.$pemisah.http_build_query($query));
+        }
+
+        return $this->kembaliKeFrontend($query);
     }
 
     private function kembaliKeFrontend(array $query)

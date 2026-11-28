@@ -16,18 +16,54 @@ class GoogleAuthService
 
     public const STATE_TTL_DETIK = 600;
 
-    public function buatState(): string
+    /**
+     * Buat state anti-CSRF. $appRedirect (opsional) = alamat deep link aplikasi mobile
+     * tempat hasil login dikembalikan; hanya dipakai bila lolos urlAppValid().
+     */
+    public function buatState(?string $appRedirect = null): string
     {
         $state = Str::random(40);
-        Cache::put('google_state:'.$state, true, self::STATE_TTL_DETIK);
+        Cache::put('google_state:'.$state, [
+            'app' => $this->urlAppValid($appRedirect) ? $appRedirect : null,
+        ], self::STATE_TTL_DETIK);
 
         return $state;
     }
 
-    /** State sekali pakai; false bila tidak ada / kedaluwarsa / sudah dipakai. */
-    public function pakaiState(?string $state): bool
+    /**
+     * State sekali pakai. Mengembalikan konteks (['app' => ?string]) atau null
+     * bila tidak ada / kedaluwarsa / sudah dipakai.
+     */
+    public function pakaiState(?string $state): ?array
     {
-        return $state !== null && $state !== '' && Cache::pull('google_state:'.$state) === true;
+        if ($state === null || $state === '') {
+            return null;
+        }
+
+        $nilai = Cache::pull('google_state:'.$state);
+
+        if ($nilai === true) {
+            return ['app' => null];
+        }
+
+        return is_array($nilai) ? $nilai : null;
+    }
+
+    /**
+     * Tujuan deep link mobile yang diizinkan: skema aplikasi (agrolight://).
+     * Skema exp:// (Expo Go) hanya bila GOOGLE_IZINKAN_EXPO=true, khusus pengembangan.
+     */
+    public function urlAppValid(?string $url): bool
+    {
+        if (! $url || strlen($url) > 300 || preg_match('/[\s<>"\x5C]/', $url)) {
+            return false;
+        }
+
+        if (str_starts_with($url, 'agrolight://')) {
+            return true;
+        }
+
+        return (bool) config('services.google.izinkan_expo') && str_starts_with($url, 'exp://');
     }
 
     /**
