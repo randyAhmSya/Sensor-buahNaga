@@ -1,4 +1,8 @@
-import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from "axios";
+import axios, {
+  AxiosError,
+  type AxiosInstance,
+  type InternalAxiosRequestConfig,
+} from "axios";
 import { Platform } from "react-native";
 import Constants from "expo-constants";
 import { authStorage } from "./authStorage";
@@ -45,7 +49,9 @@ export class EnhancedApiError extends Error {
 /**
  * Mendaftarkan callback saat backend mengembalikan 402 Payment Required (langganan habis/nonaktif).
  */
-export function onSubscriptionRequired(listener: SubscriptionRequiredListener): () => void {
+export function onSubscriptionRequired(
+  listener: SubscriptionRequiredListener,
+): () => void {
   subscriptionListeners.add(listener);
   return () => {
     subscriptionListeners.delete(listener);
@@ -57,10 +63,16 @@ export function notifySubscriptionRequired(message: string): void {
     try {
       listener(message);
     } catch (e) {
-      console.warn("[apiClient] Error inside subscriptionRequired listener:", e);
+      console.warn(
+        "[apiClient] Error inside subscriptionRequired listener:",
+        e,
+      );
     }
   });
 }
+
+/** Server produksi; dipakai build rilis bila EXPO_PUBLIC_API_URL tidak ikut ter-bundle. */
+const PRODUCTION_API_URL = "https://agrolight.magang.my.id/api";
 
 export function getBaseApiUrl(): string {
   // 1. Prioritas Utama: EXPO_PUBLIC_API_URL dari .env atau Constants.expoConfig?.extra?.apiUrl
@@ -70,7 +82,14 @@ export function getBaseApiUrl(): string {
 
   if (envApiUrl && envApiUrl.trim().length > 0) {
     const trimmed = envApiUrl.trim();
-    return trimmed.endsWith("/api") ? trimmed : `${trimmed.replace(/\/+$/, "")}/api`;
+    return trimmed.endsWith("/api")
+      ? trimmed
+      : `${trimmed.replace(/\/+$/, "")}/api`;
+  }
+
+  // 1b. Build rilis (APK/AAB): .env lokal tidak ikut build EAS, jadi jangan jatuh ke IP/emulator
+  if (!__DEV__) {
+    return PRODUCTION_API_URL;
   }
 
   // 2. Deteksi otomatis dari host Metro Bundler (physical device via Expo Go)
@@ -125,7 +144,10 @@ apiClient.interceptors.request.use(
       }
     } catch (err) {
       if (__DEV__) {
-        console.warn("[apiClient Request Interceptor] Gagal menyematkan token auth:", err);
+        console.warn(
+          "[apiClient Request Interceptor] Gagal menyematkan token auth:",
+          err,
+        );
       }
     }
     return config;
@@ -136,7 +158,14 @@ apiClient.interceptors.request.use(
 // Response Interceptor: tangani pesan error spesifik backend
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<{ status?: string; pesan?: string; message?: string; errors?: Record<string, string[]> }>) => {
+  (
+    error: AxiosError<{
+      status?: string;
+      pesan?: string;
+      message?: string;
+      errors?: Record<string, string[]>;
+    }>,
+  ) => {
     // Log detail error response backend untuk debugging di console/terminal (menggunakan warn agar tidak memicu RedBox)
     if (__DEV__) {
       console.warn("[apiClient Response Warning]:", {
@@ -172,15 +201,29 @@ apiClient.interceptors.response.use(
     }
 
     // Jika 401 Unauthenticated di luar endpoint login, hapus token kadaluarsa dan picu listener
-    if (error.response?.status === 401 && !error.config?.url?.includes("/auth/login")) {
-      console.warn("[apiClient] 401 Unauthenticated terdeteksi pada", error.config?.url, "- membersihkan sesi lokal.");
-      authStorage.clear().catch((e) => console.warn("[apiClient] Gagal membersihkan authStorage:", e));
+    if (
+      error.response?.status === 401 &&
+      !error.config?.url?.includes("/auth/login")
+    ) {
+      console.warn(
+        "[apiClient] 401 Unauthenticated terdeteksi pada",
+        error.config?.url,
+        "- membersihkan sesi lokal.",
+      );
+      authStorage
+        .clear()
+        .catch((e) =>
+          console.warn("[apiClient] Gagal membersihkan authStorage:", e),
+        );
       notifyAuthRequired();
     }
 
     // Jika 402 Payment Required (langganan kadaluarsa / nonaktif)
     if (error.response?.status === 402) {
-      console.warn("[apiClient] 402 Payment Required terdeteksi pada", error.config?.url);
+      console.warn(
+        "[apiClient] 402 Payment Required terdeteksi pada",
+        error.config?.url,
+      );
       notifySubscriptionRequired(customMessage);
     }
 

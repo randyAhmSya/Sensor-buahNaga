@@ -26,7 +26,7 @@ export const PROFILE_MENU: ProfileMenuItem[] = [
   { key: "subscription", label: "Langganan & Paket", icon: "card-outline" },
   {
     key: "notifications",
-    label: "Pengaturan Notifikasi",
+    label: "Notifikasi",
     icon: "notifications-outline",
   },
   {

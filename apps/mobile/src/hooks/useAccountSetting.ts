@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  changePassword,
   fetchAccountProfile,
   updateAccountProfile,
 } from "@/service/accountSettingService";
@@ -16,7 +17,8 @@ interface UseAccountSettingsReturn {
   phone: string;
   setPhone: (value: string) => void;
   email: string;
-  setEmail: (value: string) => void;
+  tenantName: string | null;
+  setTenantName: (value: string) => void;
   currentPassword: string;
   setCurrentPassword: (value: string) => void;
   newPassword: string;
@@ -24,7 +26,9 @@ interface UseAccountSettingsReturn {
   confirmPassword: string;
   setConfirmPassword: (value: string) => void;
   isSaving: boolean;
-  save: () => Promise<void>;
+  isChangingPassword: boolean;
+  saveProfile: () => Promise<void>;
+  savePassword: () => Promise<void>;
 }
 
 export function useAccountSettings(): UseAccountSettingsReturn {
@@ -34,10 +38,12 @@ export function useAccountSettings(): UseAccountSettingsReturn {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [tenantName, setTenantName] = useState<string | null>(null);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,6 +55,7 @@ export function useAccountSettings(): UseAccountSettingsReturn {
         setFullName(profile.fullName);
         setPhone(profile.phone);
         setEmail(profile.email);
+        setTenantName(profile.tenantName);
         setState({ status: "success" });
       })
       .catch((err) => {
@@ -65,19 +72,29 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     };
   }, []);
 
-  const save = useCallback(async () => {
+  const saveProfile = useCallback(async () => {
     setIsSaving(true);
     try {
-      await updateAccountProfile({
-        fullName,
-        phone,
-        email,
-        newPassword: newPassword || undefined,
-      });
+      const p = await updateAccountProfile({ fullName, phone, tenantName });
+      setFullName(p.fullName);
+      setPhone(p.phone);
+      setTenantName(p.tenantName);
     } finally {
       setIsSaving(false);
     }
-  }, [fullName, phone, email, newPassword]);
+  }, [fullName, phone, tenantName]);
+
+  const savePassword = useCallback(async () => {
+    setIsChangingPassword(true);
+    try {
+      await changePassword({ currentPassword, newPassword, confirmPassword });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  }, [currentPassword, newPassword, confirmPassword]);
 
   return {
     state,
@@ -86,7 +103,8 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     phone,
     setPhone,
     email,
-    setEmail,
+    tenantName,
+    setTenantName,
     currentPassword,
     setCurrentPassword,
     newPassword,
@@ -94,6 +112,8 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     confirmPassword,
     setConfirmPassword,
     isSaving,
-    save,
+    isChangingPassword,
+    saveProfile,
+    savePassword,
   };
 }

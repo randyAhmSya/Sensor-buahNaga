@@ -8,11 +8,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Pressable,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { PressableOpacity } from "@/component/ui/PressableOpacity";
 import { authService, GoogleLoginDibatalkan } from "@/service/authService";
+import { colors } from "@/theme/tokens";
 
 const LOGO_IMG = require("@/assets/images/logo/logo.png");
 
@@ -150,8 +152,12 @@ export default function LoginScreen() {
           <View className="items-center mb-8">
             {/* Bayangan di dalam (inset), bukan di luar, supaya logo tidak tampak seperti kotak melayang */}
             <View
-              className="w-20 h-20 rounded-2xl bg-emerald-50 border border-emerald-100 items-center justify-center mb-4 p-2"
-              style={{ boxShadow: "inset 0px 2px 8px rgba(4, 120, 87, 0.18)" }}
+              className="w-20 h-20 rounded-2xl border items-center justify-center mb-4 p-2"
+              style={{
+                backgroundColor: colors.auth.logoBg,
+                borderColor: colors.auth.logoBorder,
+                boxShadow: colors.auth.logoInnerShadow,
+              }}
             >
               <Image
                 source={LOGO_IMG}
@@ -327,23 +333,45 @@ export default function LoginScreen() {
             </Text>
             <View className="flex-1 h-px bg-slate-200" />
           </View>
-          <PressableOpacity
+          <Pressable
             onPress={handleGoogleLogin}
             disabled={isGoogleLoading || isSubmitting}
-            activeOpacity={0.85}
-            className="flex-row items-center justify-center gap-3 rounded-lg py-3.5 mt-4 bg-white border-[1.5px] border-slate-300"
             accessibilityRole="button"
             accessibilityLabel="Masuk dengan Google"
+            accessibilityState={{
+              disabled: isGoogleLoading || isSubmitting,
+              busy: isGoogleLoading,
+            }}
+            android_ripple={{ color: colors.auth.ripple }}
+            className="flex-row items-center justify-center gap-3 rounded-lg py-3.5 mt-4 border-[1.5px]"
+            style={({ pressed }) => ({
+              // Saat ditekan: latar hijau muda, garis hijau, sedikit mengecil, bayangan luar hilang
+              backgroundColor: pressed
+                ? colors.auth.pressedBg
+                : colors.auth.buttonBg,
+              borderColor: pressed
+                ? colors.auth.pressedBorder
+                : colors.auth.buttonBorder,
+              transform: [{ scale: pressed ? 0.98 : 1 }],
+              boxShadow: pressed
+                ? "0px 0px 0px rgba(15, 23, 42, 0)"
+                : colors.auth.buttonShadow,
+              opacity: isGoogleLoading || isSubmitting ? 0.7 : 1,
+            })}
           >
             {isGoogleLoading ? (
               <ActivityIndicator size="small" color="#047857" />
             ) : (
-              <Ionicons name="logo-google" size={18} color="#EA4335" />
+              <Ionicons
+                name="logo-google"
+                size={18}
+                color={colors.auth.googleRed}
+              />
             )}
             <Text className="text-sm font-semibold text-slate-700">
               {isGoogleLoading ? "Membuka Google..." : "Masuk dengan Google"}
             </Text>
-          </PressableOpacity>
+          </Pressable>
 
           {/* Footer Info */}
           <View className="mt-8 items-center gap-2">
