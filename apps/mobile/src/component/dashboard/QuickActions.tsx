@@ -1,8 +1,7 @@
 import React, { memo } from "react";
-import { ScrollView, Text } from "react-native";
+import { Pressable, ScrollView, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { PressableOpacity } from "@/component/ui/PressableOpacity";
-import { colors, radius, border } from "@/theme/tokens";
+import { colors, radius } from "@/theme/tokens";
 import type { QuickAction } from "@/constant/dashboard";
 
 interface QuickActionsProps {
@@ -22,6 +21,8 @@ export function QuickActions({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{
         gap: 8,
+        paddingVertical: 12,
+        paddingHorizontal: 4,
       }}
       className="mt-2"
     >
@@ -47,21 +48,32 @@ const ActionPill = memo(function ActionPill({
   isActive: boolean;
 }) {
   return (
-    <PressableOpacity
+    <Pressable
       onPress={onPress}
-      activeOpacity={0.85}
-      style={{
-        backgroundColor: isActive ? colors.status.success.bg : colors.text.inverse,
-        borderColor: isActive ? colors.status.success.bg : colors.border.neutral,
-        borderWidth: border.strong,
-        borderRadius: radius.control,
-        paddingHorizontal: 16,
+      accessibilityRole="button"
+      accessibilityState={{ selected: isActive }}
+      style={({ pressed }) => ({
+        backgroundColor: isActive
+          ? colors.status.success.bg
+          : pressed
+            ? colors.pill.pressedBg
+            : colors.pill.idleBg,
+        borderColor: isActive
+          ? colors.status.success.bg
+          : pressed
+            ? colors.pill.pressedBorder
+            : colors.pill.idleBorder,
+        borderWidth: 1,
+        borderRadius: radius.full,
+        paddingHorizontal: 18,
         paddingVertical: 10,
         minHeight: 44,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-      }}
+        transform: [{ scale: pressed ? 0.96 : 1 }],
+        boxShadow: isActive ? colors.pill.activeShadow : colors.pill.idleShadow,
+      })}
     >
       <Ionicons
         name={action.icon}
@@ -79,6 +91,6 @@ const ActionPill = memo(function ActionPill({
       >
         {action.label}
       </Text>
-    </PressableOpacity>
+    </Pressable>
   );
 });

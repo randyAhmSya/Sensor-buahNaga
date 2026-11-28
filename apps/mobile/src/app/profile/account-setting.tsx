@@ -1,5 +1,13 @@
 import React from "react";
-import { ScrollView, Text, TextInput, View, Pressable, ActivityIndicator, Alert } from "react-native";
+import {
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+  Pressable,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/theme/tokens";
 import { AccountHeader } from "@/component/profile/AccountHeader";
@@ -14,7 +22,8 @@ export default function AccountSetting() {
     phone,
     setPhone,
     email,
-    setEmail,
+    tenantName,
+    setTenantName,
     currentPassword,
     setCurrentPassword,
     newPassword,
@@ -22,7 +31,9 @@ export default function AccountSetting() {
     confirmPassword,
     setConfirmPassword,
     isSaving,
-    save,
+    isChangingPassword,
+    saveProfile,
+    savePassword,
   } = useAccountSettings();
 
   if (state.status === "loading") {
@@ -33,25 +44,43 @@ export default function AccountSetting() {
     return (
       <View className="flex-1 bg-slate-50">
         <AccountHeader title="Account Settings" />
-        <AsyncStateView
-          status="error"
-          errorMessage={state.message}
-        />
+        <AsyncStateView status="error" errorMessage={state.message} />
       </View>
     );
   }
 
-  const handleSave = async () => {
-    if (newPassword && newPassword !== confirmPassword) {
+  const handleSaveProfile = async () => {
+    try {
+      await saveProfile();
+      Alert.alert("Sukses", "Profil berhasil disimpan.");
+    } catch (err) {
+      Alert.alert(
+        "Gagal",
+        err instanceof Error ? err.message : "Gagal menyimpan profil.",
+      );
+    }
+  };
+
+  const handleSavePassword = async () => {
+    if (!currentPassword || !newPassword) {
+      Alert.alert("Validasi", "Isi kata sandi saat ini dan kata sandi baru.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
       Alert.alert("Validasi", "Konfirmasi kata sandi baru tidak cocok.");
       return;
     }
-
     try {
-      await save();
-      Alert.alert("Sukses", "Perubahan profil berhasil disimpan.");
+      await savePassword();
+      Alert.alert(
+        "Sukses",
+        "Kata sandi diperbarui. Perangkat lain otomatis keluar.",
+      );
     } catch (err) {
-      Alert.alert("Gagal", err instanceof Error ? err.message : "Gagal menyimpan perubahan.");
+      Alert.alert(
+        "Gagal",
+        err instanceof Error ? err.message : "Gagal mengubah kata sandi.",
+      );
     }
   };
 
@@ -85,11 +114,27 @@ export default function AccountSetting() {
               onChangeText={setPhone}
             />
 
+            {tenantName !== null && (
+              <InputField
+                icon="leaf-outline"
+                label="Nama Kebun / Perusahaan"
+                value={tenantName}
+                onChangeText={setTenantName}
+              />
+            )}
+
             <InputField
               icon="mail-outline"
-              label="Email"
+              label="Email (tidak dapat diubah)"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={() => {}}
+              readOnly
+            />
+
+            <ActionButton
+              label="Simpan Profil"
+              loading={isSaving}
+              onPress={handleSaveProfile}
             />
           </View>
 
@@ -122,26 +167,6 @@ export default function AccountSetting() {
               secure
             />
           </View>
-
-          <Pressable
-            disabled={isSaving}
-            accessibilityState={{ disabled: isSaving }}
-            accessibilityRole="button"
-            className={`mt-6 rounded-lg py-3.5 items-center justify-center ${
-              isSaving
-                ? "bg-slate-300 border border-slate-400"
-                : "bg-emerald-700 active:bg-emerald-800"
-            }`}
-            onPress={handleSave}
-          >
-            {isSaving ? (
-              <ActivityIndicator color={colors.icon.neutral} />
-            ) : (
-              <Text className="text-center font-bold text-white text-sm">
-                Simpan Perubahan
-              </Text>
-            )}
-          </Pressable>
         </View>
       </ScrollView>
     </View>
@@ -154,18 +179,24 @@ function InputField({
   value,
   onChangeText,
   secure = false,
+  readOnly = false,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   value: string;
   onChangeText: (v: string) => void;
   secure?: boolean;
+  readOnly?: boolean;
 }) {
   return (
     <View className="mb-3.5">
-      <Text className="mb-1.5 text-xs font-semibold text-slate-700">{label}</Text>
+      <Text className="mb-1.5 text-xs font-semibold text-slate-700">
+        {label}
+      </Text>
 
-      <View className="flex-row items-center rounded-lg border border-slate-200 bg-slate-50 px-3">
+      <View
+        className={`flex-row items-center rounded-lg border border-slate-200 px-3 ${readOnly ? "bg-slate-100" : "bg-slate-50"}`}
+      >
         <Ionicons name={icon} size={18} color="#64748B" />
 
         <TextInput
@@ -173,10 +204,42 @@ function InputField({
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={secure}
+          editable={!readOnly}
+          autoCapitalize="none"
           placeholder={label}
           placeholderTextColor="#94A3B8"
         />
       </View>
     </View>
+  );
+}
+
+function ActionButton({
+  label,
+  loading,
+  onPress,
+}: {
+  label: string;
+  loading: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      disabled={loading}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: loading }}
+      className={`mt-1 rounded-lg py-3 items-center justify-center ${
+        loading ? "bg-slate-300" : "bg-emerald-700 active:bg-emerald-800"
+      }`}
+      onPress={onPress}
+    >
+      {loading ? (
+        <ActivityIndicator color={colors.icon.neutral} />
+      ) : (
+        <Text className="text-center font-bold text-white text-sm">
+          {label}
+        </Text>
+      )}
+    </Pressable>
   );
 }

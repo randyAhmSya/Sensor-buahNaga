@@ -6,7 +6,11 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://agrolight.magang.my.id/api",
+        "EXPO_PUBLIC_FITUR_LANGGANAN": "false"
+      }
     },
     "preview": {
       "distribution": "internal",
@@ -14,11 +18,16 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://192.168.1.3:8080/api"
+        "EXPO_PUBLIC_API_URL": "https://agrolight.magang.my.id/api",
+        "EXPO_PUBLIC_FITUR_LANGGANAN": "false"
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://agrolight.magang.my.id/api",
+        "EXPO_PUBLIC_FITUR_LANGGANAN": "false"
+      }
     }
   },
   "submit": {
